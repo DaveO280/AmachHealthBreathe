@@ -14,8 +14,6 @@ import Foundation
 
 #if os(iOS)
 import Combine
-import CryptoKit
-import CommonCrypto
 
 #if canImport(PrivySDK)
 import PrivySDK
@@ -45,10 +43,8 @@ public final class WalletService: ObservableObject {
     #endif
 
     // MARK: Key Derivation Constants (MUST match walletEncryption.ts — never change)
-    private static let encryptionKeyMessagePrefix =
+    static let encryptionKeyMessagePrefix =
         "Amach Health - Derive Encryption Key\n\nThis signature is used to encrypt your health data.\n\nNonce: "
-    private static let pbkdf2Iterations      = 100_000
-    private static let derivedKeyLengthBytes = 32
 
     private init() {
         self.hasAuthenticatedBefore = UserDefaults.standard.bool(forKey: "amach_breathe_has_authenticated")
@@ -221,60 +217,16 @@ public final class WalletService: ObservableObject {
     }
     #endif
 
-    /// PBKDF2-SHA256 key derivation. Output MUST match walletEncryption.ts deriveKeyWithWebCrypto().
+    /// PBKDF2-SHA256 key derivation. Delegates to WalletCrypto (platform-shared).
     public static func deriveEncryptionKeyPBKDF2(
         signatureHex: String,
         walletAddress: String
     ) throws -> String {
-        let sigHex = signatureHex.hasPrefix("0x") ? String(signatureHex.dropFirst(2)) : signatureHex
-        let sigBytes = try hexToBytes(sigHex)
-
-        var saltHex = walletAddress.lowercased()
-        if saltHex.hasPrefix("0x") { saltHex = String(saltHex.dropFirst(2)) }
-        saltHex = String(saltHex.prefix(40))
-        let saltBytes = try hexToBytes(saltHex)
-
-        let derived = try pbkdf2SHA256(
-            password: sigBytes,
-            salt: saltBytes,
-            iterations: pbkdf2Iterations,
-            keyLength: derivedKeyLengthBytes
-        )
-        return derived.map { String(format: "%02x", $0) }.joined()
-    }
-
-    private static func pbkdf2SHA256(
-        password: [UInt8], salt: [UInt8], iterations: Int, keyLength: Int
-    ) throws -> [UInt8] {
-        var key = [UInt8](repeating: 0, count: keyLength)
-        let status = password.withUnsafeBufferPointer { pw in
-            salt.withUnsafeBufferPointer { sl in
-                CCKeyDerivationPBKDF(
-                    CCPBKDFAlgorithm(kCCPBKDF2),
-                    pw.baseAddress, password.count,
-                    sl.baseAddress, salt.count,
-                    CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
-                    UInt32(iterations),
-                    &key, keyLength
-                )
-            }
-        }
-        guard status == kCCSuccess else { throw WalletError.keyDerivationFailed(status) }
-        return key
+        try WalletCrypto.deriveEncryptionKey(signatureHex: signatureHex, walletAddress: walletAddress)
     }
 
     public static func hexToBytes(_ hex: String) throws -> [UInt8] {
-        guard hex.count % 2 == 0 else { throw WalletError.invalidHex }
-        var bytes = [UInt8]()
-        bytes.reserveCapacity(hex.count / 2)
-        var index = hex.startIndex
-        while index < hex.endIndex {
-            let next = hex.index(index, offsetBy: 2)
-            guard let byte = UInt8(hex[index..<next], radix: 16) else { throw WalletError.invalidHex }
-            bytes.append(byte)
-            index = next
-        }
-        return bytes
+        try WalletCrypto.hexToBytes(hex)
     }
 
     // MARK: - Keychain

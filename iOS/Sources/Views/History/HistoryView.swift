@@ -7,23 +7,26 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.amachBg.ignoresSafeArea()
-                let rows = SessionHistoryModel.rows(from: sessions)
-                if rows.isEmpty {
-                    emptyState
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: AmachSpacing.cardGap) {
-                            ForEach(rows) { row in
-                                NavigationLink(value: row) {
-                                    SessionRowView(row: row)
+            VStack(spacing: 0) {
+                WalletStatusBanner()
+                ZStack {
+                    Color.amachBg.ignoresSafeArea()
+                    let rows = SessionHistoryModel.rows(from: sessions)
+                    if rows.isEmpty {
+                        emptyState
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: AmachSpacing.cardGap) {
+                                ForEach(rows) { row in
+                                    NavigationLink(value: row) {
+                                        SessionRowView(row: row)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
+                            .padding(AmachSpacing.screenEdge)
+                            .padding(.bottom, AmachSpacing.xxl)
                         }
-                        .padding(AmachSpacing.screenEdge)
-                        .padding(.bottom, AmachSpacing.xxl)
                     }
                 }
             }

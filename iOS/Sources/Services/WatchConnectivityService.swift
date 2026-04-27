@@ -2,12 +2,15 @@ import Foundation
 import WatchConnectivity
 import AmachBreatheShared
 
-/// Receives BreathingSessionRecord from Apple Watch via WCSession.
+/// Receives BreathingSessionRecord from Apple Watch via WCSession
+/// and propagates wallet state changes to the Watch.
 @MainActor
 public final class WatchConnectivityService: NSObject, ObservableObject {
 
     public var onSessionReceived: ((BreathingSessionRecord) -> Void)?
     public var onCalibrationReceived: ((ResonanceFrequencyResult) -> Void)?
+    /// Set by the app root to push current wallet state when Watch requests it.
+    public var onWalletStateRequested: (() -> Void)?
 
     public override init() {
         super.init()
@@ -16,6 +19,8 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
             WCSession.default.activate()
         }
     }
+
+    // MARK: - iPhone → Watch commands
 
     public func sendStartSession(bpm: Double, durationSeconds: Int) {
         guard WCSession.default.isReachable else { return }
@@ -26,10 +31,29 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
 
     public func sendCancelSession() {
         guard WCSession.default.isReachable else { return }
-        let message: [String: Any] = [
-            WatchMessageKey.type.rawValue: WatchMessageType.cancelSession.rawValue
-        ]
+        WCSession.default.sendMessage(makeWatchMessage(type: .cancelSession), replyHandler: nil)
+    }
+
+    /// Push current wallet state to Watch via real-time message (Watch reachable).
+    public func sendWalletState(isConnected: Bool, walletAddress: String?) {
+        guard WCSession.default.isReachable else {
+            updateWalletApplicationContext(isConnected: isConnected, walletAddress: walletAddress)
+            return
+        }
+        let msg = WalletStateMessage(isConnected: isConnected, walletAddress: walletAddress)
+        guard let message = try? makeWatchMessage(type: .walletState, payload: msg) else { return }
         WCSession.default.sendMessage(message, replyHandler: nil)
+        // Also update context so Watch gets it on next launch if currently unreachable
+        updateWalletApplicationContext(isConnected: isConnected, walletAddress: walletAddress)
+    }
+
+    /// Transfer wallet state via application context (persists across Watch sessions).
+    public func updateWalletApplicationContext(isConnected: Bool, walletAddress: String?) {
+        let context: [String: Any] = [
+            "walletConnected": isConnected,
+            "walletAddress": walletAddress ?? ""
+        ]
+        try? WCSession.default.updateApplicationContext(context)
     }
 }
 
@@ -59,7 +83,10 @@ extension WatchConnectivityService: WCSessionDelegate {
         case .calibrationResult:
             guard let result = try? decodeWatchPayload(ResonanceFrequencyResult.self, from: message) else { return }
             Task { @MainActor [weak self] in self?.onCalibrationReceived?(result) }
-        default: break
+        case .walletStateRequest:
+            Task { @MainActor [weak self] in self?.onWalletStateRequested?() }
+        default:
+            break
         }
     }
 }

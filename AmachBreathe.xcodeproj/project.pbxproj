@@ -10,9 +10,11 @@
 		005AAB239F4A8B8A749C3A48 /* SessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59ED365DB6BABB4AC05AEF87 /* SessionRecord.swift */; };
 		0299171278E8E7156C977E95 /* TrendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D8A03DA4404BCCBD3414D68 /* TrendView.swift */; };
 		0BC23BE00404ED5A84CBF141 /* VisualPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5931AE145EF39A2F94FC290C /* VisualPacer.swift */; };
+		0BDB271FED778525A4853675 /* WalletStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E41C5DC53807B47DF56C59A7 /* WalletStatusBanner.swift */; };
 		0E43BF66DC59A336E2E698D8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E45697449E49A8290893DB85 /* ContentView.swift */; };
 		1625B300201045307ADDECD7 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B124493F97494B75F4B683E /* WatchConnectivity.framework */; };
 		176F04183593FC92BFB2966A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504A408CB22767A580218235 /* SettingsView.swift */; };
+		179A5C292FE49CB43F2E3F0C /* ConnectWalletSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3378D047788A9D962CB5121A /* ConnectWalletSheet.swift */; };
 		1D28DFDD83F197CDD535832F /* AudioPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFCDEB98EDBB3DCFD0AA253C /* AudioPacer.swift */; };
 		24B0BDF701DB6AE9C4C24D73 /* AppSettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6868E973C8D5B7EBEC49ED7D /* AppSettingsService.swift */; };
 		276D28351A4F7153DC55C484 /* AmachBreatheApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EEDA969D8D4B35E5E0CF19 /* AmachBreatheApp.swift */; };
@@ -20,6 +22,7 @@
 		28DC2A35708C5F0294173EB4 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F6072B414FB21FE9AF277F /* SessionDetailView.swift */; };
 		322EC51554886CAF352C8928 /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF98D57B21EDC714D27771A0 /* SessionView.swift */; };
 		44CD03469D157BE1C3E43E7A /* WatchSessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */; };
+		58A75FF9451077BF75DC2B4F /* WatchWalletStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */; };
 		59E306DBE63E4F56D0FC53D0 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = AD5D80E56CC0C91F666C2ED6 /* AmachBreatheShared */; };
 		7BDF839BFCC256A7D6F60D50 /* HapticPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86809B0C92727B7E6DA5C05F /* HapticPacer.swift */; };
 		907334C15011F406CC93E2D3 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = 76A2C03C0ADCBD8F834AD57F /* AmachBreatheShared */; };
@@ -58,6 +61,8 @@
 		1EBE62B915290896069736D0 /* QuickStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStartView.swift; sourceTree = "<group>"; };
 		263B6EE690602C261C511609 /* CalibrationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationStore.swift; sourceTree = "<group>"; };
 		29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheTests.swift; sourceTree = "<group>"; };
+		3378D047788A9D962CB5121A /* ConnectWalletSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectWalletSheet.swift; sourceTree = "<group>"; };
+		392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWalletStore.swift; sourceTree = "<group>"; };
 		3FC5800DD5B16BFAE4612A9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		504A408CB22767A580218235 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		53C7941BAA5A18ECA5EF1B00 /* HKWorkoutSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HKWorkoutSessionManager.swift; sourceTree = "<group>"; };
@@ -81,6 +86,7 @@
 		B24AFAA8857113DBEDDF3786 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		BFCDEB98EDBB3DCFD0AA253C /* AudioPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPacer.swift; sourceTree = "<group>"; };
 		C19FAC1F75D0942CA96513C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E41C5DC53807B47DF56C59A7 /* WalletStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletStatusBanner.swift; sourceTree = "<group>"; };
 		E45697449E49A8290893DB85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E52AAD1FBD98F5C606430B96 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		E7B395C9AE603753725D2390 /* MasterPhaseTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterPhaseTimer.swift; sourceTree = "<group>"; };
@@ -131,6 +137,7 @@
 				5931AE145EF39A2F94FC290C /* VisualPacer.swift */,
 				5715B445ECAAE832393EC61C /* WatchCalibrationRunner.swift */,
 				7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */,
+				392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -270,6 +277,8 @@
 		986AC6445DE6CAFBC414AC9E /* Connection */ = {
 			isa = PBXGroup;
 			children = (
+				3378D047788A9D962CB5121A /* ConnectWalletSheet.swift */,
+				E41C5DC53807B47DF56C59A7 /* WalletStatusBanner.swift */,
 			);
 			path = Connection;
 			sourceTree = "<group>";
@@ -486,6 +495,7 @@
 				FA578290BBABF63FDF6D9219 /* CalibrationRunnerView.swift in Sources */,
 				A8E96A1F82921C4CDB5103AA /* CalibrationService.swift in Sources */,
 				D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */,
+				179A5C292FE49CB43F2E3F0C /* ConnectWalletSheet.swift in Sources */,
 				0E43BF66DC59A336E2E698D8 /* ContentView.swift in Sources */,
 				ACF65313336D3EBD8FFA6D1F /* HealthKitService.swift in Sources */,
 				B9A0D406AF8AF7207EFC70EB /* HistoryView.swift in Sources */,
@@ -494,6 +504,7 @@
 				98CCF9CD962B6366EE81CE5F /* SessionService.swift in Sources */,
 				176F04183593FC92BFB2966A /* SettingsView.swift in Sources */,
 				0299171278E8E7156C977E95 /* TrendView.swift in Sources */,
+				0BDB271FED778525A4853675 /* WalletStatusBanner.swift in Sources */,
 				FA537A83E4B24C53CA1A13D5 /* WatchConnectivityService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -513,6 +524,7 @@
 				ED6F82016C1EFFC418C68D91 /* WatchCalibrationRunner.swift in Sources */,
 				BCA5021795609855575CD5FE /* WatchContentView.swift in Sources */,
 				44CD03469D157BE1C3E43E7A /* WatchSessionRunner.swift in Sources */,
+				58A75FF9451077BF75DC2B4F /* WatchWalletStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

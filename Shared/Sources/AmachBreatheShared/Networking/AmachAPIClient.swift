@@ -89,6 +89,34 @@ public final class AmachAPIClient: Sendable {
         return envelope.data
     }
 
+    // MARK: - Timeline: Post BREATHING_SESSION event
+
+    /// Posts a BREATHING_SESSION timeline event so the record appears in the Amach dashboard.
+    /// Fails silently — dashboard visibility is a best-effort side-effect of session upload.
+    public func postBreathingSessionEvent(
+        record: BreathingSessionRecord,
+        walletAddress: String,
+        encryptionKey: WalletEncryptionKey,
+        platform: String = "ios"
+    ) async throws {
+        let event = BreathingSessionEvent(from: record, platform: platform)
+        let request = StorjRequest(
+            action: "storage/store",
+            userAddress: walletAddress,
+            encryptionKey: encryptionKey,
+            data: AnyCodable(event),
+            dataType: "timeline-event",
+            options: StorjStoreOptions(metadata: [
+                "eventId":   event.id,
+                "eventType": event.eventType,
+                "timestamp": ISO8601DateFormatter().string(from: event.timestamp),
+                "platform":  platform
+            ])
+        )
+        _ = try await post(path: "/api/storj", body: request,
+                           responseType: StorjResponse<StorjStoreResult>.self)
+    }
+
     // MARK: - HTTP Core
 
     func post<B: Encodable, R: Decodable>(

@@ -7,6 +7,7 @@ import AmachBreatheShared
 public final class SessionService: ObservableObject {
 
     @Published public private(set) var sessions: [SessionRecord] = []
+    @Published public private(set) var isSyncing = false
 
     private let storageKey = "com.amach.breathe.sessions"
     private let apiClient = AmachAPIClient()
@@ -18,33 +19,75 @@ public final class SessionService: ObservableObject {
     // MARK: - Public
 
     public func save(_ record: BreathingSessionRecord) {
+        guard !sessions.contains(where: { $0.id == record.id }) else { return }
         let sr = SessionRecord(from: record)
         sessions.insert(sr, at: 0)
         persistToDisk()
     }
 
-    /// Attempt to upload any pending sessions. Call after wallet is connected.
-    public func syncPending(walletAddress: String, encryptionKey: String) async {
+    /// Upload pending sessions + post dashboard timeline events. Call after wallet connects.
+    public func syncPending(encryptionKey: WalletEncryptionKey) async {
+        guard !isSyncing else { return }
+        isSyncing = true
+        defer { isSyncing = false }
+
         for i in sessions.indices where sessions[i].uploadStatus == .pending {
             let record = sessions[i].breathingSession
             do {
-                let key = WalletEncryptionKey(
-                    walletAddress: walletAddress,
-                    encryptionKey: encryptionKey,
-                    signature: "",
-                    timestamp: Int(Date().timeIntervalSince1970)
-                )
-                _ = try await apiClient.storeBreathingSession(
+                let result = try await apiClient.storeBreathingSession(
                     record: record,
-                    walletAddress: walletAddress,
-                    encryptionKey: key
+                    walletAddress: encryptionKey.walletAddress,
+                    encryptionKey: encryptionKey
                 )
                 sessions[i].uploadStatus = .uploaded
+                sessions[i].storjUri = result.storjUri
+
+                // Best-effort dashboard event — don't fail the upload if this errors
+                try? await apiClient.postBreathingSessionEvent(
+                    record: record,
+                    walletAddress: encryptionKey.walletAddress,
+                    encryptionKey: encryptionKey
+                )
             } catch {
                 sessions[i].uploadStatus = .failed
             }
         }
         persistToDisk()
+    }
+
+    /// Restores session history from Storj for a new device install.
+    /// Merges cloud records with any existing local records (deduplicates by id).
+    public func restoreFromStorj(encryptionKey: WalletEncryptionKey) async throws {
+        isSyncing = true
+        defer { isSyncing = false }
+
+        let items = try await apiClient.listBreathingSessions(
+            walletAddress: encryptionKey.walletAddress,
+            encryptionKey: encryptionKey
+        )
+
+        var restored: [SessionRecord] = []
+        for item in items {
+            guard !sessions.contains(where: { $0.storjUri == item.uri }) else { continue }
+            do {
+                let record = try await apiClient.retrieveBreathingSession(
+                    storjUri: item.uri,
+                    walletAddress: encryptionKey.walletAddress,
+                    encryptionKey: encryptionKey
+                )
+                // Skip if we already have this session by id
+                guard !sessions.contains(where: { $0.id == record.id }) else { continue }
+                var sr = SessionRecord(from: record, uploadStatus: .uploaded, storjUri: item.uri)
+                restored.append(sr)
+            } catch {
+                continue
+            }
+        }
+
+        if !restored.isEmpty {
+            sessions = (sessions + restored).sorted { $0.breathingSession.timestamp > $1.breathingSession.timestamp }
+            persistToDisk()
+        }
     }
 
     // MARK: - Persistence

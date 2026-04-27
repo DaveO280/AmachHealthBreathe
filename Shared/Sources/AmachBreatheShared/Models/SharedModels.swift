@@ -187,6 +187,40 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
     }
 }
 
+// MARK: - Breathing Session Timeline Event
+// Matches Amach dashboard's BREATHING_SESSION event type (committed in healthEventTypes.ts Phase 0).
+// Stored as dataType:"timeline-event" in Storj so the Amach dashboard picks it up automatically.
+
+public struct BreathingSessionEvent: Codable, Sendable {
+    public struct Metadata: Codable, Sendable {
+        public let platform: String
+        public let version: String
+        public let source: String
+    }
+    public let id: String
+    public let eventType: String           // "BREATHING_SESSION"
+    public let timestamp: Date
+    public let data: [String: String]
+    public let metadata: Metadata
+
+    public init(from record: BreathingSessionRecord, platform: String = "ios") {
+        self.id = UUID().uuidString
+        self.eventType = "BREATHING_SESSION"
+        self.timestamp = record.timestamp
+        self.data = [
+            "sessionId":       record.id,
+            "durationSeconds": String(record.durationSeconds),
+            "bpm":             String(record.bpm),
+            "ratio":           record.ratio,
+            "coherenceScore":  String(format: "%.3f", record.coherenceScore),
+            "avgHRV":          String(format: "%.1f", record.avgHRV),
+            "baselineHRV":     String(format: "%.1f", record.baselineHRV),
+            "recoveryHRV":     String(format: "%.1f", record.recoveryHRV)
+        ]
+        self.metadata = Metadata(platform: platform, version: "1", source: "user")
+    }
+}
+
 // MARK: - Subscription State
 
 public enum SubscriptionState: String, Codable, Sendable {

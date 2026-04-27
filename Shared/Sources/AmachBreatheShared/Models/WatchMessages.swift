@@ -8,10 +8,12 @@ public enum WatchMessageKey: String, Sendable {
 }
 
 public enum WatchMessageType: String, Codable, Sendable {
-    case sessionComplete     // Watch → iPhone: BreathingSessionRecord JSON
-    case calibrationResult   // Watch → iPhone: ResonanceFrequencyResult JSON
-    case startSession        // iPhone → Watch: StartSessionCommand JSON
-    case cancelSession       // iPhone → Watch: no payload
+    case sessionComplete      // Watch → iPhone: BreathingSessionRecord JSON
+    case calibrationResult    // Watch → iPhone: ResonanceFrequencyResult JSON
+    case startSession         // iPhone → Watch: StartSessionCommand JSON
+    case cancelSession        // iPhone → Watch: no payload
+    case walletState          // iPhone → Watch: WalletStateMessage JSON
+    case walletStateRequest   // Watch → iPhone: no payload (Watch requests current state)
 }
 
 public struct StartSessionCommand: Codable, Sendable {
@@ -34,6 +36,17 @@ public struct ResonanceFrequencyResult: Codable, Sendable {
     }
 }
 
+/// Wallet state pushed from iPhone → Watch so the Watch can show connected/disconnected UI.
+public struct WalletStateMessage: Codable, Sendable {
+    public let isConnected: Bool
+    public let walletAddress: String?   // nil when disconnected
+
+    public init(isConnected: Bool, walletAddress: String?) {
+        self.isConnected = isConnected
+        self.walletAddress = walletAddress
+    }
+}
+
 /// Wraps any Codable payload into a [String: Any] WCSession message dict.
 public func makeWatchMessage<T: Encodable>(type: WatchMessageType, payload: T) throws -> [String: Any] {
     let data = try JSONEncoder().encode(payload)
@@ -42,6 +55,11 @@ public func makeWatchMessage<T: Encodable>(type: WatchMessageType, payload: T) t
         WatchMessageKey.type.rawValue: type.rawValue,
         WatchMessageKey.payload.rawValue: payloadString
     ]
+}
+
+/// Makes a no-payload message (for cancelSession, walletStateRequest, etc.).
+public func makeWatchMessage(type: WatchMessageType) -> [String: Any] {
+    [WatchMessageKey.type.rawValue: type.rawValue]
 }
 
 /// Decodes a payload from a WCSession message dict.
