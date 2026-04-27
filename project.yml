@@ -1,0 +1,76 @@
+name: AmachBreathe
+options:
+  bundleIdPrefix: com.amach
+  deploymentTarget:
+    iOS: "17.0"
+    watchOS: "10.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+packages:
+  AmachBreatheShared:
+    path: Shared
+
+targets:
+
+  # ── iOS App ──────────────────────────────────────────────────
+  AmachBreathe:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    bundleId: com.amach.breathe
+    sources:
+      - path: iOS/Sources
+        type: group
+    dependencies:
+      - package: AmachBreatheShared
+    settings:
+      PRODUCT_NAME: "Amach Breathe"
+      SWIFT_VERSION: "6.0"
+      DEVELOPMENT_TEAM: ""
+      TARGETED_DEVICE_FAMILY: "1,2"
+      INFOPLIST_FILE: iOS/Sources/App/Info.plist
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGNING_REQUIRED: "NO"
+      CODE_SIGNING_ALLOWED: "NO"
+
+  # ── iOS Unit Tests ────────────────────────────────────────────
+  AmachBreatheTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    bundleId: com.amach.breathe.tests
+    sources:
+      - path: iOS/Tests/Unit
+    dependencies:
+      - target: AmachBreathe
+      - package: AmachBreatheShared
+    settings:
+      SWIFT_VERSION: "6.0"
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGNING_REQUIRED: "NO"
+      CODE_SIGNING_ALLOWED: "NO"
+
+  # ── watchOS App ───────────────────────────────────────────────
+  AmachBreatheWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    bundleId: com.amach.breathe.watchkitapp
+    sources:
+      - path: watchOS/Sources
+        type: group
+    dependencies:
+      - package: AmachBreatheShared
+    settings:
+      PRODUCT_NAME: "Amach Breathe Watch"
+      SWIFT_VERSION: "6.0"
+      DEVELOPMENT_TEAM: ""
+      TARGETED_DEVICE_FAMILY: "4"
+      INFOPLIST_FILE: watchOS/Sources/App/Info.plist
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGNING_REQUIRED: "NO"
+      CODE_SIGNING_ALLOWED: "NO"
+      WKApplication: "YES"
