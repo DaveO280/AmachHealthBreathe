@@ -7,34 +7,40 @@ public struct QuickStartView: View {
 
     @State private var selectedBPM: Double = 5.5
     @State private var selectedDuration: Int = 300
+    @State private var selectedRatio: BreathRatio = .fourToSix
     @State private var isStarting: Bool = false
 
-    private let bpmOptions: [Double] = [4.5, 5.0, 5.5, 6.0, 6.5, 7.0]
+    private let bpmOptions: [Double] = CalibrationEngine.candidateBPMs
     private let durationOptions: [(label: String, seconds: Int)] = [
-        ("5 min", 300), ("10 min", 600), ("15 min", 900)
+        ("5", 300), ("10", 600), ("15", 900)
     ]
 
     public var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     Text("Breathe")
                         .font(.headline)
                         .foregroundStyle(Color.amachTextPrimary)
 
                     bpmPicker
                     durationPicker
+                    ratioPicker
                     startButton
                 }
                 .padding(.horizontal, 8)
+                .padding(.bottom, 8)
             }
+            .navigationTitle("")
         }
         .task { try? await runner.requestHealthKitAuthorization() }
     }
 
+    // MARK: - Subviews
+
     private var bpmPicker: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Rate")
+        VStack(alignment: .leading, spacing: 2) {
+            Label("Rate", systemImage: "waveform.path.ecg")
                 .font(.caption2)
                 .foregroundStyle(Color.amachTextSecondary)
             Picker("BPM", selection: $selectedBPM) {
@@ -43,30 +49,57 @@ public struct QuickStartView: View {
                 }
             }
             .pickerStyle(.wheel)
-            .frame(height: 64)
+            .frame(height: 60)
         }
     }
 
     private var durationPicker: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Duration")
+        VStack(alignment: .leading, spacing: 2) {
+            Label("Duration (min)", systemImage: "clock")
                 .font(.caption2)
                 .foregroundStyle(Color.amachTextSecondary)
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 ForEach(durationOptions, id: \.seconds) { opt in
-                    Button(opt.label) {
-                        selectedDuration = opt.seconds
-                    }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .padding(6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(selectedDuration == opt.seconds
-                                  ? Color.amachPrimary
-                                  : Color.amachSurface)
-                    )
-                    .foregroundStyle(Color.amachTextPrimary)
+                    durationChip(opt.label, seconds: opt.seconds)
+                }
+            }
+        }
+    }
+
+    private func durationChip(_ label: String, seconds: Int) -> some View {
+        Button(label) { selectedDuration = seconds }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(selectedDuration == seconds
+                          ? Color.amachPrimary
+                          : Color.amachSurface)
+            )
+            .foregroundStyle(Color.amachTextPrimary)
+    }
+
+    private var ratioPicker: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label("Ratio", systemImage: "lungs")
+                .font(.caption2)
+                .foregroundStyle(Color.amachTextSecondary)
+            HStack(spacing: 4) {
+                ForEach(BreathRatio.allCases, id: \.self) { ratio in
+                    Button(ratio.displayLabel) { selectedRatio = ratio }
+                        .buttonStyle(.plain)
+                        .font(.caption)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 7)
+                                .fill(selectedRatio == ratio
+                                      ? Color.amachPrimary
+                                      : Color.amachSurface)
+                        )
+                        .foregroundStyle(Color.amachTextPrimary)
                 }
             }
         }
@@ -92,10 +125,16 @@ public struct QuickStartView: View {
         .disabled(isStarting)
     }
 
+    // MARK: - Actions
+
     private func startSession() {
         isStarting = true
         Task {
-            try? await runner.startSession(bpm: selectedBPM, durationSeconds: selectedDuration)
+            try? await runner.startSession(
+                bpm: selectedBPM,
+                durationSeconds: selectedDuration,
+                ratio: selectedRatio
+            )
             await MainActor.run { isStarting = false }
         }
     }

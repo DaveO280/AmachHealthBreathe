@@ -12,6 +12,24 @@ public struct PacerState: Sendable {
     public let sessionPhaseElapsed: TimeInterval
     public let sessionPhaseRemaining: TimeInterval?
 
+    public init(
+        sessionPhase: SessionPhase,
+        breathPhase: BreathPhase,
+        breathProgress: Double,
+        ringScale: Double,
+        totalElapsed: TimeInterval,
+        sessionPhaseElapsed: TimeInterval,
+        sessionPhaseRemaining: TimeInterval?
+    ) {
+        self.sessionPhase = sessionPhase
+        self.breathPhase = breathPhase
+        self.breathProgress = breathProgress
+        self.ringScale = ringScale
+        self.totalElapsed = totalElapsed
+        self.sessionPhaseElapsed = sessionPhaseElapsed
+        self.sessionPhaseRemaining = sessionPhaseRemaining
+    }
+
     public static let idle = PacerState(
         sessionPhase: .idle,
         breathPhase: .inhale,

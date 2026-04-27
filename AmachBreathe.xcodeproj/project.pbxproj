@@ -18,19 +18,19 @@
 		44CD03469D157BE1C3E43E7A /* WatchSessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */; };
 		59E306DBE63E4F56D0FC53D0 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = AD5D80E56CC0C91F666C2ED6 /* AmachBreatheShared */; };
 		7BDF839BFCC256A7D6F60D50 /* HapticPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86809B0C92727B7E6DA5C05F /* HapticPacer.swift */; };
-		8A992078FB2223332506FA7D /* SessionPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65363405EBD487DBD24E006C /* SessionPhase.swift */; };
 		907334C15011F406CC93E2D3 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = 76A2C03C0ADCBD8F834AD57F /* AmachBreatheShared */; };
 		973CEEB939F48AE990397161 /* HKWorkoutSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C7941BAA5A18ECA5EF1B00 /* HKWorkoutSessionManager.swift */; };
 		97964E41D131BF25C9F08A0D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B24AFAA8857113DBEDDF3786 /* HealthKit.framework */; };
 		98CCF9CD962B6366EE81CE5F /* SessionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD9953583514A39FE07FD064 /* SessionService.swift */; };
-		9A32AAC6F82AF03E96383709 /* PacerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23F73C6868E7422466502D87 /* PacerState.swift */; };
 		A8E96A1F82921C4CDB5103AA /* CalibrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5F443328E39EC5515A7C72 /* CalibrationService.swift */; };
 		ACF65313336D3EBD8FFA6D1F /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E60979A3399B86409CCD6E2 /* HealthKitService.swift */; };
 		BCA5021795609855575CD5FE /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E95C15232BEA6143056723A /* WatchContentView.swift */; };
 		CBA98E3A9653DFD2F49D77A7 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = 2A4BA8C7FAA7AFF50FFA0707 /* AmachBreatheShared */; };
+		D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263B6EE690602C261C511609 /* CalibrationStore.swift */; };
 		D4863F57713FB5A59BB28D33 /* AmachBreatheWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF23B5FEADFC0762F10EE429 /* AmachBreatheWatchApp.swift */; };
 		E72484FBE37CAAE6DC175659 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B124493F97494B75F4B683E /* WatchConnectivity.framework */; };
 		EBF53FD16A3B741F8173F35E /* QuickStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBE62B915290896069736D0 /* QuickStartView.swift */; };
+		ED6F82016C1EFFC418C68D91 /* WatchCalibrationRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5715B445ECAAE832393EC61C /* WatchCalibrationRunner.swift */; };
 		F91941A76702CE3ECA1901A5 /* AmachBreatheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */; };
 		FA537A83E4B24C53CA1A13D5 /* WatchConnectivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5A36BFE915419789FED99A /* WatchConnectivityService.swift */; };
 		FBE87AD063CB88858CD75049 /* MasterPhaseTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B395C9AE603753725D2390 /* MasterPhaseTimer.swift */; };
@@ -50,14 +50,14 @@
 		172C4A356E8CFD3E9CCC085E /* AmachBreatheWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AmachBreatheWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		189E3A52ECD338569B679F86 /* AmachBreathe.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AmachBreathe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1EBE62B915290896069736D0 /* QuickStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStartView.swift; sourceTree = "<group>"; };
-		23F73C6868E7422466502D87 /* PacerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacerState.swift; sourceTree = "<group>"; };
+		263B6EE690602C261C511609 /* CalibrationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationStore.swift; sourceTree = "<group>"; };
 		29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheTests.swift; sourceTree = "<group>"; };
 		3FC5800DD5B16BFAE4612A9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		53C7941BAA5A18ECA5EF1B00 /* HKWorkoutSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HKWorkoutSessionManager.swift; sourceTree = "<group>"; };
+		5715B445ECAAE832393EC61C /* WatchCalibrationRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchCalibrationRunner.swift; sourceTree = "<group>"; };
 		5931AE145EF39A2F94FC290C /* VisualPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualPacer.swift; sourceTree = "<group>"; };
 		59ED365DB6BABB4AC05AEF87 /* SessionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecord.swift; sourceTree = "<group>"; };
 		5E60979A3399B86409CCD6E2 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
-		65363405EBD487DBD24E006C /* SessionPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPhase.swift; sourceTree = "<group>"; };
 		6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AmachBreatheTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionRunner.swift; sourceTree = "<group>"; };
 		86809B0C92727B7E6DA5C05F /* HapticPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticPacer.swift; sourceTree = "<group>"; };
@@ -117,6 +117,7 @@
 				53C7941BAA5A18ECA5EF1B00 /* HKWorkoutSessionManager.swift */,
 				E7B395C9AE603753725D2390 /* MasterPhaseTimer.swift */,
 				5931AE145EF39A2F94FC290C /* VisualPacer.swift */,
+				5715B445ECAAE832393EC61C /* WatchCalibrationRunner.swift */,
 				7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */,
 			);
 			path = Services;
@@ -195,6 +196,7 @@
 			isa = PBXGroup;
 			children = (
 				AD5F443328E39EC5515A7C72 /* CalibrationService.swift */,
+				263B6EE690602C261C511609 /* CalibrationStore.swift */,
 				5E60979A3399B86409CCD6E2 /* HealthKitService.swift */,
 				AD9953583514A39FE07FD064 /* SessionService.swift */,
 				9F5A36BFE915419789FED99A /* WatchConnectivityService.swift */,
@@ -275,8 +277,6 @@
 		A55986494109714D7DD0E8F3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				23F73C6868E7422466502D87 /* PacerState.swift */,
-				65363405EBD487DBD24E006C /* SessionPhase.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -465,6 +465,7 @@
 			files = (
 				276D28351A4F7153DC55C484 /* AmachBreatheApp.swift in Sources */,
 				A8E96A1F82921C4CDB5103AA /* CalibrationService.swift in Sources */,
+				D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */,
 				0E43BF66DC59A336E2E698D8 /* ContentView.swift in Sources */,
 				ACF65313336D3EBD8FFA6D1F /* HealthKitService.swift in Sources */,
 				005AAB239F4A8B8A749C3A48 /* SessionRecord.swift in Sources */,
@@ -482,11 +483,10 @@
 				973CEEB939F48AE990397161 /* HKWorkoutSessionManager.swift in Sources */,
 				7BDF839BFCC256A7D6F60D50 /* HapticPacer.swift in Sources */,
 				FBE87AD063CB88858CD75049 /* MasterPhaseTimer.swift in Sources */,
-				9A32AAC6F82AF03E96383709 /* PacerState.swift in Sources */,
 				EBF53FD16A3B741F8173F35E /* QuickStartView.swift in Sources */,
-				8A992078FB2223332506FA7D /* SessionPhase.swift in Sources */,
 				322EC51554886CAF352C8928 /* SessionView.swift in Sources */,
 				0BC23BE00404ED5A84CBF141 /* VisualPacer.swift in Sources */,
+				ED6F82016C1EFFC418C68D91 /* WatchCalibrationRunner.swift in Sources */,
 				BCA5021795609855575CD5FE /* WatchContentView.swift in Sources */,
 				44CD03469D157BE1C3E43E7A /* WatchSessionRunner.swift in Sources */,
 			);

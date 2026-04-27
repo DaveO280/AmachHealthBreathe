@@ -16,6 +16,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     @Published public private(set) var currentCoherence: Double = 0
     @Published public private(set) var currentHRV: Double = 0
     @Published public private(set) var isRunning: Bool = false
+    @Published public private(set) var isPaused: Bool = false
     @Published public private(set) var completedRecord: BreathingSessionRecord?
 
     // MARK: - Sub-services
@@ -32,15 +33,13 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     // MARK: - Session config
 
     private var bpm: Double = 5.5
+    private var selectedRatio: BreathRatio = .fourToSix
     private var mainDurationSeconds: Int = 300
     private var sessionId: String = ""
     private var reflectionRating: Int?
 
-    // Snapshot HRV at phase boundaries
     private var baselineHRV: Double = 0
     private var recoveryHRV: Double = 0
-
-    // Coherence accumulation during main phase
     private var coherenceSamples: [Double] = []
 
     private var cancellables = Set<AnyCancellable>()
@@ -67,8 +66,13 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         try await workoutManager.requestAuthorization()
     }
 
-    public func startSession(bpm: Double, durationSeconds: Int) async throws {
+    public func startSession(
+        bpm: Double,
+        durationSeconds: Int,
+        ratio: BreathRatio = .fourToSix
+    ) async throws {
         self.bpm = bpm
+        self.selectedRatio = ratio
         self.mainDurationSeconds = durationSeconds
         self.sessionId = UUID().uuidString
         self.reflectionRating = nil
@@ -78,8 +82,9 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         hrvProcessor.reset()
 
         try await workoutManager.startWorkout()
-        timer.start(bpm: bpm, mainDurationSeconds: durationSeconds)
+        timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
+        isPaused = false
     }
 
     public func stopSession() async {
@@ -88,6 +93,19 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         audioPacer.stop()
         await workoutManager.stopWorkout()
         isRunning = false
+        isPaused = false
+    }
+
+    public func pause() {
+        guard isRunning, !isPaused else { return }
+        timer.pause()
+        isPaused = true
+    }
+
+    public func resume() {
+        guard isRunning, isPaused else { return }
+        timer.resume()
+        isPaused = false
     }
 
     public func submitReflection(rating: Int) {
@@ -111,26 +129,24 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         phase = state.sessionPhase
         pacerState = state
 
-        // Snapshot HRV at phase transitions
         if prevPhase != state.sessionPhase {
             switch state.sessionPhase {
             case .warmup:
                 baselineHRV = hrvProcessor.rmssd ?? 0
             case .recovery:
-                coherenceSamples = []  // reset — will collect during recovery too, unused
+                break
             case .reflection:
                 recoveryHRV = hrvProcessor.rmssd ?? 0
-                // Auto-finalize without rating if Watch doesn't receive one
             case .complete:
                 if reflectionRating == nil { buildRecord() }
             default: break
             }
         }
 
-        // Sample coherence during main phase
         if case .main = state.sessionPhase {
             let window = hrvProcessor.currentWindow
-            if let score = coherenceCalc.coherenceScore(rrIntervals: window, targetBPM: bpm) {
+            if let score = coherenceCalc.coherenceScore(
+                rrIntervals: window, targetBPM: bpm) {
                 coherenceSamples.append(score)
                 currentCoherence = score
             }
@@ -156,7 +172,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
             timestamp: Date(),
             durationSeconds: mainDurationSeconds,
             bpm: bpm,
-            ratio: "4:6",
+            ratio: selectedRatio.rawValue,
             baselineHRV: baselineHRV,
             recoveryHRV: recoveryHRV,
             avgHRV: hrvProcessor.rmssd ?? 0,
@@ -179,7 +195,8 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
 
     private func sendRecordToPhone(_ record: BreathingSessionRecord) async {
         guard let session = wcSession, session.isReachable else { return }
-        guard let message = try? makeWatchMessage(type: .sessionComplete, payload: record) else { return }
+        guard let message = try? makeWatchMessage(
+            type: .sessionComplete, payload: record) else { return }
         session.sendMessage(message, replyHandler: nil)
     }
 }
@@ -200,9 +217,11 @@ extension WatchSessionRunner: WCSessionDelegate {
         guard let type = watchMessageType(from: message) else { return }
         switch type {
         case .startSession:
-            guard let cmd = try? decodeWatchPayload(StartSessionCommand.self, from: message) else { return }
+            guard let cmd = try? decodeWatchPayload(
+                StartSessionCommand.self, from: message) else { return }
             Task { @MainActor [weak self] in
-                try? await self?.startSession(bpm: cmd.bpm, durationSeconds: cmd.durationSeconds)
+                try? await self?.startSession(
+                    bpm: cmd.bpm, durationSeconds: cmd.durationSeconds)
             }
         case .cancelSession:
             Task { @MainActor [weak self] in await self?.stopSession() }

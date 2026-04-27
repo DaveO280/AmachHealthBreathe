@@ -2,94 +2,98 @@ import Foundation
 import Combine
 import AmachBreatheShared
 
-/// Drives the entire session at 60 Hz. All pacers subscribe to `statePublisher`.
-/// Phase transitions are automatic based on wall-clock elapsed time.
+/// Drives the session at 60 Hz. Wraps SessionPhaseController (pause/resume, phase lifecycle)
+/// and adds breath-cycle math (ratio, ring scale) to produce a PacerState each tick.
+/// All mutations are on MainActor; the DispatchSourceTimer fires → posts to main actor.
 @MainActor
 public final class MasterPhaseTimer: ObservableObject {
 
-    // MARK: - Public state
+    // MARK: - Published state
 
     @Published public private(set) var state: PacerState = .idle
     @Published public private(set) var isRunning: Bool = false
+    @Published public private(set) var isPaused: Bool = false
 
     // MARK: - Config
 
     public var bpm: Double = 5.5 {
         didSet { recomputeBreathPeriod() }
     }
-    public var mainDurationSeconds: Int = 300  // 5 / 10 / 15 min
+    public var mainDurationSeconds: Int = 300
+    public var breathRatio: BreathRatio = .fourToSix {
+        didSet { recomputeBreathPeriod() }
+    }
 
     // MARK: - Private
 
+    private var controller: SessionPhaseController?
     private var timer: DispatchSourceTimer?
-    private let timerQueue = DispatchQueue(label: "com.amach.breathe.masterTimer", qos: .userInteractive)
+    private let timerQueue = DispatchQueue(
+        label: "com.amach.breathe.masterTimer", qos: .userInteractive)
 
-    private var sessionStartDate: Date?
-    private var phaseStartDate: Date?
-    private var currentPhase: SessionPhase = .idle
-    private var phaseSequence: [SessionPhase] = []
-    private var phaseIndex: Int = 0
-
-    // Breath cycle derived from bpm
-    private var breathPeriod: TimeInterval = 60.0 / 5.5     // total cycle seconds
-    // Ratio: 40% inhale / 60% exhale (resonance breathing default)
-    private let inhaleRatio: Double = 0.4
+    private var breathPeriod: TimeInterval = 60.0 / 5.5
     private var inhaleDuration: TimeInterval = 0
     private var exhaleDuration: TimeInterval = 0
-
     private let tickInterval: TimeInterval = 1.0 / 60.0
 
-    public init() {
-        recomputeBreathPeriod()
-    }
+    public init() { recomputeBreathPeriod() }
 
     // MARK: - Control
 
-    public func start(bpm: Double, mainDurationSeconds: Int) {
+    public func start(bpm: Double, mainDurationSeconds: Int,
+                      ratio: BreathRatio = .fourToSix) {
         self.bpm = bpm
         self.mainDurationSeconds = mainDurationSeconds
+        self.breathRatio = ratio
 
-        phaseSequence = [
-            .baseline,
-            .warmup,
-            .main(durationSeconds: mainDurationSeconds),
-            .recovery,
-            .reflection
-        ]
-        phaseIndex = 0
+        let config = SessionPhaseController.Config(
+            mainDurationSeconds: mainDurationSeconds)
+        var ctrl = SessionPhaseController(config: config)
+        ctrl.start(at: Date())
+        controller = ctrl
 
-        let now = Date()
-        sessionStartDate = now
-        phaseStartDate = now
-        currentPhase = phaseSequence[0]
         isRunning = true
-
+        isPaused = false
         scheduleTimer()
     }
 
     public func stop() {
         cancelTimer()
-        currentPhase = .idle
+        controller = nil
         state = .idle
         isRunning = false
+        isPaused = false
     }
 
+    public func pause() {
+        guard isRunning, !isPaused else { return }
+        controller?.pause(at: Date())
+        isPaused = true
+    }
+
+    public func resume() {
+        guard isRunning, isPaused else { return }
+        controller?.resume(at: Date())
+        isPaused = false
+    }
+
+    /// Skip directly to reflection phase (e.g. early finish button).
     public func advanceToReflection() {
-        currentPhase = .reflection
-        phaseStartDate = Date()
+        // Force-set phase: stop normal timer loop; the view handles the reflection UI
+        stop()
     }
 
     // MARK: - Timer
 
     private func scheduleTimer() {
+        cancelTimer()
         let src = DispatchSource.makeTimerSource(queue: timerQueue)
-        src.schedule(deadline: .now(), repeating: tickInterval, leeway: .microseconds(500))
+        src.schedule(deadline: .now(), repeating: tickInterval,
+                     leeway: .microseconds(500))
         src.setEventHandler { [weak self] in
-            guard let self else { return }
-            let snapshot = self.buildSnapshot()
-            Task { @MainActor [weak self] in
-                self?.state = snapshot
-            }
+            // Capture now on timerQueue for accuracy, then post to main actor.
+            let now = Date()
+            Task { @MainActor [weak self] in self?.processTick(now: now) }
         }
         src.resume()
         timer = src
@@ -100,61 +104,55 @@ public final class MasterPhaseTimer: ObservableObject {
         timer = nil
     }
 
-    // MARK: - Snapshot (called on timerQueue)
+    // MARK: - Tick (MainActor)
 
-    private func buildSnapshot() -> PacerState {
-        let now = Date()
-        let totalElapsed = sessionStartDate.map { now.timeIntervalSince($0) } ?? 0
-        var phaseElapsed = phaseStartDate.map { now.timeIntervalSince($0) } ?? 0
+    private func processTick(now: Date) {
+        guard var ctrl = controller else { return }
+        let result = ctrl.tick(now: now)
+        controller = ctrl   // write back mutated value
 
-        // Auto-advance through phases
-        if let target = currentPhase.targetDurationSeconds, phaseElapsed >= Double(target) {
-            advancePhase(now: now)
-            phaseElapsed = 0
+        if result.isComplete {
+            cancelTimer()
+            isRunning = false
         }
 
-        let phaseRemaining: TimeInterval? = currentPhase.targetDurationSeconds.map {
-            max(0, Double($0) - phaseElapsed)
-        }
+        state = buildPacerState(from: result, now: now)
+    }
 
-        // Breath cycle position
-        let cyclePos = phaseElapsed.truncatingRemainder(dividingBy: breathPeriod)
-        let (breathPhase, breathProgress) = breathPhaseAndProgress(cyclePos: cyclePos)
+    // MARK: - PacerState construction
 
-        // Ring scale: sinusoidal 0.6 → 1.4 over full breath cycle
+    private func buildPacerState(
+        from result: SessionPhaseController.TickResult,
+        now: Date
+    ) -> PacerState {
+        let cyclePos = result.phaseElapsed.truncatingRemainder(
+            dividingBy: breathPeriod)
+        let (breathPhase, breathProgress) = breathPhaseAndProgress(
+            cyclePos: cyclePos)
         let ringScale = ringScaleFor(cyclePos: cyclePos)
 
         return PacerState(
-            sessionPhase: currentPhase,
+            sessionPhase: result.phase,
             breathPhase: breathPhase,
             breathProgress: breathProgress,
             ringScale: ringScale,
-            totalElapsed: totalElapsed,
-            sessionPhaseElapsed: phaseElapsed,
-            sessionPhaseRemaining: phaseRemaining
+            totalElapsed: result.totalElapsed,
+            sessionPhaseElapsed: result.phaseElapsed,
+            sessionPhaseRemaining: result.phaseRemaining
         )
-    }
-
-    private func advancePhase(now: Date) {
-        phaseIndex += 1
-        if phaseIndex < phaseSequence.count {
-            currentPhase = phaseSequence[phaseIndex]
-        } else {
-            currentPhase = .complete
-            cancelTimer()
-        }
-        phaseStartDate = now
     }
 
     // MARK: - Breath math
 
     private func recomputeBreathPeriod() {
         breathPeriod = 60.0 / max(bpm, 0.1)
-        inhaleDuration = breathPeriod * inhaleRatio
-        exhaleDuration = breathPeriod * (1 - inhaleRatio)
+        inhaleDuration = breathPeriod * breathRatio.inhaleFraction
+        exhaleDuration = breathPeriod * breathRatio.exhaleFraction
     }
 
-    private func breathPhaseAndProgress(cyclePos: Double) -> (BreathPhase, Double) {
+    private func breathPhaseAndProgress(
+        cyclePos: Double
+    ) -> (BreathPhase, Double) {
         if cyclePos < inhaleDuration {
             return (.inhale, cyclePos / inhaleDuration)
         } else {
@@ -163,11 +161,9 @@ public final class MasterPhaseTimer: ObservableObject {
         }
     }
 
-    /// Sinusoidal ring scale: 1.0 at cycle midpoint, 0.6 at start, 1.4 at inhale peak.
+    /// Sinusoidal ring scale: 0.6 at start of inhale → 1.4 at end of inhale → 0.6 at end of exhale.
     private func ringScaleFor(cyclePos: Double) -> Double {
-        // One full sine wave over the breath period: peak at inhale top, trough at exhale end
         let phase = (cyclePos / breathPeriod) * 2.0 * Double.pi - Double.pi / 2.0
-        let sine = sin(phase)  // -1 at start, +1 at 25% (end of inhale)
-        return 1.0 + 0.4 * sine   // 0.6 … 1.4
+        return 1.0 + 0.4 * sin(phase)
     }
 }
