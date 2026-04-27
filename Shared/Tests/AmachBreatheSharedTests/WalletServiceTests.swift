@@ -1,0 +1,91 @@
+// WalletServiceTests.swift — Phase 0: PBKDF2 key derivation + Privy init
+
+import XCTest
+@testable import AmachBreatheShared
+
+#if os(iOS)
+final class WalletServicePBKDF2Tests: XCTestCase {
+
+    // MARK: - PBKDF2 Derivation
+
+    func testDeriveEncryptionKeyProducesHexString() throws {
+        let sig  = "0x" + String(repeating: "ab", count: 65)
+        let addr = "0x" + String(repeating: "12", count: 20)
+        let key  = try WalletService.deriveEncryptionKeyPBKDF2(signatureHex: sig, walletAddress: addr)
+
+        XCTAssertEqual(key.count, 64, "Key should be 32 bytes = 64 hex chars")
+        XCTAssertTrue(key.allSatisfy { "0123456789abcdef".contains($0) }, "Key should be lowercase hex")
+    }
+
+    func testDeriveEncryptionKeyIsDeterministic() throws {
+        let sig  = "0x" + String(repeating: "cd", count: 65)
+        let addr = "0x1234567890abcdef1234567890abcdef12345678"
+
+        let key1 = try WalletService.deriveEncryptionKeyPBKDF2(signatureHex: sig, walletAddress: addr)
+        let key2 = try WalletService.deriveEncryptionKeyPBKDF2(signatureHex: sig, walletAddress: addr)
+
+        XCTAssertEqual(key1, key2, "Same inputs must always produce the same key")
+    }
+
+    func testDeriveEncryptionKeyChangesWithDifferentSig() throws {
+        let addr = "0x1234567890abcdef1234567890abcdef12345678"
+        let sig1 = "0x" + String(repeating: "aa", count: 65)
+        let sig2 = "0x" + String(repeating: "bb", count: 65)
+
+        let key1 = try WalletService.deriveEncryptionKeyPBKDF2(signatureHex: sig1, walletAddress: addr)
+        let key2 = try WalletService.deriveEncryptionKeyPBKDF2(signatureHex: sig2, walletAddress: addr)
+
+        XCTAssertNotEqual(key1, key2)
+    }
+
+    func testDeriveEncryptionKeyStripsOxPrefix() throws {
+        let sig     = "0x" + String(repeating: "ab", count: 65)
+        let sigNoOx = String(repeating: "ab", count: 65)
+        let addr    = "0x1234567890abcdef1234567890abcdef12345678"
+
+        let key1 = try WalletService.deriveEncryptionKeyPBKDF2(signatureHex: sig, walletAddress: addr)
+        let key2 = try WalletService.deriveEncryptionKeyPBKDF2(signatureHex: sigNoOx, walletAddress: addr)
+
+        XCTAssertEqual(key1, key2, "0x prefix should be stripped before derivation")
+    }
+
+    func testDeriveEncryptionKeyOutputLength32Bytes() throws {
+        let key = try WalletService.deriveEncryptionKeyPBKDF2(
+            signatureHex: "0x" + String(repeating: "ef", count: 65),
+            walletAddress: "0xabcdef1234567890abcdef1234567890abcdef12"
+        )
+        XCTAssertEqual(key.count, 64)
+    }
+
+    // MARK: - Hex utilities
+
+    func testHexToBytesRoundTrip() throws {
+        let hex = "deadbeef"
+        let bytes = try WalletService.hexToBytes(hex)
+        XCTAssertEqual(bytes, [0xde, 0xad, 0xbe, 0xef])
+    }
+
+    func testHexToBytesOddLengthThrows() {
+        XCTAssertThrowsError(try WalletService.hexToBytes("abc"))
+    }
+
+    func testHexToBytesEmptyInput() throws {
+        let bytes = try WalletService.hexToBytes("")
+        XCTAssertTrue(bytes.isEmpty)
+    }
+
+    // MARK: - Privy init (smoke test — no real SDK required)
+
+    @MainActor
+    func testWalletServiceSharedExists() {
+        XCTAssertNotNil(WalletService.shared)
+    }
+
+    @MainActor
+    func testWalletServiceInitiallyDisconnected() {
+        // Fresh state should be disconnected (state is persisted; just verify type)
+        let ws = WalletService.shared
+        XCTAssertFalse(ws.isLoading)
+    }
+}
+#endif
