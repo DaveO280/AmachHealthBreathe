@@ -59,6 +59,21 @@ public final class CoherenceCalculator: @unchecked Sendable {
         return ResonanceFrequencyResult(resonanceBPM: best.key, scores: scores)
     }
 
+    // MARK: - Raw amplitude
+
+    /// Un-normalized Goertzel amplitude (sqrt of spectral power) at `targetBPM`.
+    /// Proportional to the actual RR oscillation amplitude in milliseconds.
+    /// Use this for comparing across different breathing rates (calibration).
+    /// Use `coherenceScore` for the live 0–1 display metric during sessions.
+    public func rawAmplitude(rrIntervals: [Double], targetBPM: Double) -> Double? {
+        guard rrIntervals.count >= 8 else { return nil }
+        let evenlySampled = interpolate(rrIntervals: rrIntervals)
+        guard evenlySampled.count >= 8 else { return nil }
+        let power = goertzel(signal: evenlySampled, frequency: targetBPM / 60.0,
+                             sampleRate: sampleRate)
+        return sqrt(max(0, power))
+    }
+
     // MARK: - Private
 
     /// Goertzel algorithm: efficient single-frequency DFT bin computation.

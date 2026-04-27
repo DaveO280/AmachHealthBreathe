@@ -20,6 +20,8 @@ public final class CalibrationEngine: Sendable {
     // MARK: - API
 
     /// Given a map of bpm → RR interval array (ms), return resonance result.
+    /// Uses raw Goertzel amplitude (proportional to oscillation amplitude in ms)
+    /// so that larger breathing-driven oscillations compare correctly across rates.
     /// Rates with insufficient data are skipped.
     public func findResonance(
         samples: [Double: [Double]]
@@ -28,16 +30,18 @@ public final class CalibrationEngine: Sendable {
         for bpm in Self.candidateBPMs {
             guard let rr = samples[bpm],
                   rr.count >= Self.minSamplesPerRate else { continue }
-            if let score = coherenceCalc.coherenceScore(rrIntervals: rr, targetBPM: bpm) {
-                scores[bpm] = score
+            if let amp = coherenceCalc.rawAmplitude(rrIntervals: rr, targetBPM: bpm) {
+                scores[bpm] = amp
             }
         }
         guard let best = scores.max(by: { $0.value < $1.value }) else { return nil }
-        return ResonanceFrequencyResult(resonanceBPM: best.key, scores: scores)
+        // Normalise scores to 0–1 relative to max amplitude for consistent storage.
+        let maxAmp = best.value
+        let normScores = scores.mapValues { maxAmp > 0 ? $0 / maxAmp : 0 }
+        return ResonanceFrequencyResult(resonanceBPM: best.key, scores: normScores)
     }
 
-    /// Convenience: evaluate a single RR array against all candidates,
-    /// treating the same data as representative for every rate.
+    /// Convenience: evaluate a single RR array against all candidates.
     /// Useful only for testing; real calibration passes per-rate data.
     public func findResonanceFromSingleWindow(
         rrIntervals: [Double]
@@ -48,9 +52,9 @@ public final class CalibrationEngine: Sendable {
 
     // MARK: - Per-rate amplitude
 
-    /// Coherence score (0–1) of `rrIntervals` at `bpm`. Returns nil if insufficient data.
+    /// Raw Goertzel amplitude at `bpm` Hz — proportional to RR oscillation amplitude.
     public func amplitude(rrIntervals: [Double], bpm: Double) -> Double? {
         guard rrIntervals.count >= Self.minSamplesPerRate else { return nil }
-        return coherenceCalc.coherenceScore(rrIntervals: rrIntervals, targetBPM: bpm)
+        return coherenceCalc.rawAmplitude(rrIntervals: rrIntervals, targetBPM: bpm)
     }
 }
