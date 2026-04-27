@@ -8,6 +8,8 @@ public final class SessionService: ObservableObject {
 
     @Published public private(set) var sessions: [SessionRecord] = []
     @Published public private(set) var isSyncing = false
+    @Published public private(set) var isRestoring = false
+    @Published public private(set) var syncError: String?
 
     private let storageKey = "com.amach.breathe.sessions"
     private let apiClient = AmachAPIClient()
@@ -29,8 +31,10 @@ public final class SessionService: ObservableObject {
     public func syncPending(encryptionKey: WalletEncryptionKey) async {
         guard !isSyncing else { return }
         isSyncing = true
+        syncError = nil
         defer { isSyncing = false }
 
+        var hadError = false
         for i in sessions.indices where sessions[i].uploadStatus == .pending {
             let record = sessions[i].breathingSession
             do {
@@ -50,16 +54,18 @@ public final class SessionService: ObservableObject {
                 )
             } catch {
                 sessions[i].uploadStatus = .failed
+                hadError = true
             }
         }
+        if hadError { syncError = "Some sessions failed to sync. Tap to retry." }
         persistToDisk()
     }
 
     /// Restores session history from Storj for a new device install.
     /// Merges cloud records with any existing local records (deduplicates by id).
     public func restoreFromStorj(encryptionKey: WalletEncryptionKey) async throws {
-        isSyncing = true
-        defer { isSyncing = false }
+        isRestoring = true
+        defer { isRestoring = false }
 
         let items = try await apiClient.listBreathingSessions(
             walletAddress: encryptionKey.walletAddress,

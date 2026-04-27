@@ -29,14 +29,19 @@ struct WalletStatusBanner: View {
                 .font(AmachType.tiny)
                 .foregroundStyle(Color.amachTextSecondary)
             Spacer()
-            if sessionService.isSyncing {
+            if sessionService.isSyncing || sessionService.isRestoring {
                 HStack(spacing: 4) {
                     ProgressView()
                         .scaleEffect(0.7)
-                    Text("Syncing…")
+                    Text(sessionService.isRestoring ? "Restoring…" : "Syncing…")
                         .font(AmachType.tiny)
                         .foregroundStyle(Color.amachTextTertiary)
                 }
+            } else if let err = sessionService.syncError {
+                Text(err)
+                    .font(AmachType.tiny)
+                    .foregroundStyle(Color.amachDestructive)
+                    .lineLimit(1)
             } else {
                 let pending = sessionService.sessions.filter { $0.uploadStatus == .pending }.count
                 if pending > 0 {

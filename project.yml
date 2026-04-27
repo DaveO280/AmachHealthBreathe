@@ -24,6 +24,8 @@ targets:
     sources:
       - path: iOS/Sources
         type: group
+      - path: iOS/PrivacyInfo.xcprivacy
+        type: file
     dependencies:
       - package: AmachBreatheShared
       - sdk: HealthKit.framework
@@ -71,10 +73,14 @@ targets:
       - package: AmachBreatheShared
       - sdk: HealthKit.framework
       - sdk: WatchConnectivity.framework
+      - sdk: WidgetKit.framework
+      - target: AmachBreatheWatchComplication
+        embed: true
     entitlements:
       path: watchOS/AmachBreatheWatch.entitlements
     settings:
       PRODUCT_NAME: "Amach Breathe Watch"
+      PRODUCT_BUNDLE_IDENTIFIER: com.amach.breathe.watchkitapp
       SWIFT_VERSION: "6.0"
       DEVELOPMENT_TEAM: ""
       TARGETED_DEVICE_FAMILY: "4"
@@ -83,3 +89,27 @@ targets:
       CODE_SIGNING_REQUIRED: "NO"
       CODE_SIGNING_ALLOWED: "NO"
       WKApplication: "YES"
+
+  # ── watchOS Complication Extension ────────────────────────────
+  AmachBreatheWatchComplication:
+    type: app-extension
+    platform: watchOS
+    deploymentTarget: "10.0"
+    bundleId: com.amach.breathe.watchkitapp.complication
+    sources:
+      - path: watchOS/Complication
+        type: group
+    dependencies:
+      - package: AmachBreatheShared
+      - sdk: WidgetKit.framework
+    settings:
+      PRODUCT_NAME: AmachBreatheWatchComplication
+      PRODUCT_BUNDLE_IDENTIFIER: com.amach.breathe.watchkitapp.complication
+      SWIFT_VERSION: "6.0"
+      DEVELOPMENT_TEAM: ""
+      TARGETED_DEVICE_FAMILY: "4"
+      INFOPLIST_FILE: watchOS/Complication/Info.plist
+      CODE_SIGN_STYLE: Manual
+      CODE_SIGNING_REQUIRED: "NO"
+      CODE_SIGNING_ALLOWED: "NO"
+      SKIP_INSTALL: "YES"

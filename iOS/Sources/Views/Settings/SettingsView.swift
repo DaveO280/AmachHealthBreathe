@@ -7,6 +7,8 @@ struct SettingsView: View {
     @EnvironmentObject private var subscriptionService: SubscriptionService
 
     @State private var showManageSubscription = false
+    @State private var showAddReminder = false
+    @State private var pendingReminderTime = Date()
 
     var body: some View {
         NavigationStack {
@@ -16,6 +18,7 @@ struct SettingsView: View {
                     VStack(spacing: AmachSpacing.sectionSpacing) {
                         subscriptionSection
                         breathingSection
+                        reminderSection
                         audioSection
                         pacerSection
                     }
@@ -77,6 +80,127 @@ struct SettingsView: View {
         case .connected:  return "3+ sessions/month keeps access free"
         case .expired:    return "Subscribe or sync to regain access"
         }
+    }
+
+    // MARK: - Reminders
+
+    private var reminderSection: some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.sm) {
+            sectionHeader("Reminders")
+            VStack(spacing: 0) {
+                let reminders = settingsService.settings.reminderSecondsFromMidnight
+
+                if reminders.isEmpty {
+                    HStack {
+                        Text("No reminders set")
+                            .font(AmachType.body)
+                            .foregroundStyle(Color.amachTextSecondary)
+                        Spacer()
+                    }
+                    .padding(AmachSpacing.md)
+                } else {
+                    ForEach(Array(reminders.enumerated()), id: \.offset) { index, seconds in
+                        HStack {
+                            Text(NotificationScheduler.displayTime(secondsFromMidnight: seconds))
+                                .font(AmachType.body)
+                                .foregroundStyle(Color.amachTextPrimary)
+                            Spacer()
+                            Button {
+                                removeReminder(at: index)
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundStyle(Color.amachDestructive)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(AmachSpacing.md)
+                        if index < reminders.count - 1 {
+                            Divider().padding(.leading, AmachSpacing.md)
+                        }
+                    }
+                }
+
+                if reminders.count < NotificationScheduler.maxRemindersPerDay {
+                    Divider().padding(.leading, AmachSpacing.md)
+                    Button {
+                        pendingReminderTime = Date()
+                        showAddReminder = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(Color.amachPrimary)
+                            Text("Add Reminder")
+                                .font(AmachType.body)
+                                .foregroundStyle(Color.amachPrimary)
+                        }
+                        .padding(AmachSpacing.md)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
+            .background(Color.amachSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            Text("Daily breathing reminders. Max \(NotificationScheduler.maxRemindersPerDay) per day.")
+                .font(AmachType.tiny)
+                .foregroundStyle(Color.amachTextTertiary)
+                .padding(.horizontal, AmachSpacing.xs)
+        }
+        .sheet(isPresented: $showAddReminder) {
+            addReminderSheet
+        }
+    }
+
+    private var addReminderSheet: some View {
+        NavigationStack {
+            ZStack {
+                Color.amachBg.ignoresSafeArea()
+                DatePicker(
+                    "Reminder Time",
+                    selection: $pendingReminderTime,
+                    displayedComponents: .hourAndMinute
+                )
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .padding()
+            }
+            .navigationTitle("Add Reminder")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { showAddReminder = false }
+                        .foregroundStyle(Color.amachTextSecondary)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add") {
+                        addReminder()
+                        showAddReminder = false
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.amachPrimary)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func addReminder() {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.hour, .minute], from: pendingReminderTime)
+        let seconds = (comps.hour ?? 0) * 3600 + (comps.minute ?? 0) * 60
+        var updated = settingsService.settings.reminderSecondsFromMidnight
+        guard !updated.contains(seconds) else { return }
+        updated.append(seconds)
+        settingsService.updateReminders(updated)
+        Task { await NotificationService.shared.scheduleReminders(updated) }
+    }
+
+    private func removeReminder(at index: Int) {
+        var updated = settingsService.settings.reminderSecondsFromMidnight
+        guard index < updated.count else { return }
+        updated.remove(at: index)
+        settingsService.updateReminders(updated)
+        Task { await NotificationService.shared.scheduleReminders(updated) }
     }
 
     private var breathingSection: some View {

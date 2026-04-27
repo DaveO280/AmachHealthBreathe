@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import WatchConnectivity
+import WidgetKit
 import AmachBreatheShared
 
 /// Orchestrates a complete breathing session on Apple Watch.
@@ -78,6 +79,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         self.reflectionRating = nil
         self.baselineHRV = 0
         self.recoveryHRV = 0
+        updateComplicationState(inSession: true)
         self.coherenceSamples = []
         hrvProcessor.reset()
 
@@ -94,6 +96,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         await workoutManager.stopWorkout()
         isRunning = false
         isPaused = false
+        updateComplicationState(inSession: false)
     }
 
     public func pause() {
@@ -183,6 +186,14 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         Task { await sendRecordToPhone(record) }
     }
 
+    // MARK: - Complication state
+
+    private func updateComplicationState(inSession: Bool) {
+        UserDefaults.standard.set(inSession, forKey: ComplicationDisplayLogic.inSessionKey)
+        UserDefaults.standard.set(true, forKey: ComplicationDisplayLogic.hasCalibrationKey)
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
     // MARK: - WatchConnectivity
 
     private func setupWCSession() {
@@ -225,7 +236,25 @@ extension WatchSessionRunner: WCSessionDelegate {
             }
         case .cancelSession:
             Task { @MainActor [weak self] in await self?.stopSession() }
+        case .walletState:
+            guard let msg = try? decodeWatchPayload(
+                WalletStateMessage.self, from: message) else { return }
+            Task { @MainActor in
+                WatchWalletStore.shared.applyState(
+                    isConnected: msg.isConnected, walletAddress: msg.walletAddress)
+            }
         default: break
+        }
+    }
+
+    nonisolated public func session(
+        _ session: WCSession,
+        didReceiveApplicationContext applicationContext: [String: Any]
+    ) {
+        let connected = applicationContext["walletConnected"] as? Bool ?? false
+        let address   = applicationContext["walletAddress"] as? String
+        Task { @MainActor in
+            WatchWalletStore.shared.applyState(isConnected: connected, walletAddress: address)
         }
     }
 }

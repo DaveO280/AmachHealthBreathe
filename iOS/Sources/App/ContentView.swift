@@ -4,6 +4,7 @@ import AmachBreatheShared
 struct ContentView: View {
 
     @EnvironmentObject private var subscriptionService: SubscriptionService
+    @EnvironmentObject private var onboardingService: OnboardingService
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab = 0
 
@@ -39,6 +40,9 @@ struct ContentView: View {
                 Task { await subscriptionService.checkAndUpdateState() }
             }
         }
+        .fullScreenCover(isPresented: .constant(!onboardingService.hasCompletedOnboarding)) {
+            OnboardingView()
+        }
     }
 }
 
@@ -49,4 +53,5 @@ struct ContentView: View {
         .environmentObject(CalibrationStore())
         .environmentObject(AppSettingsService())
         .environmentObject(SubscriptionService())
+        .environmentObject({ let s = OnboardingService(); s.markComplete(); return s }())
 }

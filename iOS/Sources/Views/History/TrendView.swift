@@ -18,19 +18,39 @@ struct TrendView: View {
         NavigationStack {
             ZStack {
                 Color.amachBg.ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: AmachSpacing.sectionSpacing) {
-                        windowPicker
-                        consistencySection
-                        hrvTrendSection
-                        coherenceTrendSection
+                if allSessions.isEmpty {
+                    emptyState
+                } else {
+                    ScrollView {
+                        VStack(spacing: AmachSpacing.sectionSpacing) {
+                            windowPicker
+                            consistencySection
+                            hrvTrendSection
+                            coherenceTrendSection
+                        }
+                        .padding(AmachSpacing.screenEdge)
+                        .padding(.bottom, AmachSpacing.xxl)
                     }
-                    .padding(AmachSpacing.screenEdge)
-                    .padding(.bottom, AmachSpacing.xxl)
                 }
             }
             .navigationTitle("Trends")
             .navigationBarTitleDisplayMode(.large)
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: AmachSpacing.lg) {
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.amachTextTertiary)
+            Text("No data yet")
+                .font(AmachType.h2)
+                .foregroundStyle(Color.amachTextPrimary)
+            Text("Complete at least 3 sessions to see trends, streaks, and HRV progress.")
+                .font(AmachType.caption)
+                .foregroundStyle(Color.amachTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, AmachSpacing.xl)
         }
     }
 
