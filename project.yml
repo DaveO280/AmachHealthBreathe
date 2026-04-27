@@ -33,6 +33,9 @@ targets:
       - sdk: StoreKit.framework
     entitlements:
       path: iOS/AmachBreathe.entitlements
+      properties:
+        com.apple.developer.healthkit: YES
+        com.apple.developer.healthkit.access: []
     settings:
       PRODUCT_NAME: "Amach Breathe"
       SWIFT_VERSION: "6.0"
@@ -78,6 +81,9 @@ targets:
         embed: true
     entitlements:
       path: watchOS/AmachBreatheWatch.entitlements
+      properties:
+        com.apple.developer.healthkit: YES
+        com.apple.developer.healthkit.access: []
     settings:
       PRODUCT_NAME: "Amach Breathe Watch"
       PRODUCT_BUNDLE_IDENTIFIER: com.amach.breathe.watchkitapp

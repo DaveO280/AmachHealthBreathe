@@ -35,6 +35,48 @@ jobs:
         working-directory: Shared
         run: swift test --parallel
 
+  # ── iOS unit tests ──────────────────────────────────────────────
+  test-ios:
+    name: iOS Unit Tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.3.app/Contents/Developer
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Regenerate project
+        run: xcodegen generate
+
+      - name: Pick simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available --json \
+            | python3 -c "
+          import json,sys
+          data=json.load(sys.stdin)
+          for rt,devs in data['devices'].items():
+              if 'iOS' not in rt: continue
+              for d in devs:
+                  if 'iPhone' in d['name'] and d['isAvailable']:
+                      print(d['udid']); exit()
+          ")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Run iOS unit tests
+        run: |
+          xcodebuild test \
+            -project AmachBreathe.xcodeproj \
+            -scheme AmachBreathe \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -configuration Debug \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || cat
+
   # ── iOS build ───────────────────────────────────────────────────
   build-ios:
     name: Build iOS
@@ -85,6 +127,33 @@ jobs:
             -scheme AmachBreatheWatch \
             -destination "generic/platform=watchOS Simulator" \
             -configuration Debug \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || cat
+
+  # ── Release archive config validation ───────────────────────────
+  archive-check:
+    name: Archive Config Check (iOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.3.app/Contents/Developer
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Regenerate project
+        run: xcodegen generate
+
+      - name: Verify Release build compiles
+        run: |
+          xcodebuild build \
+            -project AmachBreathe.xcodeproj \
+            -scheme AmachBreathe \
+            -destination "generic/platform=iOS Simulator" \
+            -configuration Release \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty || cat

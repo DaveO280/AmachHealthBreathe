@@ -17,7 +17,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
@@ -29,7 +29,7 @@
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -39,5 +39,7 @@
 	<string>Amach Breathe reads your heart rate to calculate HRV and coherence during breathing sessions.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Amach Breathe saves breathing sessions to Apple Health.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Amach Breathe sends optional daily reminders to start your breathing session.</string>
 </dict>
 </plist>
