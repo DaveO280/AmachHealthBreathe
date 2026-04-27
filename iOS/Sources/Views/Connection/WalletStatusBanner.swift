@@ -47,7 +47,7 @@ struct WalletStatusBanner: View {
                 if pending > 0 {
                     Text("\(pending) pending")
                         .font(AmachType.tiny)
-                        .foregroundStyle(Color(hex: "F59E0B"))
+                        .foregroundStyle(Color.amachWarning)
                 }
             }
         }

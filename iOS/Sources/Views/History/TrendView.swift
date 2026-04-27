@@ -41,7 +41,7 @@ struct TrendView: View {
     private var emptyState: some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 48))
+                .font(.system(size: AmachType.iconHero))
                 .foregroundStyle(Color.amachTextTertiary)
             Text("No data yet")
                 .font(AmachType.h2)
@@ -93,7 +93,7 @@ struct TrendView: View {
             }
         }
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
     }
 
     // MARK: - Consistency
@@ -114,7 +114,7 @@ struct TrendView: View {
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     private func consistencyTile(value: String, label: String, unit: String) -> some View {
@@ -178,7 +178,7 @@ struct TrendView: View {
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     // MARK: - Coherence trend
@@ -208,7 +208,7 @@ struct TrendView: View {
                         .interpolationMethod(.catmullRom)
                     }
                     RuleMark(y: .value("Target", 70))
-                        .foregroundStyle(Color(hex: "10B981").opacity(0.4))
+                        .foregroundStyle(Color.amachSuccess.opacity(0.4))
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
                 }
                 .frame(height: 160)
@@ -234,7 +234,7 @@ struct TrendView: View {
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     // MARK: - Helpers

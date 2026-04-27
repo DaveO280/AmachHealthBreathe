@@ -5,11 +5,12 @@ struct WatchContentView: View {
     var body: some View {
         VStack(spacing: AmachSpacing.sm) {
             Image(systemName: AmachIcon.breathe)
-                .font(.system(size: 32))
+                .font(.system(size: AmachType.iconBase))
                 .foregroundStyle(Color.amachPrimary)
             Text("Amach Breathe")
                 .font(AmachType.h3)
-                .foregroundStyle(Color.amachTextPrimary)
+                .foregroundStyle(Color.amachPrimaryWordmark)
+                .amachShimmer(delay: 0.6)
         }
     }
 }

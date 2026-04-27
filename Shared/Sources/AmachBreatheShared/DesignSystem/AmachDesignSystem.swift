@@ -273,6 +273,15 @@ public enum AmachType {
         .system(size: size, weight: .regular, design: .monospaced)
     }
     public static var dataMono: Font { .system(size: 12, weight: .medium, design: .monospaced) }
+
+    // Icon / display sizes — use these instead of hardcoded .system(size:) values
+    public static let iconSm:    CGFloat = 28
+    public static let iconBase:  CGFloat = 32
+    public static let iconAlert: CGFloat = 36
+    public static let iconCard:  CGFloat = 40
+    public static let iconMd:    CGFloat = 44
+    public static let iconHero:  CGFloat = 48
+    public static let iconLg:    CGFloat = 56
 }
 
 
@@ -301,9 +310,9 @@ public enum AmachSpacing {
 // ============================================================
 
 public enum AmachRadius {
-    public static let xs:   CGFloat = 6
+    public static let xs:   CGFloat = 7   // watchOS compact buttons and small badges
     public static let sm:   CGFloat = 10
-    public static let md:   CGFloat = 14
+    public static let md:   CGFloat = 12  // list cells, settings rows, calibration cards
     public static let card: CGFloat = 16
     public static let lg:   CGFloat = 20
     public static let xl:   CGFloat = 24

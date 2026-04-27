@@ -73,7 +73,7 @@ public struct QuickStartView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 5)
             .background(
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: AmachRadius.xs)
                     .fill(selectedDuration == seconds
                           ? Color.amachPrimary
                           : Color.amachSurface)
@@ -94,7 +94,7 @@ public struct QuickStartView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 5)
                         .background(
-                            RoundedRectangle(cornerRadius: 7)
+                            RoundedRectangle(cornerRadius: AmachRadius.xs)
                                 .fill(selectedRatio == ratio
                                       ? Color.amachPrimary
                                       : Color.amachSurface)
@@ -121,7 +121,7 @@ public struct QuickStartView: View {
         .padding(.vertical, 10)
         .background(Color.amachPrimary)
         .foregroundStyle(Color.amachTextPrimary)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
         .disabled(isStarting)
     }
 

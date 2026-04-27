@@ -32,7 +32,7 @@ struct ConversionView: View {
     private var header: some View {
         VStack(spacing: AmachSpacing.sm) {
             Image(systemName: "waveform.path.ecg.rectangle")
-                .font(.system(size: 44))
+                .font(.system(size: AmachType.iconMd))
                 .foregroundStyle(Color.amachPrimary)
             Text("Your trial has ended")
                 .font(AmachType.h1)
@@ -58,7 +58,8 @@ struct ConversionView: View {
                 "Stay connected to the protocol"
             ],
             ctaLabel: "Continue Free",
-            ctaStyle: .outline
+            ctaStyle: .outline,
+            shimmerTitle: true
         ) {
             subscriptionService.dismissConversionScreen()
         }
@@ -69,7 +70,7 @@ struct ConversionView: View {
     private var paidCard: some View {
         conversionCard(
             icon: "star.circle.fill",
-            iconColor: Color(hex: "F59E0B"),
+            iconColor: Color.amachGold,
             title: "Subscribe",
             subtitle: "$4.99/month",
             features: [
@@ -96,16 +97,25 @@ struct ConversionView: View {
         features: [String],
         ctaLabel: String,
         ctaStyle: CTAStyle,
+        shimmerTitle: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         VStack(spacing: AmachSpacing.md) {
             Image(systemName: icon)
-                .font(.system(size: 32))
+                .font(.system(size: AmachType.iconBase))
                 .foregroundStyle(iconColor)
             VStack(spacing: 4) {
-                Text(title)
-                    .font(AmachType.h3)
-                    .foregroundStyle(Color.amachTextPrimary)
+                Group {
+                    if shimmerTitle {
+                        Text(title)
+                            .foregroundStyle(Color.amachPrimaryWordmark)
+                            .amachShimmer(delay: 0.3)
+                    } else {
+                        Text(title)
+                            .foregroundStyle(Color.amachTextPrimary)
+                    }
+                }
+                .font(AmachType.h3)
                 Text(subtitle)
                     .font(AmachType.caption)
                     .foregroundStyle(iconColor)
@@ -147,7 +157,7 @@ struct ConversionView: View {
         .padding(AmachSpacing.md)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     // MARK: - Footer

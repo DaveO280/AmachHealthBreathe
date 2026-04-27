@@ -60,7 +60,7 @@ struct SettingsView: View {
                 .padding(AmachSpacing.md)
             }
             .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
         }
     }
 
@@ -139,7 +139,7 @@ struct SettingsView: View {
                 }
             }
             .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
 
             Text("Daily breathing reminders. Max \(NotificationScheduler.maxRemindersPerDay) per day.")
                 .font(AmachType.tiny)
@@ -221,7 +221,7 @@ struct SettingsView: View {
                 }
             }
             .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
         }
     }
 
@@ -242,7 +242,7 @@ struct SettingsView: View {
                 }
             }
             .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
         }
     }
 
@@ -279,7 +279,7 @@ struct SettingsView: View {
                 }
             }
             .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
         }
     }
 

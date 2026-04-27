@@ -9,7 +9,7 @@ struct CancelSubscriptionSheet: View {
     var body: some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: "checkmark.shield")
-                .font(.system(size: 36))
+                .font(.system(size: AmachType.iconAlert))
                 .foregroundStyle(Color.amachPrimary)
                 .padding(.top, AmachSpacing.md)
 

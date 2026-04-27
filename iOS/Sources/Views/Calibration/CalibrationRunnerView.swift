@@ -43,7 +43,7 @@ struct CalibrationRunnerView: View {
         VStack(spacing: AmachSpacing.lg) {
             Spacer()
             Image(systemName: "waveform.path.ecg")
-                .font(.system(size: 56))
+                .font(.system(size: AmachType.iconLg))
                 .foregroundStyle(Color.amachPrimary)
             Text("Find Your Resonance Rate")
                 .font(AmachType.h2)
@@ -73,7 +73,7 @@ struct CalibrationRunnerView: View {
                 if record.needsRetest {
                     Text("Retest recommended")
                         .font(AmachType.tiny)
-                        .foregroundStyle(Color(hex: "F59E0B"))
+                        .foregroundStyle(Color.amachWarning)
                 } else {
                     Text("Valid for \(daysUntilRetest(record)) more days")
                         .font(AmachType.tiny)
@@ -84,7 +84,7 @@ struct CalibrationRunnerView: View {
         }
         .padding(AmachSpacing.md)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
     }
 
     // MARK: - Running
@@ -128,7 +128,7 @@ struct CalibrationRunnerView: View {
                 .animation(.linear(duration: 1), value: fraction)
             VStack(spacing: 2) {
                 Text("\(minutesLeft)")
-                    .font(.system(size: 32, weight: .bold, design: .monospaced))
+                    .font(.system(size: AmachType.iconBase, weight: .bold, design: .monospaced))
                     .foregroundStyle(Color.amachTextPrimary)
                 Text("min left")
                     .font(AmachType.tiny)
@@ -154,7 +154,7 @@ struct CalibrationRunnerView: View {
         }
         .padding(AmachSpacing.md)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
     }
 
     // MARK: - Complete
@@ -163,14 +163,14 @@ struct CalibrationRunnerView: View {
         VStack(spacing: AmachSpacing.lg) {
             Spacer()
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 56))
+                .font(.system(size: AmachType.iconLg))
                 .foregroundStyle(Color.amachPrimary)
             VStack(spacing: AmachSpacing.sm) {
                 Text("Your Resonance Rate")
                     .font(AmachType.h2)
                     .foregroundStyle(Color.amachTextPrimary)
                 Text("\(result.resonanceBPM, specifier: "%.1f") BPM")
-                    .font(.system(size: 48, weight: .bold, design: .monospaced))
+                    .font(.system(size: AmachType.iconHero, weight: .bold, design: .monospaced))
                     .foregroundStyle(Color.amachPrimary)
                 Text("This breath rate creates the strongest heart-breath synchrony for you")
                     .font(AmachType.caption)
@@ -214,7 +214,7 @@ struct CalibrationRunnerView: View {
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     // MARK: - Failed
@@ -223,8 +223,8 @@ struct CalibrationRunnerView: View {
         VStack(spacing: AmachSpacing.lg) {
             Spacer()
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 56))
-                .foregroundStyle(Color(hex: "EF4444"))
+                .font(.system(size: AmachType.iconLg))
+                .foregroundStyle(Color.amachDestructive)
             Text("Calibration Failed")
                 .font(AmachType.h2)
                 .foregroundStyle(Color.amachTextPrimary)

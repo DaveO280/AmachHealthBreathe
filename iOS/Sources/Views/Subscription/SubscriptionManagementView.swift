@@ -42,7 +42,7 @@ struct SubscriptionManagementView: View {
     private var statusCard: some View {
         VStack(spacing: AmachSpacing.sm) {
             Image(systemName: statusIcon)
-                .font(.system(size: 40))
+                .font(.system(size: AmachType.iconCard))
                 .foregroundStyle(statusColor)
             Text(statusTitle)
                 .font(AmachType.h2)
@@ -55,7 +55,7 @@ struct SubscriptionManagementView: View {
         .padding(AmachSpacing.lg)
         .frame(maxWidth: .infinity)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     // MARK: - Actions
@@ -90,10 +90,10 @@ struct SubscriptionManagementView: View {
             }
         }
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
         .overlay {
             if subscriptionService.isLoading {
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AmachRadius.md)
                     .fill(Color.amachSurface.opacity(0.7))
                 ProgressView()
             }
@@ -158,7 +158,7 @@ struct SubscriptionManagementView: View {
     private var statusColor: Color {
         switch subscriptionService.state {
         case .trial:      return Color.amachPrimary
-        case .subscribed: return Color(hex: "F59E0B")
+        case .subscribed: return Color.amachGold
         case .connected:  return Color.amachPrimary
         case .expired:    return Color.amachDestructive
         }

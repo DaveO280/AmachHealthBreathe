@@ -9,8 +9,8 @@ struct SyncOrSubscribeSheet: View {
     var body: some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
-                .foregroundStyle(Color(hex: "F59E0B"))
+                .font(.system(size: AmachType.iconAlert))
+                .foregroundStyle(Color.amachWarning)
                 .padding(.top, AmachSpacing.md)
 
             VStack(spacing: AmachSpacing.xs) {

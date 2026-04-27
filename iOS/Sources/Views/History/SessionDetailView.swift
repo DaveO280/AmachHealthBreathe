@@ -56,7 +56,7 @@ struct SessionDetailView: View {
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     private func metricTile(value: String, label: String) -> some View {
@@ -117,7 +117,7 @@ struct SessionDetailView: View {
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     // MARK: - Coherence
@@ -154,14 +154,14 @@ struct SessionDetailView: View {
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 
     private var coherenceRingColor: Color {
         switch row.coherencePercent {
         case 70...100: return .amachPrimary
-        case 40..<70:  return Color(hex: "F59E0B")
-        default:       return Color(hex: "EF4444")
+        case 40..<70:  return Color.amachWarning
+        default:       return Color.amachDestructive
         }
     }
 
@@ -191,13 +191,13 @@ struct SessionDetailView: View {
             HStack(spacing: AmachSpacing.sm) {
                 ForEach(1...5, id: \.self) { star in
                     Image(systemName: star <= rating ? "star.fill" : "star")
-                        .foregroundStyle(star <= rating ? Color(hex: "F59E0B") : Color.amachTextTertiary)
+                        .foregroundStyle(star <= rating ? Color.amachGold : Color.amachTextTertiary)
                         .font(.system(size: 24))
                 }
             }
         }
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 }

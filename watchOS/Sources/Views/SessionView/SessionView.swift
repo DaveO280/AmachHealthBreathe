@@ -168,7 +168,7 @@ private struct ReflectionView: View {
             .frame(maxWidth: .infinity)
             .background(Color.amachPrimary)
             .foregroundStyle(Color.amachTextPrimary)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
         }
         .padding(8)
     }
@@ -225,7 +225,7 @@ private struct CompletionView: View {
             .frame(maxWidth: .infinity)
             .background(Color.amachSurface)
             .foregroundStyle(Color.amachTextPrimary)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
         }
         .padding(8)
     }

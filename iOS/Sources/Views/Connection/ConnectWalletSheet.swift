@@ -50,7 +50,7 @@ struct ConnectWalletSheet: View {
                     .fill(Color.amachPrimary.opacity(0.12))
                     .frame(width: 64, height: 64)
                 Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 28))
+                    .font(.system(size: AmachType.iconSm))
                     .foregroundStyle(Color.amachPrimary)
             }
             .padding(.top, AmachSpacing.xl)

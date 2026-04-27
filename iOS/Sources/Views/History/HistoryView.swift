@@ -45,7 +45,7 @@ struct HistoryView: View {
     private var emptyState: some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 48))
+                .font(.system(size: AmachType.iconHero))
                 .foregroundStyle(Color.amachTextTertiary)
             Text("No sessions yet")
                 .font(AmachType.h2)
@@ -86,7 +86,7 @@ private struct SessionRowView: View {
         }
         .padding(AmachSpacing.md)
         .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
     }
 
     private var coherenceBadge: some View {
@@ -103,8 +103,8 @@ private struct SessionRowView: View {
     private var coherenceColor: Color {
         switch row.coherencePercent {
         case 70...100: return .amachPrimary
-        case 40..<70:  return Color(hex: "F59E0B")
-        default:       return Color(hex: "EF4444")
+        case 40..<70:  return Color.amachWarning
+        default:       return Color.amachDestructive
         }
     }
 }

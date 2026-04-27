@@ -58,7 +58,8 @@ struct OnboardingView: View {
             title: "Amach Breathe",
             subtitle: "Resonant breathing, effortlessly calibrated.",
             body: "Synchronise your breath with your heart rate variability. Your Apple Watch finds your perfect frequency.",
-            cta: "Get Started"
+            cta: "Get Started",
+            shimmerTitle: true
         ) { advance() }
     }
 
@@ -68,7 +69,7 @@ struct OnboardingView: View {
         ScrollView {
             VStack(spacing: AmachSpacing.lg) {
                 Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 48))
+                    .font(.system(size: AmachType.iconHero))
                     .foregroundStyle(Color.amachPrimary)
                     .padding(.top, AmachSpacing.xl)
 
@@ -84,12 +85,12 @@ struct OnboardingView: View {
 
                 VStack(spacing: AmachSpacing.sm) {
                     permissionRow(
-                        icon: "heart.fill", iconColor: Color(hex: "EF4444"),
+                        icon: "heart.fill", iconColor: Color.amachDestructive,
                         title: "Health",
                         detail: "Heart rate during breathing sessions"
                     )
                     permissionRow(
-                        icon: "bell.fill", iconColor: Color(hex: "F59E0B"),
+                        icon: "bell.fill", iconColor: Color.amachWarning,
                         title: "Notifications",
                         detail: "Optional daily breathing reminders"
                     )
@@ -163,7 +164,7 @@ struct OnboardingView: View {
     private var sessionLengthPage: some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: "clock.fill")
-                .font(.system(size: 48))
+                .font(.system(size: AmachType.iconHero))
                 .foregroundStyle(Color.amachPrimary)
                 .padding(.top, AmachSpacing.xl)
 
@@ -224,8 +225,8 @@ struct OnboardingView: View {
     private var reminderPage: some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: "bell.badge.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(Color(hex: "F59E0B"))
+                .font(.system(size: AmachType.iconHero))
+                .foregroundStyle(Color.amachWarning)
                 .padding(.top, AmachSpacing.xl)
 
             VStack(spacing: AmachSpacing.xs) {
@@ -272,18 +273,27 @@ struct OnboardingView: View {
         subtitle: String,
         body: String,
         cta: String,
+        shimmerTitle: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: icon)
-                .font(.system(size: 56))
+                .font(.system(size: AmachType.iconLg))
                 .foregroundStyle(Color.amachPrimary)
                 .padding(.top, AmachSpacing.xl)
 
             VStack(spacing: AmachSpacing.sm) {
-                Text(title)
-                    .font(AmachType.h1)
-                    .foregroundStyle(Color.amachTextPrimary)
+                Group {
+                    if shimmerTitle {
+                        Text(title)
+                            .foregroundStyle(Color.amachPrimaryWordmark)
+                            .amachShimmer(delay: 0.8)
+                    } else {
+                        Text(title)
+                            .foregroundStyle(Color.amachTextPrimary)
+                    }
+                }
+                .font(AmachType.h1)
                 Text(subtitle)
                     .font(AmachType.body)
                     .foregroundStyle(Color.amachPrimary)
@@ -362,7 +372,7 @@ private struct ReminderTimePicker: View {
                 ForEach(Array(selectedTimes.enumerated()), id: \.offset) { _, seconds in
                     HStack {
                         Image(systemName: "bell.fill")
-                            .foregroundStyle(Color(hex: "F59E0B"))
+                            .foregroundStyle(Color.amachWarning)
                         Text(NotificationScheduler.displayTime(secondsFromMidnight: seconds))
                             .font(AmachType.body)
                             .foregroundStyle(Color.amachTextPrimary)

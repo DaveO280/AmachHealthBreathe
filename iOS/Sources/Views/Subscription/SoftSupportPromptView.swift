@@ -10,14 +10,15 @@ struct SoftSupportPromptView: View {
     var body: some View {
         VStack(spacing: AmachSpacing.lg) {
             Image(systemName: "heart.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(Color(hex: "EF4444"))
+                .font(.system(size: AmachType.iconCard))
+                .foregroundStyle(Color.amachDestructive)
                 .padding(.top, AmachSpacing.md)
 
             VStack(spacing: AmachSpacing.xs) {
                 Text("Enjoying Amach Breathe?")
                     .font(AmachType.h2)
-                    .foregroundStyle(Color.amachTextPrimary)
+                    .foregroundStyle(Color.amachPrimaryWordmark)
+                    .amachShimmer(delay: 0.4)
                 Text("You've been using Amach for 3 months on the free plan — thank you for staying with us. If you'd like to support ongoing development, subscribing for $4.99/month keeps the servers running.")
                     .font(AmachType.caption)
                     .foregroundStyle(Color.amachTextSecondary)
