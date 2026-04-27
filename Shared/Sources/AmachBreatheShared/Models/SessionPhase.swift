@@ -1,5 +1,4 @@
 import Foundation
-import AmachBreatheShared
 
 public enum SessionPhase: Equatable, Sendable {
     case idle

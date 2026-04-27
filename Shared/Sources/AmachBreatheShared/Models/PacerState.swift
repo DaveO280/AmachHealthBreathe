@@ -1,5 +1,4 @@
 import Foundation
-import AmachBreatheShared
 
 /// Published at 60 Hz by MasterPhaseTimer; all pacers read from this single source of truth.
 public struct PacerState: Sendable {
