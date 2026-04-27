@@ -26,6 +26,10 @@ targets:
         type: group
     dependencies:
       - package: AmachBreatheShared
+      - sdk: HealthKit.framework
+      - sdk: WatchConnectivity.framework
+    entitlements:
+      path: iOS/AmachBreathe.entitlements
     settings:
       PRODUCT_NAME: "Amach Breathe"
       SWIFT_VERSION: "6.0"
@@ -64,6 +68,10 @@ targets:
         type: group
     dependencies:
       - package: AmachBreatheShared
+      - sdk: HealthKit.framework
+      - sdk: WatchConnectivity.framework
+    entitlements:
+      path: watchOS/AmachBreatheWatch.entitlements
     settings:
       PRODUCT_NAME: "Amach Breathe Watch"
       SWIFT_VERSION: "6.0"

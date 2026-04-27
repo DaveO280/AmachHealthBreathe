@@ -20,5 +20,9 @@
 	<string>1</string>
 	<key>WKApplication</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Amach Breathe reads your heart rate to calculate HRV and coherence during breathing sessions.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Amach Breathe saves breathing sessions to Apple Health.</string>
 </dict>
 </plist>
