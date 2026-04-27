@@ -1,0 +1,94 @@
+{
+  "identifier" : "AE0F1ED0-4D76-4C35-B95C-A2B55A0E9DBE",
+  "nonConsumableProducts" : [
+
+  ],
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Overlay"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Redeem Offer Code"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21540532",
+      "localizations" : [
+
+      ],
+      "name" : "Amach Breathe",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "F0E12B7A-8C6D-4A9E-B3F1-2D5C8E9A1F3B",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited breathing sessions. No activity requirement. Support the protocol.",
+              "displayName" : "Amach Breathe Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.amach.breathe.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Monthly",
+          "subscriptionGroupID" : "21540532",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}

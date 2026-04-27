@@ -221,6 +221,13 @@ public struct BreathingSessionEvent: Codable, Sendable {
     }
 }
 
+// MARK: - Generic tracking response
+
+public struct TrackingResponse: Decodable, Sendable {
+    public let success: Bool?
+    public let error: String?
+}
+
 // MARK: - Subscription State
 
 public enum SubscriptionState: String, Codable, Sendable {

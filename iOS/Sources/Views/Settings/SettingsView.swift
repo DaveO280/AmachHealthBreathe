@@ -4,6 +4,9 @@ import AmachBreatheShared
 struct SettingsView: View {
 
     @EnvironmentObject private var settingsService: AppSettingsService
+    @EnvironmentObject private var subscriptionService: SubscriptionService
+
+    @State private var showManageSubscription = false
 
     var body: some View {
         NavigationStack {
@@ -11,6 +14,7 @@ struct SettingsView: View {
                 Color.amachBg.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: AmachSpacing.sectionSpacing) {
+                        subscriptionSection
                         breathingSection
                         audioSection
                         pacerSection
@@ -21,10 +25,59 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showManageSubscription) {
+                SubscriptionManagementView()
+                    .environmentObject(subscriptionService)
+            }
         }
     }
 
     // MARK: - Sections
+
+    private var subscriptionSection: some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.sm) {
+            sectionHeader("Subscription")
+            Button {
+                showManageSubscription = true
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(subscriptionTierLabel)
+                            .font(AmachType.body)
+                            .foregroundStyle(Color.amachTextPrimary)
+                        Text(subscriptionTierDetail)
+                            .font(AmachType.caption)
+                            .foregroundStyle(Color.amachTextSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color.amachTextTertiary)
+                }
+                .padding(AmachSpacing.md)
+            }
+            .background(Color.amachSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private var subscriptionTierLabel: String {
+        switch subscriptionService.state {
+        case .trial:      return "Free Trial"
+        case .subscribed: return "Subscribed"
+        case .connected:  return "Connected — Free"
+        case .expired:    return "Trial Ended"
+        }
+    }
+
+    private var subscriptionTierDetail: String {
+        switch subscriptionService.state {
+        case .trial:      return "Sync sessions or subscribe after trial"
+        case .subscribed: return "$4.99/month · Manage in App Store"
+        case .connected:  return "3+ sessions/month keeps access free"
+        case .expired:    return "Subscribe or sync to regain access"
+        }
+    }
 
     private var breathingSection: some View {
         VStack(alignment: .leading, spacing: AmachSpacing.sm) {
@@ -150,4 +203,5 @@ private extension AppSettings.PacerStyle {
 #Preview {
     SettingsView()
         .environmentObject(AppSettingsService())
+        .environmentObject(SubscriptionService())
 }

@@ -11,6 +11,7 @@ struct AmachBreatheApp: App {
     @StateObject private var calibrationStore: CalibrationStore
     @StateObject private var calibrationService: CalibrationService
     @StateObject private var settingsService = AppSettingsService()
+    @StateObject private var subscriptionService: SubscriptionService
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -19,9 +20,13 @@ struct AmachBreatheApp: App {
         let store = CalibrationStore()
         let watch = WatchConnectivityService()
         let cal = CalibrationService(watchService: watch, store: store)
+        let session = SessionService()
+        let sub = SubscriptionService(sessionService: session, walletService: WalletService.shared)
         _calibrationStore = StateObject(wrappedValue: store)
         _watchConnectivity = StateObject(wrappedValue: watch)
         _calibrationService = StateObject(wrappedValue: cal)
+        _sessionService = StateObject(wrappedValue: session)
+        _subscriptionService = StateObject(wrappedValue: sub)
     }
 
     var body: some Scene {
@@ -33,7 +38,8 @@ struct AmachBreatheApp: App {
                 .environmentObject(calibrationStore)
                 .environmentObject(calibrationService)
                 .environmentObject(settingsService)
-                .task { wireAll() }
+                .environmentObject(subscriptionService)
+                .task { await wireAll() }
                 .onReceive(walletService.$isConnected) { connected in
                     handleWalletConnectionChange(connected: connected)
                 }
@@ -41,13 +47,32 @@ struct AmachBreatheApp: App {
                     guard let key else { return }
                     Task { await sessionService.syncPending(encryptionKey: key) }
                 }
+                .sheet(isPresented: $subscriptionService.showConversionScreen) {
+                    ConversionView()
+                        .environmentObject(subscriptionService)
+                        .environmentObject(sessionService)
+                }
+                .sheet(isPresented: $subscriptionService.showSyncOrSubscribePrompt) {
+                    SyncOrSubscribeSheet()
+                        .environmentObject(subscriptionService)
+                        .presentationDetents([.height(360)])
+                        .presentationDragIndicator(.visible)
+                }
+                .sheet(isPresented: $subscriptionService.showSoftSupportPrompt) {
+                    SoftSupportPromptView()
+                        .environmentObject(subscriptionService)
+                        .presentationDetents([.height(400)])
+                        .presentationDragIndicator(.visible)
+                }
         }
     }
 
     // MARK: - Wiring
 
     @MainActor
-    private func wireAll() {
+    private func wireAll() async {
+        subscriptionService.start()
+        await subscriptionService.checkAndUpdateState()
         watchConnectivity.onSessionReceived = { record in
             sessionService.save(record)
             // Auto-sync newly received session if wallet is available

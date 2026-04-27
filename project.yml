@@ -28,6 +28,7 @@ targets:
       - package: AmachBreatheShared
       - sdk: HealthKit.framework
       - sdk: WatchConnectivity.framework
+      - sdk: StoreKit.framework
     entitlements:
       path: iOS/AmachBreathe.entitlements
     settings:

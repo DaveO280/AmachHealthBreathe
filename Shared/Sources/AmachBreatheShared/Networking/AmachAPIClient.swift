@@ -89,6 +89,63 @@ public final class AmachAPIClient: Sendable {
         return envelope.data
     }
 
+    // MARK: - Subscription state (stored in Storj for cross-device sync)
+
+    public func storeSubscriptionState(
+        record: SubscriptionRecord,
+        encryptionKey: WalletEncryptionKey
+    ) async throws {
+        let request = StorjRequest(
+            action: "storage/store",
+            userAddress: record.walletAddress,
+            encryptionKey: encryptionKey,
+            data: AnyCodable(record),
+            dataType: "subscription-state",
+            options: StorjStoreOptions(metadata: [
+                "state":     record.state.rawValue,
+                "updatedAt": ISO8601DateFormatter().string(from: record.updatedAt)
+            ])
+        )
+        _ = try await post(path: "/api/storj", body: request,
+                           responseType: StorjResponse<StorjStoreResult>.self)
+    }
+
+    public func retrieveSubscriptionState(
+        walletAddress: String,
+        encryptionKey: WalletEncryptionKey
+    ) async throws -> SubscriptionRecord? {
+        // List subscription-state items, take the most recent
+        let items = try await post(
+            path: "/api/storj",
+            body: StorjListRequest(action: "storage/list", userAddress: walletAddress,
+                                   encryptionKey: encryptionKey, dataType: "subscription-state"),
+            responseType: StorjResponse<[StorjListItem]>.self
+        ).unwrapped()
+
+        guard let latest = items.sorted(by: { $0.uploadedAt > $1.uploadedAt }).first else {
+            return nil
+        }
+        let envelope = try await post(
+            path: "/api/storj",
+            body: StorjRetrieveRequest(action: "storage/retrieve", userAddress: walletAddress,
+                                       encryptionKey: encryptionKey, storjUri: latest.uri),
+            responseType: StorjResponse<StorjRetrievedData<SubscriptionRecord>>.self
+        ).unwrapped()
+        return envelope.data
+    }
+
+    // MARK: - Cost telemetry (/api/tracking)
+
+    public func submitTelemetry(
+        _ event: SubscriptionTelemetryEvent,
+        encryptionKey: WalletEncryptionKey
+    ) async throws {
+        // /api/tracking accepts any JSON body — we send the event directly.
+        // No authentication required; the backend proxies to the admin analytics API.
+        let _ = try await post(path: "/api/tracking", body: event,
+                               responseType: TrackingResponse.self)
+    }
+
     // MARK: - Timeline: Post BREATHING_SESSION event
 
     /// Posts a BREATHING_SESSION timeline event so the record appears in the Amach dashboard.
