@@ -2,6 +2,7 @@ import XCTest
 @testable import AmachBreathe
 import AmachBreatheShared
 
+@MainActor
 final class OnboardingFlowTests: XCTestCase {
 
     private let testKey = OnboardingService.userDefaultsKey
@@ -18,14 +19,12 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - OnboardingService state tracking
 
-    @MainActor
     func testFirstLaunchShowsOnboarding() {
         UserDefaults.standard.removeObject(forKey: testKey)
         let service = OnboardingService()
         XCTAssertFalse(service.hasCompletedOnboarding)
     }
 
-    @MainActor
     func testMarkCompleteUpdatesState() {
         let service = OnboardingService()
         XCTAssertFalse(service.hasCompletedOnboarding)
@@ -33,7 +32,6 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertTrue(service.hasCompletedOnboarding)
     }
 
-    @MainActor
     func testMarkCompletePersistsToDisk() {
         let service = OnboardingService()
         service.markComplete()
@@ -42,7 +40,6 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertTrue(freshService.hasCompletedOnboarding)
     }
 
-    @MainActor
     func testResetClearsState() {
         let service = OnboardingService()
         service.markComplete()
@@ -51,7 +48,6 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertFalse(service.hasCompletedOnboarding)
     }
 
-    @MainActor
     func testResetClearsPersistedValue() {
         let service = OnboardingService()
         service.markComplete()
@@ -62,7 +58,6 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - AppSettings written on completion
 
-    @MainActor
     func testOnboardingWritesDefaultRatio() {
         let settings = AppSettingsService()
         settings.updateRatio(.oneToOne)
@@ -71,7 +66,6 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(settings.settings.defaultRatio, .fourToSix)
     }
 
-    @MainActor
     func testOnboardingWritesReminderTimes() {
         let settings = AppSettingsService()
         let times = [28800, 64800]  // 8am, 6pm
@@ -79,7 +73,6 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(settings.settings.reminderSecondsFromMidnight, times)
     }
 
-    @MainActor
     func testOnboardingReminderTimesRoundTrip() throws {
         let settings = AppSettingsService()
         let times = [8 * 3600, 18 * 3600]
@@ -89,7 +82,6 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(fresh.settings.reminderSecondsFromMidnight, times)
     }
 
-    @MainActor
     func testOnboardingClearsRemindersWhenEmpty() {
         let settings = AppSettingsService()
         settings.updateReminders([28800])

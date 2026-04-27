@@ -25,6 +25,7 @@
 		2A6892F971D28BDC04341850 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7A09F0E641E3D6BCF914B8AD /* PrivacyInfo.xcprivacy */; };
 		322EC51554886CAF352C8928 /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF98D57B21EDC714D27771A0 /* SessionView.swift */; };
 		44CD03469D157BE1C3E43E7A /* WatchSessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */; };
+		4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */; };
 		58A75FF9451077BF75DC2B4F /* WatchWalletStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */; };
 		59E306DBE63E4F56D0FC53D0 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = AD5D80E56CC0C91F666C2ED6 /* AmachBreatheShared */; };
 		5C73510208F54B6714D216CE /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F79C7B1B3FD3E998C6D7AE /* OnboardingView.swift */; };
@@ -130,6 +131,7 @@
 		86809B0C92727B7E6DA5C05F /* HapticPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticPacer.swift; sourceTree = "<group>"; };
 		86D5E8A4BE5285CCD42C626E /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		86EEDA969D8D4B35E5E0CF19 /* AmachBreatheApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheApp.swift; sourceTree = "<group>"; };
+		8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchQueueDeliveryTests.swift; sourceTree = "<group>"; };
 		8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowTests.swift; sourceTree = "<group>"; };
 		8E95C15232BEA6143056723A /* WatchContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchContentView.swift; sourceTree = "<group>"; };
 		9B124493F97494B75F4B683E /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
@@ -303,6 +305,7 @@
 			children = (
 				29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */,
 				8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */,
+				8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */,
 			);
 			path = Unit;
 			sourceTree = "<group>";
@@ -623,6 +626,7 @@
 			files = (
 				F91941A76702CE3ECA1901A5 /* AmachBreatheTests.swift in Sources */,
 				F05F3A7561021647AB83F036 /* OnboardingFlowTests.swift in Sources */,
+				4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -856,6 +860,7 @@
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_STYLE = Manual;
+				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -866,7 +871,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AmachBreathe.app/AmachBreathe";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Amach Breathe.app/Amach Breathe";
 			};
 			name = Release;
 		};
@@ -950,6 +955,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe;
+				PRODUCT_MODULE_NAME = AmachBreathe;
 				PRODUCT_NAME = "Amach Breathe";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
@@ -974,6 +980,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe;
+				PRODUCT_MODULE_NAME = AmachBreathe;
 				PRODUCT_NAME = "Amach Breathe";
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
@@ -988,6 +995,7 @@
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_STYLE = Manual;
+				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -998,7 +1006,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AmachBreathe.app/AmachBreathe";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Amach Breathe.app/Amach Breathe";
 			};
 			name = Debug;
 		};

@@ -34,7 +34,12 @@ public final class CalibrationEngine: Sendable {
                 scores[bpm] = amp
             }
         }
-        guard let best = scores.max(by: { $0.value < $1.value }) else { return nil }
+        // Tiebreaker: when two rates share the same amplitude, prefer the lower BPM.
+        // Lower BPM is more conservative (slower breath rate → gentler physiological demand).
+        guard let best = scores.max(by: { a, b in
+            if a.value != b.value { return a.value < b.value }
+            return a.key > b.key   // equal amplitude → higher BPM is "less" → lower BPM wins
+        }) else { return nil }
         // Normalise scores to 0–1 relative to max amplitude for consistent storage.
         let maxAmp = best.value
         let normScores = scores.mapValues { maxAmp > 0 ? $0 / maxAmp : 0 }

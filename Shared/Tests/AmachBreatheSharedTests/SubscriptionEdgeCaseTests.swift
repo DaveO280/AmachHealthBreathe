@@ -191,13 +191,12 @@ final class SubscriptionEdgeCaseTests: XCTestCase {
 
     // MARK: - activeSessionCount edge cases
 
-    func testActiveSessionCount_futureDatesCountIfInWindow() {
-        // Future timestamps are still >= windowStart, so they count.
-        // This is expected behaviour (clock skew tolerance).
+    func testActiveSessionCount_futureTimestamps_notCounted() {
+        // Sessions timestamped in the future (device clock ahead / manipulation) must NOT count.
         let now = date("2024-06-01T00:00:00Z")
         let future = date("2024-06-10T00:00:00Z") // 9 days in the future
         XCTAssertEqual(SubscriptionStateMachine.activeSessionCount(
-            uploadedTimestamps: [future], from: now, calendar: cal), 1)
+            uploadedTimestamps: [future], from: now, calendar: cal), 0)
     }
 
     func testActiveSessionCount_exactlyOneDayInsideWindow() {

@@ -38,6 +38,7 @@ targets:
         com.apple.developer.healthkit.access: []
     settings:
       PRODUCT_NAME: "Amach Breathe"
+      PRODUCT_MODULE_NAME: AmachBreathe
       SWIFT_VERSION: "6.0"
       DEVELOPMENT_TEAM: ""
       TARGETED_DEVICE_FAMILY: "1,2"
@@ -62,6 +63,9 @@ targets:
       CODE_SIGN_STYLE: Manual
       CODE_SIGNING_REQUIRED: "NO"
       CODE_SIGNING_ALLOWED: "NO"
+      TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Amach Breathe.app/Amach Breathe"
+      BUNDLE_LOADER: "$(TEST_HOST)"
+      GENERATE_INFOPLIST_FILE: "YES"
 
   # ── watchOS App ───────────────────────────────────────────────
   AmachBreatheWatch:
@@ -119,3 +123,18 @@ targets:
       CODE_SIGNING_REQUIRED: "NO"
       CODE_SIGNING_ALLOWED: "NO"
       SKIP_INSTALL: "YES"
+
+schemes:
+  AmachBreathe:
+    build:
+      targets:
+        AmachBreathe: all
+        AmachBreatheTests: [test]
+    test:
+      targets:
+        - AmachBreatheTests
+      commandLineArguments: {}
+    run:
+      config: Debug
+    archive:
+      config: Release

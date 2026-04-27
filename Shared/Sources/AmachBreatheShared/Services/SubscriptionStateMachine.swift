@@ -33,7 +33,9 @@ public enum SubscriptionStateMachine {
         calendar: Calendar = .current
     ) -> Int {
         let windowStart = calendar.date(byAdding: .day, value: -rollingWindowDays, to: now)!
-        return uploadedTimestamps.filter { $0 >= windowStart }.count
+        // Upper bound: timestamps > now are future-dated (clock-skew or manipulation) and
+        // must not count — they haven't actually occurred from the device's perspective.
+        return uploadedTimestamps.filter { $0 >= windowStart && $0 <= now }.count
     }
 
     public static func isActivelyConnected(
