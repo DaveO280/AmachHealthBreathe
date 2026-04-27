@@ -105,7 +105,7 @@ public enum TrendEngine {
         let sortedDays = activeDays.sorted()
         var longest = sortedDays.isEmpty ? 0 : 1
         var run = sortedDays.isEmpty ? 0 : 1
-        for i in 1 ..< sortedDays.count {
+        for i in stride(from: 1, to: sortedDays.count, by: 1) {
             let diff = calendar.dateComponents(
                 [.day], from: sortedDays[i-1], to: sortedDays[i]).day ?? 0
             if diff == 1 { run += 1; longest = max(longest, run) }
