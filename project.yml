@@ -31,6 +31,8 @@ targets:
       - sdk: HealthKit.framework
       - sdk: WatchConnectivity.framework
       - sdk: StoreKit.framework
+      - target: AmachBreatheWatch
+        embed: true
     entitlements:
       path: iOS/AmachBreathe.entitlements
       properties:

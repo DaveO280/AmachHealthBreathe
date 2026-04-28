@@ -24,6 +24,7 @@
 		28DC2A35708C5F0294173EB4 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F6072B414FB21FE9AF277F /* SessionDetailView.swift */; };
 		2A6892F971D28BDC04341850 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7A09F0E641E3D6BCF914B8AD /* PrivacyInfo.xcprivacy */; };
 		322EC51554886CAF352C8928 /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF98D57B21EDC714D27771A0 /* SessionView.swift */; };
+		34C1B92D4017AC5A63E66477 /* AmachBreatheWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 172C4A356E8CFD3E9CCC085E /* AmachBreatheWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		44CD03469D157BE1C3E43E7A /* WatchSessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */; };
 		4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */; };
 		58A75FF9451077BF75DC2B4F /* WatchWalletStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */; };
@@ -80,6 +81,13 @@
 			remoteGlobalIDString = D5E24FFB8A57E26E03D39354;
 			remoteInfo = AmachBreathe;
 		};
+		4D89BFD42BF8D220835191C6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 080D6D09391BB7CA9DF2F786 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F933C606C00E41B756403FCA;
+			remoteInfo = AmachBreatheWatch;
+		};
 		4F987AAB738A0A1495E44FFF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 080D6D09391BB7CA9DF2F786 /* Project object */;
@@ -90,6 +98,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		4069D0400296B19C5E296ACF /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				34C1B92D4017AC5A63E66477 /* AmachBreatheWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5F0A70AF0C2E5B54E9A5EEA2 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -546,10 +565,12 @@
 				438019DED4A585C23329DF22 /* Sources */,
 				4241518CF3F2ADFFB381228B /* Resources */,
 				5E4085E664AD1CA3373583B4 /* Frameworks */,
+				4069D0400296B19C5E296ACF /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				56909514EA4BF1E37DF2FA62 /* PBXTargetDependency */,
 			);
 			name = AmachBreathe;
 			packageProductDependencies = (
@@ -730,6 +751,11 @@
 			isa = PBXTargetDependency;
 			target = C1EB844D7A73828E528CB43A /* AmachBreatheWatchComplication */;
 			targetProxy = 4F987AAB738A0A1495E44FFF /* PBXContainerItemProxy */;
+		};
+		56909514EA4BF1E37DF2FA62 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F933C606C00E41B756403FCA /* AmachBreatheWatch */;
+			targetProxy = 4D89BFD42BF8D220835191C6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
