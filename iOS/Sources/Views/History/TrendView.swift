@@ -18,40 +18,45 @@ struct TrendView: View {
         NavigationStack {
             ZStack {
                 Color.amachBg.ignoresSafeArea()
-                if allSessions.isEmpty {
-                    emptyState
-                } else {
-                    ScrollView {
-                        VStack(spacing: AmachSpacing.sectionSpacing) {
-                            windowPicker
-                            consistencySection
-                            hrvTrendSection
-                            coherenceTrendSection
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.horizontal, AmachSpacing.md)
+                        .padding(.top, AmachSpacing.sm)
+                    if allSessions.isEmpty {
+                        AmachEmptyState(
+                            icon: "chart.line.uptrend.xyaxis",
+                            title: "No data yet",
+                            message: "Complete at least 3 sessions to see trends, streaks, and HRV progress."
+                        )
+                    } else {
+                        ScrollView {
+                            VStack(spacing: AmachSpacing.sectionSpacing) {
+                                windowPicker
+                                consistencySection
+                                hrvTrendSection
+                                coherenceTrendSection
+                            }
+                            .padding(AmachSpacing.screenEdge)
+                            .padding(.bottom, AmachSpacing.xxl)
                         }
-                        .padding(AmachSpacing.screenEdge)
-                        .padding(.bottom, AmachSpacing.xxl)
                     }
                 }
             }
-            .navigationTitle("Trends")
-            .navigationBarTitleDisplayMode(.large)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
-    private var emptyState: some View {
-        VStack(spacing: AmachSpacing.lg) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: AmachType.iconHero))
-                .foregroundStyle(Color.amachTextTertiary)
-            Text("No data yet")
-                .font(AmachType.h2)
-                .foregroundStyle(Color.amachTextPrimary)
-            Text("Complete at least 3 sessions to see trends, streaks, and HRV progress.")
-                .font(AmachType.caption)
-                .foregroundStyle(Color.amachTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, AmachSpacing.xl)
+    private var headerSection: some View {
+        HStack(alignment: .center, spacing: AmachSpacing.md) {
+            VStack(alignment: .leading, spacing: 6) {
+                AmachBrandMark(layout: .compact)
+                Text("Trends")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.amachTextPrimary)
+            }
+            Spacer()
         }
+        .padding(.bottom, AmachSpacing.sm)
     }
 
     // MARK: - Filtered data
@@ -113,8 +118,8 @@ struct TrendView: View {
             }
         }
         .padding(AmachSpacing.cardPadding)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .amachCard()
     }
 
     private func consistencyTile(value: String, label: String, unit: String) -> some View {
@@ -177,8 +182,8 @@ struct TrendView: View {
             }
         }
         .padding(AmachSpacing.cardPadding)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .amachCard()
     }
 
     // MARK: - Coherence trend
@@ -233,8 +238,8 @@ struct TrendView: View {
             }
         }
         .padding(AmachSpacing.cardPadding)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .amachCard()
     }
 
     // MARK: - Helpers

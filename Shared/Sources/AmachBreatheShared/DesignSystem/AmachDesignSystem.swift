@@ -116,9 +116,10 @@ public extension Color {
         }
 
         public enum Surface {
-            public static let bgDark       = Color(hex: "0A0E1A")
-            public static let surfaceDark  = Color(hex: "111827")
-            public static let elevatedDark = Color(hex: "1A2234")
+            // Green-tinted dark — matches AmachHealth-iOS reference, not generic navy/gray
+            public static let bgDark       = Color(hex: "0A1A15")
+            public static let surfaceDark  = Color(hex: "111F1A")
+            public static let elevatedDark = Color(hex: "1A2E26")
         }
 
         public enum Text {
@@ -188,14 +189,15 @@ public extension Color {
 // ============================================================
 
 public enum AmachType {
-    public static var h1: Font          { .title2.bold() }
-    public static var companyName: Font { .title.bold() }
-    public static var h2: Font          { .title3 }
-    public static var h3: Font          { .headline }
-    public static var body: Font        { .subheadline }
-    public static var caption: Font     { .caption }
-    public static var tiny: Font        { .caption2 }
-    public static var brandLabel: Font  { .caption2 }
+    // Precise point sizes — match AmachHealth-iOS reference exactly
+    public static var h1: Font          { .system(size: 28, weight: .bold) }
+    public static var companyName: Font { .system(size: 32, weight: .heavy) }
+    public static var h2: Font          { .system(size: 20, weight: .semibold) }
+    public static var h3: Font          { .system(size: 16, weight: .semibold) }
+    public static var body: Font        { .system(size: 16, weight: .regular) }
+    public static var caption: Font     { .system(size: 14, weight: .regular) }
+    public static var tiny: Font        { .system(size: 12, weight: .medium) }
+    public static var brandLabel: Font  { .system(size: 12, weight: .medium) }
 
     public static func metricValue(size: CGFloat = 22) -> Font {
         .system(size: size, weight: .bold, design: .rounded)

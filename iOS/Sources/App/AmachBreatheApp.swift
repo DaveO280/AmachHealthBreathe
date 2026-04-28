@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import Combine
 import AmachBreatheShared
 
@@ -28,11 +29,14 @@ struct AmachBreatheApp: App {
         _calibrationService = StateObject(wrappedValue: cal)
         _sessionService = StateObject(wrappedValue: session)
         _subscriptionService = StateObject(wrappedValue: sub)
+
+        Self.applyAppearance()
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.dark)
                 .environmentObject(walletService)
                 .environmentObject(sessionService)
                 .environmentObject(watchConnectivity)
@@ -108,5 +112,59 @@ struct AmachBreatheApp: App {
                 try? await sessionService.restoreFromStorj(encryptionKey: key)
             }
         }
+    }
+
+    // MARK: - UIKit appearance
+    //
+    // Mirrors `applyTabBarAppearance()` in AmachHealth-iOS so the tab bar and
+    // navigation bar render with the green-tinted dark surface, emerald
+    // selected tint, and matching typography. Without this, SwiftUI falls
+    // back to the default iOS materials and the tab bar reads as a generic
+    // navy pill on top of our green-tinted bg.
+    private static func applyAppearance() {
+        let bg       = UIColor(Color.amachBg)
+        let primary  = UIColor(Color.amachPrimaryBright)
+        let textPri  = UIColor(Color.amachTextPrimary)
+        let textSec  = UIColor(Color.amachTextSecondary)
+        let hairline = UIColor(Color.amachPrimary).withAlphaComponent(0.10)
+
+        // Tab bar
+        let tab = UITabBarAppearance()
+        tab.configureWithOpaqueBackground()
+        tab.backgroundColor = bg
+        tab.shadowColor = hairline
+
+        let stack = tab.stackedLayoutAppearance
+        stack.selected.iconColor = primary
+        stack.selected.titleTextAttributes = [.foregroundColor: primary]
+        stack.normal.iconColor = textSec
+        stack.normal.titleTextAttributes = [.foregroundColor: textSec]
+        tab.stackedLayoutAppearance = stack
+        tab.inlineLayoutAppearance = stack
+        tab.compactInlineLayoutAppearance = stack
+
+        UITabBar.appearance().standardAppearance = tab
+        UITabBar.appearance().scrollEdgeAppearance = tab
+
+        // Navigation bar
+        let nav = UINavigationBarAppearance()
+        nav.configureWithOpaqueBackground()
+        nav.backgroundColor = bg
+        nav.shadowColor = hairline
+        nav.titleTextAttributes = [
+            .foregroundColor: textPri,
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
+        ]
+        nav.largeTitleTextAttributes = [
+            .foregroundColor: textPri,
+            .font: UIFont.systemFont(ofSize: 28, weight: .bold)
+        ]
+        nav.buttonAppearance.normal.titleTextAttributes = [.foregroundColor: primary]
+        nav.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: primary]
+
+        UINavigationBar.appearance().standardAppearance = nav
+        UINavigationBar.appearance().scrollEdgeAppearance = nav
+        UINavigationBar.appearance().compactAppearance = nav
+        UINavigationBar.appearance().tintColor = primary
     }
 }

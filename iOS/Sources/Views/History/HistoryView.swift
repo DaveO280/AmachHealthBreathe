@@ -7,13 +7,20 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                WalletStatusBanner()
-                ZStack {
-                    Color.amachBg.ignoresSafeArea()
+            ZStack {
+                Color.amachBg.ignoresSafeArea()
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.horizontal, AmachSpacing.md)
+                        .padding(.top, AmachSpacing.sm)
+                    WalletStatusBanner()
                     let rows = SessionHistoryModel.rows(from: sessions)
                     if rows.isEmpty {
-                        emptyState
+                        AmachEmptyState(
+                            icon: AmachIcon.breathe,
+                            title: "No sessions yet",
+                            message: "Complete a breathing session on your Apple Watch to see your history here."
+                        )
                     } else {
                         ScrollView {
                             LazyVStack(spacing: AmachSpacing.cardGap) {
@@ -30,8 +37,7 @@ struct HistoryView: View {
                     }
                 }
             }
-            .navigationTitle("History")
-            .navigationBarTitleDisplayMode(.large)
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: SessionHistoryModel.Row.self) { row in
                 SessionDetailView(row: row)
             }
@@ -42,20 +48,17 @@ struct HistoryView: View {
         sessionService.sessions.map(\.breathingSession)
     }
 
-    private var emptyState: some View {
-        VStack(spacing: AmachSpacing.lg) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: AmachType.iconHero))
-                .foregroundStyle(Color.amachTextTertiary)
-            Text("No sessions yet")
-                .font(AmachType.h2)
-                .foregroundStyle(Color.amachTextPrimary)
-            Text("Complete a breathing session on your Apple Watch to see your history here.")
-                .font(AmachType.caption)
-                .foregroundStyle(Color.amachTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, AmachSpacing.xl)
+    private var headerSection: some View {
+        HStack(alignment: .center, spacing: AmachSpacing.md) {
+            VStack(alignment: .leading, spacing: 6) {
+                AmachBrandMark(layout: .compact)
+                Text("History")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.amachTextPrimary)
+            }
+            Spacer()
         }
+        .padding(.bottom, AmachSpacing.sm)
     }
 }
 
@@ -85,8 +88,7 @@ private struct SessionRowView: View {
             }
         }
         .padding(AmachSpacing.md)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+        .amachCard()
     }
 
     private var coherenceBadge: some View {
