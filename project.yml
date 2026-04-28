@@ -73,7 +73,7 @@ targets:
     type: application
     platform: watchOS
     deploymentTarget: "10.0"
-    bundleId: com.amach.breathe.watchkitapp
+    bundleId: com.amach.AmachBreathe.watchkitapp
     sources:
       - path: watchOS/Sources
         type: group
@@ -91,7 +91,7 @@ targets:
         com.apple.developer.healthkit.access: []
     settings:
       PRODUCT_NAME: "Amach Breathe Watch"
-      PRODUCT_BUNDLE_IDENTIFIER: com.amach.breathe.watchkitapp
+      PRODUCT_BUNDLE_IDENTIFIER: com.amach.AmachBreathe.watchkitapp
       SWIFT_VERSION: "6.0"
       TARGETED_DEVICE_FAMILY: "4"
       INFOPLIST_FILE: watchOS/Sources/App/Info.plist
@@ -105,7 +105,7 @@ targets:
     type: app-extension
     platform: watchOS
     deploymentTarget: "10.0"
-    bundleId: com.amach.breathe.watchkitapp.complication
+    bundleId: com.amach.AmachBreathe.watchkitapp.complication
     sources:
       - path: watchOS/Complication
         type: group
@@ -114,7 +114,7 @@ targets:
       - sdk: WidgetKit.framework
     settings:
       PRODUCT_NAME: AmachBreatheWatchComplication
-      PRODUCT_BUNDLE_IDENTIFIER: com.amach.breathe.watchkitapp.complication
+      PRODUCT_BUNDLE_IDENTIFIER: com.amach.AmachBreathe.watchkitapp.complication
       SWIFT_VERSION: "6.0"
       TARGETED_DEVICE_FAMILY: "4"
       INFOPLIST_FILE: watchOS/Complication/Info.plist

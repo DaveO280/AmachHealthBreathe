@@ -769,7 +769,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = watchOS/Sources/App/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = com.amach.breathe.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp;
 				PRODUCT_NAME = "Amach Breathe Watch";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -792,7 +792,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.amach.breathe.watchkitapp.complication;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp.complication;
 				PRODUCT_NAME = AmachBreatheWatchComplication;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -867,7 +867,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				INFOPLIST_FILE = watchOS/Sources/App/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = com.amach.breathe.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp;
 				PRODUCT_NAME = "Amach Breathe Watch";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -890,7 +890,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.amach.breathe.watchkitapp.complication;
+				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp.complication;
 				PRODUCT_NAME = AmachBreatheWatchComplication;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
