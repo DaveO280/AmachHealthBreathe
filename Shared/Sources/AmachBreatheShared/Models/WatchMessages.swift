@@ -11,6 +11,7 @@ public enum WatchMessageType: String, Codable, Sendable {
     case sessionComplete      // Watch → iPhone: BreathingSessionRecord JSON
     case calibrationResult    // Watch → iPhone: ResonanceFrequencyResult JSON
     case startSession         // iPhone → Watch: StartSessionCommand JSON
+    case startCalibration     // iPhone → Watch: no payload
     case cancelSession        // iPhone → Watch: no payload
     case walletState          // iPhone → Watch: WalletStateMessage JSON
     case walletStateRequest   // Watch → iPhone: no payload (Watch requests current state)

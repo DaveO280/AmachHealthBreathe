@@ -31,6 +31,15 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
         WCSession.default.sendMessage(message, replyHandler: nil)
     }
 
+    /// Sends a start-calibration command to the Watch. Returns false if Watch isn't reachable —
+    /// caller should prompt the user to open the Watch app.
+    @discardableResult
+    public func sendStartCalibration() -> Bool {
+        guard WCSession.default.isReachable else { return false }
+        WCSession.default.sendMessage(makeWatchMessage(type: .startCalibration), replyHandler: nil)
+        return true
+    }
+
     public func sendCancelSession() {
         guard WCSession.default.isReachable else { return }
         WCSession.default.sendMessage(makeWatchMessage(type: .cancelSession), replyHandler: nil)
@@ -90,6 +99,18 @@ extension WatchConnectivityService: WCSessionDelegate {
         _ session: WCSession,
         didReceiveMessage message: [String: Any]
     ) {
+        handleIncoming(message)
+    }
+
+    // Background-delivery fallback for calibration results when iPhone isn't foreground
+    nonisolated public func session(
+        _ session: WCSession,
+        didReceiveUserInfo userInfo: [String: Any]
+    ) {
+        handleIncoming(userInfo)
+    }
+
+    nonisolated private func handleIncoming(_ message: [String: Any]) {
         guard let type = watchMessageType(from: message) else { return }
         switch type {
         case .sessionComplete:

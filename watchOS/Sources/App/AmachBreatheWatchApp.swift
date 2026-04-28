@@ -5,11 +5,14 @@ import AmachBreatheShared
 struct AmachBreatheWatchApp: App {
 
     @StateObject private var runner = WatchSessionRunner()
+    @StateObject private var calibrationRunner = WatchCalibrationRunner()
 
     var body: some Scene {
         WindowGroup {
             SessionView()
                 .environmentObject(runner)
+                .environmentObject(calibrationRunner)
+                .onAppear { runner.calibrationRunner = calibrationRunner }
                 .onOpenURL { url in
                     handleDeepLink(url)
                 }

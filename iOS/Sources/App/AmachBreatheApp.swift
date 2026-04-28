@@ -99,6 +99,7 @@ struct AmachBreatheApp: App {
         }
         watchConnectivity.onCalibrationReceived = { result in
             calibrationStore.save(result: result)
+            calibrationService.completeWithResult(result)
         }
         watchConnectivity.onWalletStateRequested = {
             watchConnectivity.sendWalletState(

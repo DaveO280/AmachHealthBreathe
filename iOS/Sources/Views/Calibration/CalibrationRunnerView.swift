@@ -8,6 +8,7 @@ struct CalibrationRunnerView: View {
     @EnvironmentObject private var calibrationStore: CalibrationStore
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showWatchPrompt = false
 
     var body: some View {
         NavigationStack {
@@ -81,9 +82,16 @@ struct CalibrationRunnerView: View {
             }
             Spacer()
             Button("Start Calibration") {
-                calibrationService.startCalibration()
+                if !calibrationService.startCalibration() {
+                    showWatchPrompt = true
+                }
             }
             .amachPrimaryButtonStyle()
+            .alert("Open Watch App First", isPresented: $showWatchPrompt) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Open the Amach Breathe app on your Apple Watch, then tap Start Calibration.")
+            }
         }
     }
 

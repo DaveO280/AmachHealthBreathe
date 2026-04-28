@@ -33,6 +33,9 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
 
     // MARK: - Session config
 
+    // Set by AmachBreatheWatchApp after both objects are created
+    public weak var calibrationRunner: WatchCalibrationRunner?
+
     private var bpm: Double = 5.5
     private var selectedRatio: BreathRatio = .fourToSix
     private var mainDurationSeconds: Int = 300
@@ -235,8 +238,15 @@ extension WatchSessionRunner: WCSessionDelegate {
                 try? await self?.startSession(
                     bpm: cmd.bpm, durationSeconds: cmd.durationSeconds, ratio: ratio)
             }
+        case .startCalibration:
+            Task { @MainActor [weak self] in
+                try? await self?.calibrationRunner?.start()
+            }
         case .cancelSession:
-            Task { @MainActor [weak self] in await self?.stopSession() }
+            Task { @MainActor [weak self] in
+                await self?.stopSession()
+                await self?.calibrationRunner?.cancel()
+            }
         case .walletState:
             guard let msg = try? decodeWatchPayload(
                 WalletStateMessage.self, from: message) else { return }

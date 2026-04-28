@@ -1,9 +1,11 @@
 import Foundation
 import AmachBreatheShared
 
-/// Orchestrates the 6-rate calibration protocol from the iPhone side.
-/// Sends each rate to the Watch via WatchConnectivityService; waits for
-/// session results (coherence score per rate); finalises via CalibrationEngine.
+/// Orchestrates calibration from the iPhone side.
+/// Sends a single `.startCalibration` command to the Watch, then drives a local
+/// progress timer that mirrors the Watch's 6×60s protocol. When the Watch finishes
+/// it sends back a `ResonanceFrequencyResult`; `AmachBreatheApp` calls
+/// `completeWithResult(_:)` to surface it here.
 @MainActor
 public final class CalibrationService: ObservableObject {
 
@@ -18,64 +20,65 @@ public final class CalibrationService: ObservableObject {
 
     private let candidates = CalibrationEngine.candidateBPMs
     private let perRateDuration: TimeInterval = 60
-    private let engine = CalibrationEngine()
 
     private var watchService: WatchConnectivityService?
-    private var store: CalibrationStore?
-    private var collectedSamples: [Double: [Double]] = [:]  // bpm → RR window
-    private var candidateIndex: Int = 0
+    private var progressTimer: Timer?
 
     public init(watchService: WatchConnectivityService? = nil,
                 store: CalibrationStore? = nil) {
         self.watchService = watchService
-        self.store = store
     }
 
     // MARK: - Public API
 
-    public func startCalibration() {
-        collectedSamples = [:]
-        candidateIndex = 0
-        advanceToNextCandidate()
+    /// Sends `.startCalibration` to Watch and starts the local progress display.
+    /// Returns `false` when Watch is not reachable — caller should prompt the user.
+    @discardableResult
+    public func startCalibration() -> Bool {
+        guard watchService?.sendStartCalibration() == true else { return false }
+        startLocalProgressTimer()
+        return true
     }
 
     public func cancel() {
+        stopProgressTimer()
         calibrationState = .idle
         watchService?.sendCancelSession()
     }
 
-    /// Called by WatchConnectivityService when a Watch session completes during calibration.
-    /// `rrIntervals` is the RR window collected at `bpm`.
-    public func recordRRWindow(bpm: Double, rrIntervals: [Double]) {
-        collectedSamples[bpm] = rrIntervals
-        advanceToNextCandidate()
-    }
-
-    // MARK: - Private
-
-    private func advanceToNextCandidate() {
-        guard candidateIndex < candidates.count else {
-            finalize()
-            return
-        }
-
-        let bpm = candidates[candidateIndex]
-        candidateIndex += 1
-
-        let total = Double(candidates.count) * perRateDuration
-        let elapsed = Double(candidateIndex - 1) * perRateDuration
-        calibrationState = .running(currentBPM: bpm, elapsed: elapsed, total: total)
-
-        watchService?.sendStartSession(bpm: bpm,
-                                       durationSeconds: Int(perRateDuration))
-    }
-
-    private func finalize() {
-        guard let result = engine.findResonance(samples: collectedSamples) else {
-            calibrationState = .failed
-            return
-        }
+    /// Called by `AmachBreatheApp` when the Watch sends back a `ResonanceFrequencyResult`.
+    public func completeWithResult(_ result: ResonanceFrequencyResult) {
+        stopProgressTimer()
         calibrationState = .complete(result: result)
-        store?.save(result: result)
+    }
+
+    // MARK: - Local progress timer
+
+    private func startLocalProgressTimer() {
+        stopProgressTimer()
+        let total = Double(candidates.count) * perRateDuration
+        let startTime = Date()
+        calibrationState = .running(currentBPM: candidates[0], elapsed: 0, total: total)
+
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let elapsed = Date().timeIntervalSince(startTime)
+                if elapsed >= total {
+                    self.stopProgressTimer()
+                    return
+                }
+                let rateIndex = min(Int(elapsed / self.perRateDuration), self.candidates.count - 1)
+                self.calibrationState = .running(
+                    currentBPM: self.candidates[rateIndex],
+                    elapsed: elapsed,
+                    total: total)
+            }
+        }
+    }
+
+    private func stopProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = nil
     }
 }

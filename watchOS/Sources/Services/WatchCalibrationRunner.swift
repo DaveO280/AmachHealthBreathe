@@ -21,6 +21,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
 
     @Published public private(set) var calibrationState: State = .idle
     @Published public private(set) var isRunning: Bool = false
+    @Published public private(set) var pacerState: PacerState = .idle
 
     // MARK: - Config
 
@@ -67,8 +68,10 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         rateTimer?.invalidate()
         rateTimer = nil
         timer.stop()
+        cancellables.removeAll()
         await workoutManager.stopWorkout()
         isRunning = false
+        pacerState = .idle
         calibrationState = .idle
     }
 
@@ -90,11 +93,12 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
 
         calibrationState = .running(rateIndex: currentRateIndex, bpm: bpm, elapsed: 0)
 
-        // Subscribe to timer for elapsed display
+        // Subscribe to timer for elapsed display and pacer ring animation
         timer.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] state in
                 guard let self else { return }
+                self.pacerState = state
                 if case .running(let idx, _, _) = self.calibrationState {
                     self.calibrationState = .running(
                         rateIndex: idx, bpm: bpm,
@@ -148,9 +152,15 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     // MARK: - WatchConnectivity
 
     private func sendResultToPhone(_ result: ResonanceFrequencyResult) {
-        guard WCSession.isSupported(), WCSession.default.isReachable else { return }
+        guard WCSession.isSupported() else { return }
         guard let message = try? makeWatchMessage(
             type: .calibrationResult, payload: result) else { return }
-        WCSession.default.sendMessage(message, replyHandler: nil)
+        let session = WCSession.default
+        if session.isReachable {
+            session.sendMessage(message, replyHandler: nil)
+        } else {
+            // iPhone not in foreground — deliver when it next becomes active
+            session.transferUserInfo(message)
+        }
     }
 }

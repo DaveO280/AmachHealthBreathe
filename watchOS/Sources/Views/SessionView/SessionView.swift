@@ -4,24 +4,77 @@ import AmachBreatheShared
 public struct SessionView: View {
 
     @EnvironmentObject private var runner: WatchSessionRunner
+    @EnvironmentObject private var calibrationRunner: WatchCalibrationRunner
 
     public var body: some View {
         ZStack {
             Color.amachBg.ignoresSafeArea()
 
-            switch runner.phase {
-            case .idle:
-                QuickStartView()
-            case .baseline, .warmup, .main:
-                ActiveSessionView()
-            case .recovery:
-                ActiveSessionView(isRecovery: true)
-            case .reflection:
-                ReflectionView()
-            case .complete:
-                CompletionView()
+            if calibrationRunner.isRunning {
+                CalibrationActiveView()
+            } else {
+                switch runner.phase {
+                case .idle:
+                    QuickStartView()
+                case .baseline, .warmup, .main:
+                    ActiveSessionView()
+                case .recovery:
+                    ActiveSessionView(isRecovery: true)
+                case .reflection:
+                    ReflectionView()
+                case .complete:
+                    CompletionView()
+                }
             }
         }
+    }
+}
+
+// MARK: - Calibration view
+
+private struct CalibrationActiveView: View {
+
+    @EnvironmentObject private var calibrationRunner: WatchCalibrationRunner
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("Calibrating")
+                .font(.caption2)
+                .foregroundStyle(Color.amachTextSecondary)
+
+            ZStack {
+                Circle()
+                    .stroke(Color.amachPrimary.opacity(0.2), lineWidth: 3)
+                    .frame(width: 76, height: 76)
+                Circle()
+                    .stroke(Color.amachPrimary, lineWidth: 3)
+                    .frame(width: 76, height: 76)
+                    .scaleEffect(calibrationRunner.pacerState.ringScale)
+                    .animation(.linear(duration: 1.0 / 60.0),
+                               value: calibrationRunner.pacerState.ringScale)
+                Text(calibrationRunner.pacerState.breathPhase == .inhale ? "In" : "Out")
+                    .font(.caption)
+                    .foregroundStyle(Color.amachTextPrimary)
+            }
+
+            if case .running(let idx, let bpm, _) = calibrationRunner.calibrationState {
+                HStack(spacing: 4) {
+                    ForEach(0..<CalibrationEngine.candidateBPMs.count, id: \.self) { i in
+                        Circle()
+                            .fill(i < idx
+                                  ? Color.amachPrimary
+                                  : i == idx
+                                    ? Color.amachPrimary.opacity(0.6)
+                                    : Color.amachTextTertiary.opacity(0.3))
+                            .frame(width: 8, height: 8)
+                    }
+                }
+                Text(String(format: "%.1f BPM", bpm))
+                    .font(.caption2)
+                    .foregroundStyle(Color.amachTextSecondary)
+            }
+        }
+        .padding(.horizontal, 8)
     }
 }
 
