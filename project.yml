@@ -89,7 +89,6 @@ targets:
       path: watchOS/AmachBreatheWatch.entitlements
       properties:
         com.apple.developer.healthkit: YES
-        com.apple.developer.healthkit.access: []
     settings:
       PRODUCT_NAME: "Amach Breathe Watch"
       PRODUCT_BUNDLE_IDENTIFIER: com.amach.AmachBreathe.watchkitapp
