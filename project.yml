@@ -20,7 +20,7 @@ targets:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
-    bundleId: com.amach.breathe
+    bundleId: com.amach.AmachBreathe
     sources:
       - path: iOS/Sources
         type: group
@@ -54,7 +54,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     deploymentTarget: "17.0"
-    bundleId: com.amach.breathe.tests
+    bundleId: com.amach.AmachBreathe.tests
     sources:
       - path: iOS/Tests/Unit
     dependencies:
