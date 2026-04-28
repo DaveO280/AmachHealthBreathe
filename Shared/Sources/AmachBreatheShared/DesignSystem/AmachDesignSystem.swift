@@ -42,7 +42,7 @@ public extension Color {
         }
 
         public enum Semantic {
-            public static let success        = Color(hex: "10B981")
+            public static let success        = Color(hex: "34D399")
             public static let successBgL     = Color(hex: "ECFDF5")
             public static let successBgD     = Color(hex: "064E3B")
             public static let successTextL   = Color(hex: "065F46")
@@ -56,14 +56,14 @@ public extension Color {
             public static let warningTextD   = Color(hex: "FCD34D")
             public static let warningBorder  = Color(hex: "FCD34D")
 
-            public static let error          = Color(hex: "EF4444")
+            public static let error          = Color(hex: "F87171")
             public static let errorBgL       = Color(hex: "FEF2F2")
             public static let errorBgD       = Color(hex: "7F1D1D")
             public static let errorTextL     = Color(hex: "991B1B")
             public static let errorTextD     = Color(hex: "FCA5A5")
             public static let errorBorder    = Color(hex: "FCA5A5")
 
-            public static let info           = Color(hex: "3B82F6")
+            public static let info           = Color(hex: "818CF8")
             public static let infoBgL        = Color(hex: "EFF6FF")
             public static let infoBgD        = Color(hex: "1E3A5F")
             public static let infoTextL      = Color(hex: "1D4ED8")
@@ -98,31 +98,27 @@ public extension Color {
         }
 
         public enum Tier {
-            public static let goldBg      = Color(hex: "FEF3C7")
-            public static let goldText    = Color(hex: "B45309")
-            public static let goldBorder  = Color(hex: "FCD34D")
+            public static let goldBg      = Color(hex: "F59E0B").opacity(0.15)
+            public static let goldText    = Color(hex: "FCD34D")
+            public static let goldBorder  = Color(hex: "F59E0B").opacity(0.40)
 
-            public static let silverBg     = Color(hex: "F1F5F9")
-            public static let silverText   = Color(hex: "475569")
-            public static let silverBorder = Color(hex: "CBD5E1")
+            public static let silverBg     = Color(hex: "94A3B8").opacity(0.15)
+            public static let silverText   = Color(hex: "CBD5E1")
+            public static let silverBorder = Color(hex: "94A3B8").opacity(0.40)
 
-            public static let bronzeBg     = Color(hex: "FDF0E6")
-            public static let bronzeText   = Color(hex: "9A4B1C")
-            public static let bronzeBorder = Color(hex: "E8A87C")
+            public static let bronzeBg     = Color(hex: "CD7F32").opacity(0.15)
+            public static let bronzeText   = Color(hex: "E8A87C")
+            public static let bronzeBorder = Color(hex: "CD7F32").opacity(0.40)
 
-            public static let noneBg     = Color(hex: "F3F4F6")
-            public static let noneText   = Color(hex: "6B7280")
-            public static let noneBorder = Color(hex: "D1D5DB")
+            public static let noneBg     = Color(hex: "6B7280").opacity(0.15)
+            public static let noneText   = Color(hex: "9CA3AF")
+            public static let noneBorder = Color(hex: "6B7280").opacity(0.40)
         }
 
         public enum Surface {
-            public static let bgLight       = Color(hex: "FFFFFF")
-            public static let surfaceLight  = Color(hex: "F9FAFB")
-            public static let elevatedLight = Color(hex: "F3F4F6")
-
-            public static let bgDark       = Color(hex: "0A1A15")
-            public static let surfaceDark  = Color(hex: "111F1A")
-            public static let elevatedDark = Color(hex: "1A2E26")
+            public static let bgDark       = Color(hex: "0A0E1A")
+            public static let surfaceDark  = Color(hex: "111827")
+            public static let elevatedDark = Color(hex: "1A2234")
         }
 
         public enum Text {
@@ -160,96 +156,30 @@ public extension Color {
 
 
 // ============================================================
-// MARK: - ADAPTIVE COLOR API
+// MARK: - SEMANTIC COLOR API (dark-mode-only)
 // ============================================================
 
 public extension Color {
 
-#if os(iOS)
-    static var amachBg: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.Surface.bgDark)
-                : UIColor(Amach.Surface.bgLight)
-        })
-    }
-
-    static var amachSurface: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.Surface.surfaceDark)
-                : UIColor(Amach.Surface.surfaceLight)
-        })
-    }
-
-    static var amachElevated: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.Surface.elevatedDark)
-                : UIColor(Amach.Surface.elevatedLight)
-        })
-    }
-
-    static var amachPrimary: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.p400)
-                : UIColor(Amach.primary)
-        })
-    }
-
-    static var amachAccent: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.accent)
-                : UIColor(Amach.a600)
-        })
-    }
-
-    static var amachTextPrimary: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.Text.primaryD)
-                : UIColor(Amach.Text.primaryL)
-        })
-    }
-
-    static var amachTextSecondary: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.Text.secondaryD)
-                : UIColor(Amach.Text.secondaryL)
-        })
-    }
-
-    static var amachTextTertiary: Color {
-        Color(UIColor { t in
-            t.userInterfaceStyle == .dark
-                ? UIColor(Amach.Text.tertiaryD)
-                : UIColor(Amach.Text.tertiaryL)
-        })
-    }
-
-#else
     static var amachBg: Color            { Amach.Surface.bgDark }
     static var amachSurface: Color       { Amach.Surface.surfaceDark }
     static var amachElevated: Color      { Amach.Surface.elevatedDark }
-    static var amachPrimary: Color       { Amach.p400 }
+    static var amachSurfaceElevated: Color { Amach.Surface.elevatedDark }
+    static var amachPrimary: Color       { Color(hex: "10B981") }
     static var amachAccent: Color        { Amach.accent }
     static var amachTextPrimary: Color   { Amach.Text.primaryD }
     static var amachTextSecondary: Color { Amach.Text.secondaryD }
     static var amachTextTertiary: Color  { Amach.Text.tertiaryD }
-#endif
 
-    static let amachPrimaryBright     = Amach.p400
+    static let amachPrimaryBright  = Color(hex: "34D399")
     static var amachPrimaryWordmark: Color { amachPrimary }
-    static let amachGold              = Amach.accent
-    static let amachSilver            = Color(hex: "94A3B8")
-    static let amachBronze            = Color(hex: "CD7F32")
-    static let amachAI                = Amach.AI.base
-    static let amachDestructive       = Amach.Semantic.error
-    static let amachWarning           = Amach.Semantic.warning
-    static let amachSuccess           = Amach.Semantic.success
+    static let amachGold           = Amach.accent
+    static let amachSilver         = Color(hex: "94A3B8")
+    static let amachBronze         = Color(hex: "CD7F32")
+    static let amachAI             = Amach.AI.base
+    static let amachDestructive    = Color(hex: "F87171")
+    static let amachWarning        = Amach.Semantic.warning
+    static let amachSuccess        = Color(hex: "34D399")
 }
 
 
@@ -258,14 +188,18 @@ public extension Color {
 // ============================================================
 
 public enum AmachType {
-    public static var h1: Font          { .system(size: 28, weight: .bold) }
-    public static var companyName: Font { .system(size: 32, weight: .heavy) }
-    public static var h2: Font          { .system(size: 20, weight: .semibold) }
-    public static var h3: Font          { .system(size: 16, weight: .semibold) }
-    public static var body: Font        { .system(size: 16, weight: .regular) }
-    public static var caption: Font     { .system(size: 14, weight: .regular) }
-    public static var tiny: Font        { .system(size: 12, weight: .medium) }
+    public static var h1: Font          { .title2.bold() }
+    public static var companyName: Font { .title.bold() }
+    public static var h2: Font          { .title3 }
+    public static var h3: Font          { .headline }
+    public static var body: Font        { .subheadline }
+    public static var caption: Font     { .caption }
+    public static var tiny: Font        { .caption2 }
+    public static var brandLabel: Font  { .caption2 }
 
+    public static func metricValue(size: CGFloat = 22) -> Font {
+        .system(size: size, weight: .bold, design: .rounded)
+    }
     public static func dataValue(size: CGFloat = 28) -> Font {
         .system(size: size, weight: .bold, design: .monospaced)
     }
@@ -310,13 +244,13 @@ public enum AmachSpacing {
 // ============================================================
 
 public enum AmachRadius {
-    public static let xs:   CGFloat = 7   // watchOS compact buttons and small badges
-    public static let sm:   CGFloat = 10
-    public static let md:   CGFloat = 12  // list cells, settings rows, calibration cards
+    public static let xs:   CGFloat = 7
+    public static let sm:   CGFloat = 8
+    public static let md:   CGFloat = 14
     public static let card: CGFloat = 16
-    public static let lg:   CGFloat = 20
+    public static let lg:   CGFloat = 16
     public static let xl:   CGFloat = 24
-    public static let pill: CGFloat = 100
+    public static let pill: CGFloat = 99
 }
 
 
@@ -523,10 +457,10 @@ public struct AmachPrimaryButtonStyle: ButtonStyle {
         .padding(.horizontal, AmachSpacing.lg)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(Color.Amach.primary)
+        .background(Color.amachPrimary)
         .foregroundStyle(Color.Amach.Text.onPrimary)
         .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
-        .shadow(color: Color.Amach.primary.opacity(0.28), radius: 8, y: 2)
+        .shadow(color: Color.amachPrimary.opacity(0.40), radius: 12, y: 2)
         .scaleEffect(configuration.isPressed ? AmachAnimation.buttonPressScale : 1)
         .animation(AmachAnimation.ifMotion(AmachAnimation.spring), value: configuration.isPressed)
         .onChange(of: configuration.isPressed) { _, pressed in
@@ -545,12 +479,9 @@ public struct AmachSecondaryButtonStyle: ButtonStyle {
             .padding(.horizontal, AmachSpacing.lg)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
-            .background(.clear)
-            .foregroundStyle(Color.amachPrimary)
-            .overlay(
-                RoundedRectangle(cornerRadius: AmachRadius.sm)
-                    .stroke(Color.amachPrimary, lineWidth: 1.5)
-            )
+            .background(Color.amachPrimary.opacity(0.15))
+            .foregroundStyle(Color.amachPrimaryBright)
+            .clipShape(Capsule())
             .scaleEffect(configuration.isPressed ? AmachAnimation.cardPressScale : 1)
             .animation(AmachAnimation.ifMotion(AmachAnimation.spring), value: configuration.isPressed)
     }
