@@ -1,7 +1,8 @@
 import SwiftUI
 
-// Amber light-sweep animates left-to-right continuously, masked to the text shape.
-// Use .amachShimmer() on any Text that carries the Amach brand name.
+// Silver light-sweep animates left-to-right continuously, masked to the text shape.
+// Mirrors GoldShimmerModifier from AmachHealth-iOS exactly. Use .amachShimmer() on
+// any Text that carries the Amach brand name (the wordmark, not body typography).
 struct AmachShimmerModifier: ViewModifier {
 
     @State private var phase: CGFloat = 0
@@ -20,9 +21,9 @@ struct AmachShimmerModifier: ViewModifier {
                     LinearGradient(
                         colors: [
                             .clear,
-                            Color(hex: "F59E0B").opacity(0.60),
-                            Color(hex: "FCD34D").opacity(0.85),
-                            Color(hex: "F59E0B").opacity(0.60),
+                            Color(hex: "CBD5E1").opacity(0.70),
+                            Color.white.opacity(0.85),
+                            Color(hex: "CBD5E1").opacity(0.70),
                             .clear
                         ],
                         startPoint: .leading,

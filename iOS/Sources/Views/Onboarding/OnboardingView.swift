@@ -53,14 +53,40 @@ struct OnboardingView: View {
     // MARK: - Page 1: Welcome
 
     private var welcomePage: some View {
-        onboardingPage(
-            icon: "waveform.path.ecg.rectangle",
-            title: "Amach Breathe",
-            subtitle: "Resonant breathing, effortlessly calibrated.",
-            body: "Synchronise your breath with your heart rate variability. Your Apple Watch finds your perfect frequency.",
-            cta: "Get Started",
-            shimmerTitle: true
-        ) { advance() }
+        VStack(spacing: AmachSpacing.lg) {
+            Spacer()
+
+            AmachBrandMark(layout: .stacked)
+
+            Spacer()
+
+            VStack(spacing: AmachSpacing.sm) {
+                Text("Resonant breathing, effortlessly calibrated.")
+                    .font(AmachType.body)
+                    .foregroundStyle(Color.amachPrimary)
+                    .fontWeight(.medium)
+                    .multilineTextAlignment(.center)
+                Text("Synchronise your breath with your heart rate variability. Your Apple Watch finds your perfect frequency.")
+                    .font(AmachType.caption)
+                    .foregroundStyle(Color.amachTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AmachSpacing.lg)
+            }
+
+            Spacer()
+
+            Button { advance() } label: {
+                Text("Get Started")
+                    .font(AmachType.caption.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.amachPrimary)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+            }
+            .padding(.horizontal, AmachSpacing.screenEdge)
+            .padding(.bottom, AmachSpacing.xl)
+        }
     }
 
     // MARK: - Page 2: Permissions

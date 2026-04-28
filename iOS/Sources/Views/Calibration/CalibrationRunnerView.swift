@@ -13,28 +13,51 @@ struct CalibrationRunnerView: View {
         NavigationStack {
             ZStack {
                 Color.amachBg.ignoresSafeArea()
-                VStack(spacing: AmachSpacing.sectionSpacing) {
-                    switch calibrationService.calibrationState {
-                    case .idle:
-                        idleView
-                    case let .running(bpm, elapsed, total):
-                        runningView(bpm: bpm, elapsed: elapsed, total: total)
-                    case let .complete(result):
-                        completeView(result: result)
-                    case .failed:
-                        failedView
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.horizontal, AmachSpacing.md)
+                        .padding(.top, AmachSpacing.sm)
+                    VStack(spacing: AmachSpacing.sectionSpacing) {
+                        switch calibrationService.calibrationState {
+                        case .idle:
+                            idleView
+                        case let .running(bpm, elapsed, total):
+                            runningView(bpm: bpm, elapsed: elapsed, total: total)
+                        case let .complete(result):
+                            completeView(result: result)
+                        case .failed:
+                            failedView
+                        }
                     }
+                    .padding(AmachSpacing.screenEdge)
                 }
-                .padding(AmachSpacing.screenEdge)
             }
-            .navigationTitle("Calibration")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { calibrationService.cancel(); dismiss() }
+            .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    private var headerSection: some View {
+        HStack(alignment: .center, spacing: AmachSpacing.md) {
+            VStack(alignment: .leading, spacing: 6) {
+                AmachBrandMark(layout: .compact)
+                Text("Calibrate")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.amachTextPrimary)
+            }
+            Spacer()
+            if case .running = calibrationService.calibrationState {
+                Button {
+                    calibrationService.cancel()
+                    dismiss()
+                } label: {
+                    Text("Cancel")
+                        .font(AmachType.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.amachTextSecondary)
                 }
             }
         }
+        .padding(.bottom, AmachSpacing.sm)
     }
 
     // MARK: - Idle
@@ -83,8 +106,8 @@ struct CalibrationRunnerView: View {
             Spacer()
         }
         .padding(AmachSpacing.md)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .amachCard()
     }
 
     // MARK: - Running
@@ -153,8 +176,8 @@ struct CalibrationRunnerView: View {
             }
         }
         .padding(AmachSpacing.md)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .amachCard()
     }
 
     // MARK: - Complete
@@ -213,8 +236,8 @@ struct CalibrationRunnerView: View {
             }
         }
         .padding(AmachSpacing.cardPadding)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .amachCard()
     }
 
     // MARK: - Failed

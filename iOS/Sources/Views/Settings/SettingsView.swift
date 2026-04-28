@@ -14,25 +14,42 @@ struct SettingsView: View {
         NavigationStack {
             ZStack {
                 Color.amachBg.ignoresSafeArea()
-                ScrollView {
-                    VStack(spacing: AmachSpacing.sectionSpacing) {
-                        subscriptionSection
-                        breathingSection
-                        reminderSection
-                        audioSection
-                        pacerSection
+                VStack(spacing: 0) {
+                    headerSection
+                        .padding(.horizontal, AmachSpacing.md)
+                        .padding(.top, AmachSpacing.sm)
+                    ScrollView {
+                        VStack(spacing: AmachSpacing.sectionSpacing) {
+                            subscriptionSection
+                            breathingSection
+                            reminderSection
+                            audioSection
+                            pacerSection
+                        }
+                        .padding(AmachSpacing.screenEdge)
+                        .padding(.bottom, AmachSpacing.xxl)
                     }
-                    .padding(AmachSpacing.screenEdge)
-                    .padding(.bottom, AmachSpacing.xxl)
                 }
             }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showManageSubscription) {
                 SubscriptionManagementView()
                     .environmentObject(subscriptionService)
             }
         }
+    }
+
+    private var headerSection: some View {
+        HStack(alignment: .center, spacing: AmachSpacing.md) {
+            VStack(alignment: .leading, spacing: 6) {
+                AmachBrandMark(layout: .compact)
+                Text("Settings")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(Color.amachTextPrimary)
+            }
+            Spacer()
+        }
+        .padding(.bottom, AmachSpacing.sm)
     }
 
     // MARK: - Sections
@@ -59,8 +76,7 @@ struct SettingsView: View {
                 }
                 .padding(AmachSpacing.md)
             }
-            .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+            .amachCard()
         }
     }
 
@@ -220,8 +236,7 @@ struct SettingsView: View {
                     .frame(width: 120)
                 }
             }
-            .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+            .amachCard()
         }
     }
 
@@ -241,8 +256,7 @@ struct SettingsView: View {
                     .frame(width: 140)
                 }
             }
-            .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+            .amachCard()
         }
     }
 
@@ -278,8 +292,7 @@ struct SettingsView: View {
                     }
                 }
             }
-            .background(Color.amachSurface)
-            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+            .amachCard()
         }
     }
 
