@@ -614,12 +614,15 @@
 						ProvisioningStyle = Manual;
 					};
 					C1EB844D7A73828E528CB43A = {
+						DevelopmentTeam = 6VDX3QKK79;
 						ProvisioningStyle = Automatic;
 					};
 					D5E24FFB8A57E26E03D39354 = {
+						DevelopmentTeam = 6VDX3QKK79;
 						ProvisioningStyle = Automatic;
 					};
 					F933C606C00E41B756403FCA = {
+						DevelopmentTeam = 6VDX3QKK79;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -768,6 +771,7 @@
 				CODE_SIGN_ENTITLEMENTS = watchOS/AmachBreatheWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6VDX3QKK79;
 				INFOPLIST_FILE = watchOS/Sources/App/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp;
 				PRODUCT_NAME = "Amach Breathe Watch";
@@ -786,6 +790,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6VDX3QKK79;
 				INFOPLIST_FILE = watchOS/Complication/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -866,6 +871,7 @@
 				CODE_SIGN_ENTITLEMENTS = watchOS/AmachBreatheWatch.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6VDX3QKK79;
 				INFOPLIST_FILE = watchOS/Sources/App/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp;
 				PRODUCT_NAME = "Amach Breathe Watch";
@@ -884,6 +890,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6VDX3QKK79;
 				INFOPLIST_FILE = watchOS/Complication/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -993,6 +1000,7 @@
 				CODE_SIGN_ENTITLEMENTS = iOS/AmachBreathe.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6VDX3QKK79;
 				INFOPLIST_FILE = iOS/Sources/App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1016,6 +1024,7 @@
 				CODE_SIGN_ENTITLEMENTS = iOS/AmachBreathe.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6VDX3QKK79;
 				INFOPLIST_FILE = iOS/Sources/App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (

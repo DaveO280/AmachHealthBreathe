@@ -47,6 +47,7 @@ targets:
       CODE_SIGN_STYLE: Automatic
       CODE_SIGN_IDENTITY: "Apple Development"
       CODE_SIGNING_REQUIRED: "YES"
+      DEVELOPMENT_TEAM: 6VDX3QKK79
 
   # ── iOS Unit Tests ────────────────────────────────────────────
   AmachBreatheTests:
@@ -98,6 +99,7 @@ targets:
       CODE_SIGN_STYLE: Automatic
       CODE_SIGN_IDENTITY: "Apple Development"
       CODE_SIGNING_REQUIRED: "YES"
+      DEVELOPMENT_TEAM: 6VDX3QKK79
       WKApplication: "YES"
 
   # ── watchOS Complication Extension ────────────────────────────
@@ -121,6 +123,7 @@ targets:
       CODE_SIGN_STYLE: Automatic
       CODE_SIGN_IDENTITY: "Apple Development"
       CODE_SIGNING_REQUIRED: "YES"
+      DEVELOPMENT_TEAM: 6VDX3QKK79
       SKIP_INSTALL: "YES"
 
 schemes:
