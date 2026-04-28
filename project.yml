@@ -33,7 +33,6 @@ targets:
       - sdk: StoreKit.framework
       - target: AmachBreatheWatch
         embed: true
-        codeSign: true
     entitlements:
       path: iOS/AmachBreathe.entitlements
       properties:
@@ -86,7 +85,6 @@ targets:
       - sdk: WidgetKit.framework
       - target: AmachBreatheWatchComplication
         embed: true
-        codeSign: true
     entitlements:
       path: watchOS/AmachBreatheWatch.entitlements
       properties:
