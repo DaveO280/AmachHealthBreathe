@@ -19,7 +19,7 @@ struct HistoryView: View {
                         AmachEmptyState(
                             icon: AmachIcon.breathe,
                             title: "No sessions yet",
-                            message: "Complete a breathing session on your Apple Watch to see your history here."
+                            message: "Complete a breathing session on your Apple Watch or iPhone to see your history here."
                         )
                     } else {
                         ScrollView {
@@ -70,9 +70,16 @@ private struct SessionRowView: View {
     var body: some View {
         HStack(spacing: AmachSpacing.md) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(row.dateLabel)
-                    .font(AmachType.h3)
-                    .foregroundStyle(Color.amachTextPrimary)
+                HStack(spacing: AmachSpacing.xs) {
+                    Text(row.dateLabel)
+                        .font(AmachType.h3)
+                        .foregroundStyle(Color.amachTextPrimary)
+                    if row.isPhoneSession {
+                        Image(systemName: "iphone")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.amachTextTertiary)
+                    }
+                }
                 Text("\(row.durationLabel) · \(row.bpm, specifier: "%.1f") BPM · \(row.ratio)")
                     .font(AmachType.caption)
                     .foregroundStyle(Color.amachTextSecondary)
@@ -80,7 +87,7 @@ private struct SessionRowView: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
                 coherenceBadge
-                if row.avgHRV > 0 {
+                if !row.isPhoneSession && row.avgHRV > 0 {
                     Text("\(Int(row.avgHRV)) ms HRV")
                         .font(AmachType.tiny)
                         .foregroundStyle(Color.amachTextSecondary)
@@ -91,15 +98,27 @@ private struct SessionRowView: View {
         .amachCard()
     }
 
+    @ViewBuilder
     private var coherenceBadge: some View {
-        Text("\(row.coherencePercent)%")
-            .font(AmachType.tiny)
-            .fontWeight(.semibold)
-            .foregroundStyle(coherenceColor)
-            .padding(.horizontal, AmachSpacing.sm)
-            .padding(.vertical, 2)
-            .background(coherenceColor.opacity(0.15))
-            .clipShape(Capsule())
+        if row.isPhoneSession {
+            Text("—")
+                .font(AmachType.tiny)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.amachTextTertiary)
+                .padding(.horizontal, AmachSpacing.sm)
+                .padding(.vertical, 2)
+                .background(Color.amachTextTertiary.opacity(0.10))
+                .clipShape(Capsule())
+        } else {
+            Text("\(row.coherencePercent)%")
+                .font(AmachType.tiny)
+                .fontWeight(.semibold)
+                .foregroundStyle(coherenceColor)
+                .padding(.horizontal, AmachSpacing.sm)
+                .padding(.vertical, 2)
+                .background(coherenceColor.opacity(0.15))
+                .clipShape(Capsule())
+        }
     }
 
     private var coherenceColor: Color {

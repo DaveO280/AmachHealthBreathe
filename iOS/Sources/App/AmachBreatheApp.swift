@@ -14,6 +14,7 @@ struct AmachBreatheApp: App {
     @StateObject private var settingsService = AppSettingsService()
     @StateObject private var subscriptionService: SubscriptionService
     @StateObject private var onboardingService = OnboardingService()
+    @StateObject private var iPhoneRunner = iPhoneSessionRunner()
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -45,6 +46,7 @@ struct AmachBreatheApp: App {
                 .environmentObject(settingsService)
                 .environmentObject(subscriptionService)
                 .environmentObject(onboardingService)
+                .environmentObject(iPhoneRunner)
                 .task { await wireAll() }
                 .onReceive(walletService.$isConnected) { connected in
                     handleWalletConnectionChange(connected: connected)
@@ -80,6 +82,14 @@ struct AmachBreatheApp: App {
         subscriptionService.start()
         await subscriptionService.checkAndUpdateState()
         await NotificationService.shared.refreshAuthorizationStatus()
+
+        iPhoneRunner.onSessionComplete = { record in
+            sessionService.save(record)
+            if let key = walletService.encryptionKey {
+                Task { await sessionService.syncPending(encryptionKey: key) }
+            }
+        }
+
         watchConnectivity.onSessionReceived = { record in
             sessionService.save(record)
             // Auto-sync newly received session if wallet is available

@@ -25,7 +25,7 @@ public enum TrendEngine {
         sessions
             .sorted { $0.timestamp < $1.timestamp }
             .map { CoherencePoint(date: $0.timestamp, sessionId: $0.id,
-                                  coherenceScore: $0.coherenceScore, bpm: $0.bpm) }
+                                  coherenceScore: $0.coherenceScore ?? 0, bpm: $0.bpm) }
     }
 
     // MARK: - HRV trend (from session avgHRV, one point per day)
@@ -45,13 +45,13 @@ public enum TrendEngine {
         sessions: [BreathingSessionRecord],
         calendar: Calendar = .current
     ) -> [DailyHRV] {
-        let valid = sessions.filter { $0.avgHRV > 0 }
+        let valid = sessions.filter { ($0.avgHRV ?? 0) > 0 }
         let grouped = Dictionary(grouping: valid) { s in
             calendar.startOfDay(for: s.timestamp)
         }
         return grouped
             .map { day, records in
-                let avg = records.map(\.avgHRV).reduce(0, +) / Double(records.count)
+                let avg = records.map { $0.avgHRV ?? 0 }.reduce(0, +) / Double(records.count)
                 return DailyHRV(date: day, averageHRV: avg, sessionCount: records.count)
             }
             .sorted { $0.date < $1.date }
@@ -136,8 +136,8 @@ public enum TrendEngine {
                                 avgHRV: 0, avgDurationMinutes: 0, mostUsedBPM: nil)
         }
         let n = Double(sessions.count)
-        let avgCoherence = sessions.map(\.coherenceScore).reduce(0, +) / n
-        let avgHRV = sessions.map(\.avgHRV).reduce(0, +) / n
+        let avgCoherence = sessions.map { $0.coherenceScore ?? 0 }.reduce(0, +) / n
+        let avgHRV = sessions.map { $0.avgHRV ?? 0 }.reduce(0, +) / n
         let avgDur = sessions.map { Double($0.durationSeconds) / 60 }.reduce(0, +) / n
 
         // Mode BPM

@@ -44,7 +44,7 @@ public final class AmachAPIClient: Sendable {
                 "sessionId":      record.id,
                 "timestamp":      ISO8601DateFormatter().string(from: record.timestamp),
                 "bpm":            String(record.bpm),
-                "coherenceScore": String(record.coherenceScore),
+                "coherenceScore": String(format: "%.3f", record.coherenceScore ?? 0),
                 "platform":       "ios"
             ])
         )

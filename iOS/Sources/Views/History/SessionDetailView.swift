@@ -36,9 +36,9 @@ struct SessionDetailView: View {
     private var hrvPoints: [(label: String, value: Double)] {
         guard let r = record else { return [] }
         var pts: [(String, Double)] = []
-        if r.baselineHRV > 0 { pts.append(("Baseline", r.baselineHRV)) }
-        if r.avgHRV > 0      { pts.append(("Session", r.avgHRV)) }
-        if r.recoveryHRV > 0 { pts.append(("Recovery", r.recoveryHRV)) }
+        if let v = r.baselineHRV, v > 0  { pts.append(("Baseline", v)) }
+        if let v = r.avgHRV, v > 0       { pts.append(("Session", v)) }
+        if let v = r.recoveryHRV, v > 0  { pts.append(("Recovery", v)) }
         return pts
     }
 
@@ -127,29 +127,39 @@ struct SessionDetailView: View {
             Text("Coherence")
                 .font(AmachType.h3)
                 .foregroundStyle(Color.amachTextPrimary)
-            HStack(spacing: AmachSpacing.lg) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.amachTextTertiary.opacity(0.2), lineWidth: 10)
-                        .frame(width: 80, height: 80)
-                    Circle()
-                        .trim(from: 0, to: row.coherenceScore)
-                        .stroke(coherenceRingColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                        .frame(width: 80, height: 80)
-                        .rotationEffect(.degrees(-90))
-                    Text("\(row.coherencePercent)%")
-                        .font(.system(size: 18, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Color.amachTextPrimary)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(coherenceLabel)
-                        .font(AmachType.body)
-                        .foregroundStyle(Color.amachTextPrimary)
-                    Text(coherenceSubtitle)
+            if row.isPhoneSession {
+                HStack(spacing: AmachSpacing.sm) {
+                    Image(systemName: "iphone")
+                        .foregroundStyle(Color.amachTextTertiary)
+                    Text("HRV tracking requires Apple Watch")
                         .font(AmachType.caption)
                         .foregroundStyle(Color.amachTextSecondary)
                 }
-                Spacer()
+            } else {
+                HStack(spacing: AmachSpacing.lg) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.amachTextTertiary.opacity(0.2), lineWidth: 10)
+                            .frame(width: 80, height: 80)
+                        Circle()
+                            .trim(from: 0, to: row.coherenceScore)
+                            .stroke(coherenceRingColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                            .frame(width: 80, height: 80)
+                            .rotationEffect(.degrees(-90))
+                        Text("\(row.coherencePercent)%")
+                            .font(.system(size: 18, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.amachTextPrimary)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(coherenceLabel)
+                            .font(AmachType.body)
+                            .foregroundStyle(Color.amachTextPrimary)
+                        Text(coherenceSubtitle)
+                            .font(AmachType.caption)
+                            .foregroundStyle(Color.amachTextSecondary)
+                    }
+                    Spacer()
+                }
             }
         }
         .padding(AmachSpacing.cardPadding)

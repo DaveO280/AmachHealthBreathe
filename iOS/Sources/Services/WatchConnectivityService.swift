@@ -12,6 +12,8 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
     /// Set by the app root to push current wallet state when Watch requests it.
     public var onWalletStateRequested: (() -> Void)?
 
+    @Published public var isWatchReachable: Bool = false
+
     public override init() {
         super.init()
         if WCSession.isSupported() {
@@ -22,9 +24,9 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
 
     // MARK: - iPhone → Watch commands
 
-    public func sendStartSession(bpm: Double, durationSeconds: Int) {
+    public func sendStartSession(bpm: Double, durationSeconds: Int, ratio: BreathRatio = .fourToSix) {
         guard WCSession.default.isReachable else { return }
-        let cmd = StartSessionCommand(bpm: bpm, durationSeconds: durationSeconds)
+        let cmd = StartSessionCommand(bpm: bpm, durationSeconds: durationSeconds, ratio: ratio.rawValue)
         guard let message = try? makeWatchMessage(type: .startSession, payload: cmd) else { return }
         WCSession.default.sendMessage(message, replyHandler: nil)
     }
@@ -64,7 +66,20 @@ extension WatchConnectivityService: WCSessionDelegate {
         _ session: WCSession,
         activationDidCompleteWith activationState: WCSessionActivationState,
         error: Error?
-    ) { }
+    ) {
+        Task { @MainActor [weak self] in self?.refreshReachability() }
+    }
+
+    nonisolated public func sessionReachabilityDidChange(_ session: WCSession) {
+        Task { @MainActor [weak self] in self?.refreshReachability() }
+    }
+
+    private func refreshReachability() {
+        guard WCSession.isSupported() else { isWatchReachable = false; return }
+        isWatchReachable = WCSession.default.activationState == .activated
+            && WCSession.default.isWatchAppInstalled
+            && WCSession.default.isReachable
+    }
 
     nonisolated public func sessionDidBecomeInactive(_ session: WCSession) { }
     nonisolated public func sessionDidDeactivate(_ session: WCSession) {

@@ -10,9 +10,12 @@ public struct SessionHistoryModel: Sendable {
         public let durationMinutes: Int
         public let bpm: Double
         public let ratio: String
-        public let avgHRV: Double        // ms
-        public let coherenceScore: Double // 0–1
-        public let reflectionRating: Int? // 1–5
+        public let avgHRV: Double         // ms; 0 for phone sessions
+        public let coherenceScore: Double  // 0–1; 0 for phone sessions
+        public let reflectionRating: Int?  // 1–5
+        public let source: SessionSource
+
+        public var isPhoneSession: Bool { source == .phone }
 
         /// Short date string, e.g. "Apr 27"
         public var dateLabel: String {
@@ -44,9 +47,10 @@ public struct SessionHistoryModel: Sendable {
             durationMinutes: max(1, record.durationSeconds / 60),
             bpm: record.bpm,
             ratio: record.ratio,
-            avgHRV: record.avgHRV,
-            coherenceScore: record.coherenceScore,
-            reflectionRating: record.reflectionRating
+            avgHRV: record.avgHRV ?? 0,
+            coherenceScore: record.coherenceScore ?? 0,
+            reflectionRating: record.reflectionRating,
+            source: record.source
         )
     }
 }

@@ -231,8 +231,9 @@ extension WatchSessionRunner: WCSessionDelegate {
             guard let cmd = try? decodeWatchPayload(
                 StartSessionCommand.self, from: message) else { return }
             Task { @MainActor [weak self] in
+                let ratio = cmd.ratio.flatMap(BreathRatio.init(rawValue:)) ?? .fourToSix
                 try? await self?.startSession(
-                    bpm: cmd.bpm, durationSeconds: cmd.durationSeconds)
+                    bpm: cmd.bpm, durationSeconds: cmd.durationSeconds, ratio: ratio)
             }
         case .cancelSession:
             Task { @MainActor [weak self] in await self?.stopSession() }

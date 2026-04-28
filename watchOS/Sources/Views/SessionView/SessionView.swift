@@ -205,7 +205,7 @@ private struct CompletionView: View {
             if let record = runner.completedRecord {
                 VStack(spacing: 2) {
                     Text(String(format: "Coherence %.0f%%",
-                                record.coherenceScore * 100))
+                                (record.coherenceScore ?? 0) * 100))
                         .font(.caption)
                         .foregroundStyle(Color.amachTextSecondary)
                     if let rating = record.reflectionRating {

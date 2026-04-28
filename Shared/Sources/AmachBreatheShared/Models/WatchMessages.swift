@@ -19,10 +19,12 @@ public enum WatchMessageType: String, Codable, Sendable {
 public struct StartSessionCommand: Codable, Sendable {
     public let bpm: Double
     public let durationSeconds: Int  // 300, 600, or 900
+    public let ratio: String?        // BreathRatio.rawValue; nil = use watch default
 
-    public init(bpm: Double, durationSeconds: Int) {
+    public init(bpm: Double, durationSeconds: Int, ratio: String? = nil) {
         self.bpm = bpm
         self.durationSeconds = durationSeconds
+        self.ratio = ratio
     }
 }
 

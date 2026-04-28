@@ -146,6 +146,13 @@ public struct StorjListItem: Decodable, Identifiable, Sendable {
     public var tier: String? { metadata?["tier"] }
 }
 
+// MARK: - Session Source
+
+public enum SessionSource: String, Codable, Sendable {
+    case watch
+    case phone
+}
+
 // MARK: - Breathing Session Record
 
 /// On-Storj record for a completed breathing session.
@@ -155,12 +162,13 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
     public let timestamp: Date
     public let durationSeconds: Int
     public let bpm: Double
-    public let ratio: String               // e.g. "1:1", "4:6"
-    public let baselineHRV: Double         // ms
-    public let recoveryHRV: Double         // ms
-    public let avgHRV: Double              // ms
-    public let coherenceScore: Double      // 0–1
-    public let reflectionRating: Int?      // 1–5, nil if skipped
+    public let ratio: String          // e.g. "1:1", "4:6"
+    public let baselineHRV: Double?   // ms — nil for iPhone-only sessions
+    public let recoveryHRV: Double?   // ms — nil for iPhone-only sessions
+    public let avgHRV: Double?        // ms — nil for iPhone-only sessions
+    public let coherenceScore: Double? // 0–1 — nil for iPhone-only sessions
+    public let reflectionRating: Int? // 1–5, nil if skipped
+    public let source: SessionSource  // .watch or .phone
 
     public init(
         id: String = UUID().uuidString,
@@ -168,11 +176,12 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
         durationSeconds: Int,
         bpm: Double,
         ratio: String,
-        baselineHRV: Double,
-        recoveryHRV: Double,
-        avgHRV: Double,
-        coherenceScore: Double,
-        reflectionRating: Int? = nil
+        baselineHRV: Double? = nil,
+        recoveryHRV: Double? = nil,
+        avgHRV: Double? = nil,
+        coherenceScore: Double? = nil,
+        reflectionRating: Int? = nil,
+        source: SessionSource = .watch
     ) {
         self.id               = id
         self.timestamp        = timestamp
@@ -184,6 +193,23 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
         self.avgHRV           = avgHRV
         self.coherenceScore   = coherenceScore
         self.reflectionRating = reflectionRating
+        self.source           = source
+    }
+
+    // Custom decoder for backward compatibility: legacy Watch records don't have `source`.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id              = try  c.decode(String.self,        forKey: .id)
+        timestamp       = try  c.decode(Date.self,          forKey: .timestamp)
+        durationSeconds = try  c.decode(Int.self,           forKey: .durationSeconds)
+        bpm             = try  c.decode(Double.self,        forKey: .bpm)
+        ratio           = try  c.decode(String.self,        forKey: .ratio)
+        baselineHRV     = try  c.decodeIfPresent(Double.self, forKey: .baselineHRV)
+        recoveryHRV     = try  c.decodeIfPresent(Double.self, forKey: .recoveryHRV)
+        avgHRV          = try  c.decodeIfPresent(Double.self, forKey: .avgHRV)
+        coherenceScore  = try  c.decodeIfPresent(Double.self, forKey: .coherenceScore)
+        reflectionRating = try c.decodeIfPresent(Int.self,  forKey: .reflectionRating)
+        source = (try c.decodeIfPresent(SessionSource.self, forKey: .source)) ?? .watch
     }
 }
 
@@ -212,10 +238,11 @@ public struct BreathingSessionEvent: Codable, Sendable {
             "durationSeconds": String(record.durationSeconds),
             "bpm":             String(record.bpm),
             "ratio":           record.ratio,
-            "coherenceScore":  String(format: "%.3f", record.coherenceScore),
-            "avgHRV":          String(format: "%.1f", record.avgHRV),
-            "baselineHRV":     String(format: "%.1f", record.baselineHRV),
-            "recoveryHRV":     String(format: "%.1f", record.recoveryHRV)
+            "source":          record.source.rawValue,
+            "coherenceScore":  String(format: "%.3f", record.coherenceScore ?? 0),
+            "avgHRV":          String(format: "%.1f", record.avgHRV ?? 0),
+            "baselineHRV":     String(format: "%.1f", record.baselineHRV ?? 0),
+            "recoveryHRV":     String(format: "%.1f", record.recoveryHRV ?? 0)
         ]
         self.metadata = Metadata(platform: platform, version: "1", source: "user")
     }
