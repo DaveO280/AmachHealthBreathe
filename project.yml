@@ -40,12 +40,11 @@ targets:
       PRODUCT_NAME: "Amach Breathe"
       PRODUCT_MODULE_NAME: AmachBreathe
       SWIFT_VERSION: "6.0"
-      DEVELOPMENT_TEAM: ""
       TARGETED_DEVICE_FAMILY: "1,2"
       INFOPLIST_FILE: iOS/Sources/App/Info.plist
-      CODE_SIGN_STYLE: Manual
-      CODE_SIGNING_REQUIRED: "NO"
-      CODE_SIGNING_ALLOWED: "NO"
+      CODE_SIGN_STYLE: Automatic
+      CODE_SIGN_IDENTITY: "Apple Development"
+      CODE_SIGNING_REQUIRED: "YES"
 
   # ── iOS Unit Tests ────────────────────────────────────────────
   AmachBreatheTests:
@@ -92,12 +91,11 @@ targets:
       PRODUCT_NAME: "Amach Breathe Watch"
       PRODUCT_BUNDLE_IDENTIFIER: com.amach.breathe.watchkitapp
       SWIFT_VERSION: "6.0"
-      DEVELOPMENT_TEAM: ""
       TARGETED_DEVICE_FAMILY: "4"
       INFOPLIST_FILE: watchOS/Sources/App/Info.plist
-      CODE_SIGN_STYLE: Manual
-      CODE_SIGNING_REQUIRED: "NO"
-      CODE_SIGNING_ALLOWED: "NO"
+      CODE_SIGN_STYLE: Automatic
+      CODE_SIGN_IDENTITY: "Apple Development"
+      CODE_SIGNING_REQUIRED: "YES"
       WKApplication: "YES"
 
   # ── watchOS Complication Extension ────────────────────────────
@@ -116,12 +114,11 @@ targets:
       PRODUCT_NAME: AmachBreatheWatchComplication
       PRODUCT_BUNDLE_IDENTIFIER: com.amach.breathe.watchkitapp.complication
       SWIFT_VERSION: "6.0"
-      DEVELOPMENT_TEAM: ""
       TARGETED_DEVICE_FAMILY: "4"
       INFOPLIST_FILE: watchOS/Complication/Info.plist
-      CODE_SIGN_STYLE: Manual
-      CODE_SIGNING_REQUIRED: "NO"
-      CODE_SIGNING_ALLOWED: "NO"
+      CODE_SIGN_STYLE: Automatic
+      CODE_SIGN_IDENTITY: "Apple Development"
+      CODE_SIGNING_REQUIRED: "YES"
       SKIP_INSTALL: "YES"
 
 schemes:
