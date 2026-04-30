@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import WatchConnectivity
+import os
 import AmachBreatheShared
 
 /// Runs the 6-rate calibration protocol on Apple Watch.
@@ -33,17 +34,27 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     private let workoutManager = HKWorkoutSessionManager()
     private let timer = MasterPhaseTimer()
     private let hrvProcessor = HRVProcessor(windowDuration: 90)
+    private var audioPacer: AudioPacer!
 
     private var currentRateIndex: Int = 0
     private var collectedSamples: [Double: [Double]] = [:]
     private var rateTimer: Timer?
 
+    /// Set when the rate's sample window expires; deferred transition
+    /// fires on the next inhale start so we never cut a breath in half.
+    private var pendingRateTransition: Bool = false
+    private var lastBreathPhase: BreathPhase?
+
     private var cancellables = Set<AnyCancellable>()
+
+    private static let log = Logger(
+        subsystem: "com.amach.AmachBreathe", category: "Calibration")
 
     // MARK: - Init
 
     public override init() {
         super.init()
+        audioPacer = AudioPacer(timer: timer)
         workoutManager.onRRInterval = { [weak self] rrMs in
             self?.handleRRInterval(rrMs)
         }
@@ -78,6 +89,8 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         rateTimer = nil
         timer.stop()
         cancellables.removeAll()
+        pendingRateTransition = false
+        lastBreathPhase = nil
         await workoutManager.stopWorkout()
         isRunning = false
         pacerState = .idle
@@ -95,14 +108,18 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
 
         let bpm = candidates[currentRateIndex]
         hrvProcessor.reset()
+        pendingRateTransition = false
+        lastBreathPhase = nil
 
         // Start visual/haptic/audio pacer at this rate (warmup phase, no HK session phase change)
         timer.start(bpm: bpm, mainDurationSeconds: Int(sampleDurationPerRate),
                     ratio: .fourToSix)
 
         calibrationState = .running(rateIndex: currentRateIndex, bpm: bpm, elapsed: 0)
+        Self.log.info("Rate \(self.currentRateIndex, privacy: .public) start: \(bpm, privacy: .public) BPM")
 
-        // Subscribe to timer for elapsed display and pacer ring animation
+        // Subscribe to timer for elapsed display, pacer ring animation, and
+        // detection of the next inhale start when a rate transition is pending.
         timer.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] state in
@@ -113,20 +130,44 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
                         rateIndex: idx, bpm: bpm,
                         elapsed: state.sessionPhaseElapsed)
                 }
+                self.handleBreathPhaseForTransition(state, bpm: bpm)
             }
             .store(in: &cancellables)
 
-        // Schedule rate completion
+        // Mark the rate window as expired; the next inhale start triggers
+        // rateCompleted so the breath cycle is never cut mid-phase.
         rateTimer = Timer.scheduledTimer(
             withTimeInterval: sampleDurationPerRate, repeats: false
         ) { [weak self] _ in
-            Task { @MainActor [weak self] in await self?.rateCompleted(bpm: bpm) }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.pendingRateTransition = true
+                Self.log.info("Rate \(self.currentRateIndex, privacy: .public) (\(bpm, privacy: .public) BPM) window expired — awaiting next inhale")
+            }
         }
+    }
+
+    /// Called from the timer.$state sink. When a rate transition is pending
+    /// and we observe an exhale→inhale transition, run rateCompleted.
+    private func handleBreathPhaseForTransition(_ state: PacerState, bpm: Double) {
+        guard state.sessionPhase.isActive else { return }
+        let prev = lastBreathPhase
+        lastBreathPhase = state.breathPhase
+
+        guard pendingRateTransition,
+              prev == .exhale,
+              state.breathPhase == .inhale else { return }
+
+        pendingRateTransition = false
+        Self.log.info("Inhale start at \(state.sessionPhaseElapsed, privacy: .public)s — closing rate \(self.currentRateIndex, privacy: .public) (\(bpm, privacy: .public) BPM)")
+        Task { @MainActor [weak self] in await self?.rateCompleted(bpm: bpm) }
     }
 
     private func rateCompleted(bpm: Double) async {
         timer.stop()
         cancellables.removeAll()
+        pendingRateTransition = false
+        lastBreathPhase = nil
 
         // Collect the current window of RR intervals for this rate
         let window = hrvProcessor.currentWindow
