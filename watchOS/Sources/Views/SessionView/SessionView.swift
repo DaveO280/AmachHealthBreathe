@@ -46,8 +46,7 @@ private struct CalibrationActiveView: View {
                 pacerState: calibrationRunner.pacerState,
                 isPaused: false,
                 isRecovery: false,
-                coherence: nil,
-                sessionProgress: nil
+                coherence: nil
             )
 
             if case .running(let idx, let bpm, _) = calibrationRunner.calibrationState {
@@ -86,8 +85,7 @@ private struct ActiveSessionView: View {
                 pacerState: runner.pacerState,
                 isPaused: runner.isPaused,
                 isRecovery: isRecovery,
-                coherence: isRecovery ? nil : runner.currentCoherence,
-                sessionProgress: sessionProgress
+                coherence: isRecovery ? nil : runner.currentCoherence
             )
 
             // Metrics row
@@ -137,17 +135,6 @@ private struct ActiveSessionView: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
-    }
-
-    /// 0…1 progress through the current session phase. Used to draw the
-    /// outer arc on BreathingCoachView. Returns nil when there's no
-    /// well-defined target duration (idle / reflection / complete).
-    private var sessionProgress: Double? {
-        guard let target = runner.phase.targetDurationSeconds, target > 0 else {
-            return nil
-        }
-        let p = runner.pacerState.sessionPhaseElapsed / Double(target)
-        return min(max(p, 0), 1)
     }
 
     private var phaseName: String {

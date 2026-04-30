@@ -5,7 +5,6 @@ import AmachBreatheShared
 /// the PacerState published by MasterPhaseTimer — no separate clock.
 ///
 /// Layout (from outside in):
-///   • Session-progress arc (very faint)
 ///   • Static track ring
 ///   • Soft emerald halo that brightens at the inhale peak
 ///   • Animated emerald ring that scales 0.6 → 1.4 with the breath
@@ -17,45 +16,23 @@ struct BreathingCoachView: View {
     let isRecovery: Bool
     /// Coherence score 0…1 (tints the halo a touch when high). nil = ignore.
     let coherence: Double?
-    /// Session-phase progress 0…1 (drawn as the outer arc). nil = no arc.
-    let sessionProgress: Double?
 
     private let ringDiameter: CGFloat = 110
-    private let outerArcDiameter: CGFloat = 132
 
     var body: some View {
         ZStack {
-            outerProgressArc
             haloLayer
             trackRing
             animatedRing
             centerLabel
         }
-        .frame(width: outerArcDiameter, height: outerArcDiameter)
+        .frame(width: ringDiameter, height: ringDiameter)
         // Smooth the per-tick ringScale changes (60 Hz updates → tiny linear tween).
         .animation(.linear(duration: 1.0 / 60.0), value: pacerState.ringScale)
         .animation(.easeInOut(duration: 0.35), value: pacerState.breathPhase)
     }
 
     // MARK: - Layers
-
-    @ViewBuilder
-    private var outerProgressArc: some View {
-        if let progress = sessionProgress {
-            ZStack {
-                Circle()
-                    .stroke(Color.amachPrimary.opacity(0.10), lineWidth: 2)
-                Circle()
-                    .trim(from: 0, to: max(0, min(1, progress)))
-                    .stroke(
-                        Color.amachPrimary.opacity(0.55),
-                        style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-            }
-            .frame(width: outerArcDiameter, height: outerArcDiameter)
-        }
-    }
 
     private var haloLayer: some View {
         // Halo brightens as the ring expands — peaks at inhale top.
