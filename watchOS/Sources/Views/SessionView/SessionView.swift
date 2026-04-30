@@ -92,10 +92,6 @@ private struct ActiveSessionView: View {
             // Expanding ring
             ZStack {
                 Circle()
-                    .stroke(ringColor.opacity(0.2), lineWidth: 3)
-                    .frame(width: 76, height: 76)
-
-                Circle()
                     .stroke(ringColor, lineWidth: 3)
                     .frame(width: 76, height: 76)
                     .scaleEffect(runner.pacerState.ringScale)
