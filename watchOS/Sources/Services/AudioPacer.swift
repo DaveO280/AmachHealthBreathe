@@ -2,64 +2,32 @@ import AVFoundation
 import Combine
 import AmachBreatheShared
 
-/// Continuous-tone breath pacer. Pink noise driven through a swept bandpass
-/// filter — center frequency rides 200 → 800 Hz over each inhale and back
-/// 800 → 200 Hz over each exhale, driven by the breathProgress published by
-/// MasterPhaseTimer. The filter sweep is gapless across phase boundaries
-/// (the boundary frequency matches on both sides), and a per-phase volume
-/// envelope (gentle fade-in / sustain / soft fade-out) gives an organic
-/// breath-pulse feel without electronic clicks.
+/// Soft-thump breath pacer. At each phase transition — inhale start and
+/// exhale start — plays one short percussive sine burst whose pitch slides
+/// 60 → 30 Hz over 180 ms while the gain decays exponentially to silence by
+/// 350 ms. There is no audio between thumps; the haptic engine fires on the
+/// same transitions, so thump and tap land together.
 @MainActor
 public final class AudioPacer {
 
-    /// State touched only by the audio render thread. Marked `@unchecked
-    /// Sendable` because the render block is the sole accessor.
-    private final class RenderState: @unchecked Sendable {
-        // Paul Kellet pink-noise filter
-        var pb0: Float = 0
-        var pb1: Float = 0
-        var pb2: Float = 0
-        var pb3: Float = 0
-        var pb4: Float = 0
-        var pb5: Float = 0
-        var pb6: Float = 0
-        // Xorshift32 RNG state
-        var rng: UInt32 = 0xCAFE_BABE
-        // Chamberlin state-variable filter
-        var smoothedCenter: Float = 200
-        var lp: Float = 0
-        var bp: Float = 0
-        // Master amplitude smoothing
-        var smoothedAmp: Float = 0
-    }
-
-    /// Cross-thread knobs written by MainActor and read by the audio thread.
-    /// Each knob is a single aligned 32-bit Float, naturally atomic on the
-    /// supported Apple architectures; the audio thread reads each once per
-    /// render call (not per sample), so torn reads are not a concern.
-    private final class Knobs: @unchecked Sendable {
-        var targetCenter: Float = 200
-        var targetAmp: Float = 0
-    }
-
     private let engine = AVAudioEngine()
-    private var sourceNode: AVAudioSourceNode?
+    private let playerNode = AVAudioPlayerNode()
     private var cancellable: AnyCancellable?
+    private var lastBreathPhase: BreathPhase?
     private var isEngineRunning = false
+    private var thumpBuffer: AVAudioPCMBuffer?
 
     private let sampleRate: Double = 22_050
-    private let centerLow: Float = 200
-    private let centerHigh: Float = 800
-    private let filterQ: Float = 4
-    private let gain: Float = 0.18
-
-    private let renderState = RenderState()
-    private let knobs = Knobs()
+    private let startFreq: Double = 60
+    private let endFreq: Double = 30
+    private let pitchRampDuration: TimeInterval = 0.180
+    private let totalDuration: TimeInterval = 0.400
+    private let attackGain: Float = 0.5
 
     public init(timer: MasterPhaseTimer) {
-        knobs.targetCenter = centerLow
         configureAudioSession()
         setupEngine()
+        thumpBuffer = renderThumpBuffer()
         cancellable = timer.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] state in
@@ -69,14 +37,10 @@ public final class AudioPacer {
 
     public func stop() {
         cancellable = nil
-        knobs.targetAmp = 0
-        // Let the smoothed amplitude ramp to zero (~50 ms) before tearing the
-        // engine down, so the user never hears an abrupt cutoff.
-        Task { @MainActor [weak self] in
-            try? await Task.sleep(nanoseconds: 80_000_000)
-            guard let self, self.isEngineRunning else { return }
-            self.engine.stop()
-            self.isEngineRunning = false
+        lastBreathPhase = nil
+        if isEngineRunning {
+            engine.stop()
+            isEngineRunning = false
         }
     }
 
@@ -96,120 +60,79 @@ public final class AudioPacer {
     }
 
     private func setupEngine() {
-        guard let format = AVAudioFormat(
-            standardFormatWithSampleRate: sampleRate, channels: 1) else { return }
-
-        // Capture only Sendable values into the render block. `RenderState`
-        // and `Knobs` are @unchecked Sendable; primitives are too.
-        let state = renderState
-        let cross = knobs
-        let sr = sampleRate
-        let toneGain = gain
-        let q: Float = 1.0 / filterQ
-        // One-pole exponential smoothing, ~10 ms time constant.
-        let smoothAlpha = Float(1.0 - exp(-1.0 / (sr * 0.010)))
-        let piOverSr = Float(Double.pi / sr)
-        let kellettScale: Float = 0.11
-
-        let node = AVAudioSourceNode(format: format) {
-            _, _, frameCount, audioBufferList -> OSStatus in
-
-            let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            let centerTarget = cross.targetCenter
-            let ampTarget = cross.targetAmp
-
-            for buffer in abl {
-                guard let raw = buffer.mData else { continue }
-                let ptr = raw.assumingMemoryBound(to: Float.self)
-
-                for i in 0 ..< Int(frameCount) {
-                    // --- White noise via xorshift32 ---
-                    var r = state.rng
-                    r ^= r << 13
-                    r ^= r >> 17
-                    r ^= r << 5
-                    state.rng = r
-                    let white = Float(Int32(bitPattern: r)) / Float(Int32.max)
-
-                    // --- Pink-noise shaping (Paul Kellet) ---
-                    state.pb0 = 0.99886 * state.pb0 + white * 0.0555179
-                    state.pb1 = 0.99332 * state.pb1 + white * 0.0750759
-                    state.pb2 = 0.96900 * state.pb2 + white * 0.1538520
-                    state.pb3 = 0.86650 * state.pb3 + white * 0.3104856
-                    state.pb4 = 0.55000 * state.pb4 + white * 0.5329522
-                    state.pb5 = -0.7616  * state.pb5 - white * 0.0168980
-                    let pink = (state.pb0 + state.pb1 + state.pb2 + state.pb3
-                              + state.pb4 + state.pb5 + state.pb6
-                              + white * 0.5362) * kellettScale
-                    state.pb6 = white * 0.115926
-
-                    // --- Smooth filter center; recompute SVF coefficient ---
-                    state.smoothedCenter += (centerTarget - state.smoothedCenter) * smoothAlpha
-                    let f = 2.0 * sin(piOverSr * state.smoothedCenter)
-
-                    // --- Chamberlin SVF (bandpass tap) ---
-                    let high = pink - state.lp - q * state.bp
-                    state.bp += f * high
-                    state.lp += f * state.bp
-
-                    // --- Master amplitude smoothing ---
-                    state.smoothedAmp += (ampTarget - state.smoothedAmp) * smoothAlpha
-
-                    ptr[i] = state.bp * toneGain * state.smoothedAmp
-                }
-            }
-            return noErr
-        }
-        sourceNode = node
-
-        engine.attach(node)
-        engine.connect(node, to: engine.mainMixerNode, format: format)
-
+        engine.attach(playerNode)
+        let format = AVAudioFormat(
+            standardFormatWithSampleRate: sampleRate, channels: 1)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: format)
         do {
             try engine.start()
             isEngineRunning = true
         } catch {
-            isEngineRunning = false
+            // Audio unavailable — pacer degrades gracefully to silent.
         }
+    }
+
+    // MARK: - Buffer synthesis
+
+    /// Render the thump once at init: a sine whose frequency falls
+    /// geometrically from 60 Hz to 30 Hz across the first 180 ms (constant
+    /// thereafter), shaped by an exponential gain envelope that's at the
+    /// 0.5 attack at t = 0 and ≈ -40 dB by t = 350 ms.
+    private func renderThumpBuffer() -> AVAudioPCMBuffer? {
+        guard let format = AVAudioFormat(
+            standardFormatWithSampleRate: sampleRate, channels: 1) else { return nil }
+
+        let frameCount = AVAudioFrameCount(sampleRate * totalDuration)
+        guard let buffer = AVAudioPCMBuffer(
+            pcmFormat: format, frameCapacity: frameCount) else { return nil }
+        buffer.frameLength = frameCount
+
+        guard let data = buffer.floatChannelData?[0] else { return nil }
+
+        let sr = sampleRate
+        let pitchRampFrames = Int(sr * pitchRampDuration)
+        // Per-sample geometric multiplier that takes startFreq → endFreq in
+        // exactly pitchRampFrames samples.
+        let freqRatio = pow(endFreq / startFreq, 1.0 / Double(pitchRampFrames))
+        // Envelope time constant: g(t) = attack * exp(-t/τ). Pick τ so that
+        // by t = 350 ms the envelope is at attack/100 (~ -40 dB).
+        let tau = 0.350 / log(100.0)
+        let twoPi = 2.0 * Double.pi
+
+        var phase: Double = 0
+        var freq = startFreq
+
+        for i in 0 ..< Int(frameCount) {
+            let t = Double(i) / sr
+            let env = Float(Double(attackGain) * exp(-t / tau))
+            data[i] = Float(sin(phase)) * env
+
+            phase += twoPi * freq / sr
+            if phase > twoPi { phase -= twoPi }
+            if i < pitchRampFrames {
+                freq *= freqRatio
+            }
+        }
+        return buffer
     }
 
     // MARK: - State (MainActor)
 
     private func handleState(_ state: PacerState) {
-        guard isEngineRunning else { return }
-        guard state.sessionPhase.isActive else {
-            knobs.targetAmp = 0
-            return
-        }
-
-        let p = Float(state.breathProgress)
-        let center: Float
-        switch state.breathPhase {
-        case .inhale:
-            center = centerLow + (centerHigh - centerLow) * p
-        case .exhale:
-            center = centerHigh - (centerHigh - centerLow) * p
-        }
-        knobs.targetCenter = center
-        knobs.targetAmp = phaseEnvelope(progress: p)
+        guard state.sessionPhase.isActive, isEngineRunning else { return }
+        let breath = state.breathPhase
+        guard breath != lastBreathPhase else { return }
+        lastBreathPhase = breath
+        playThump()
     }
 
-    /// Per-phase volume envelope: smoothstep fade-in over the first 12 % of
-    /// the phase, full sustain through the middle, smoothstep fade-out over
-    /// the last 12 %. Inhale's fade-out and the next exhale's fade-in (and
-    /// vice-versa) align at phase boundaries — combined with a continuous
-    /// filter sweep — to give a smooth breath-pulse feel.
-    private func phaseEnvelope(progress: Float) -> Float {
-        let fadeIn: Float = 0.12
-        let fadeOut: Float = 0.12
-        if progress < fadeIn {
-            let t = progress / fadeIn
-            return t * t * (3 - 2 * t)
-        }
-        if progress > 1 - fadeOut {
-            let t = (1 - progress) / fadeOut
-            return t * t * (3 - 2 * t)
-        }
-        return 1
+    private func playThump() {
+        guard let buffer = thumpBuffer else { return }
+        // scheduleBuffer raises NSException if the engine has stopped or the
+        // node was detached (e.g. simulator audio failures). Guard explicitly.
+        guard engine.isRunning else { return }
+        playerNode.scheduleBuffer(
+            buffer, at: nil, options: [], completionHandler: nil)
+        if !playerNode.isPlaying { playerNode.play() }
     }
 }
