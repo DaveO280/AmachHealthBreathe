@@ -87,12 +87,12 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         hrvProcessor.reset()
 
         // HealthKit workout is best-effort — without it we lose HRV/coherence
-        // but the breathing pacer must still run. (Also fails on the watchOS
-        // simulator, where HKWorkoutSession isn't fully simulated.)
-        do {
-            try await workoutManager.startWorkout()
-        } catch {
-            // continue without HK data
+        // but the breathing pacer must still run. Kick HK off in a detached
+        // Task rather than awaiting: on the watchOS simulator the missing
+        // entitlement causes beginCollection(at:) to hang forever, which
+        // would block the pacer start indefinitely.
+        Task { [workoutManager] in
+            try? await workoutManager.startWorkout()
         }
         timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
@@ -247,7 +247,7 @@ extension WatchSessionRunner: WCSessionDelegate {
             }
         case .startCalibration:
             Task { @MainActor [weak self] in
-                try? await self?.calibrationRunner?.start()
+                await self?.calibrationRunner?.start()
             }
         case .cancelSession:
             Task { @MainActor [weak self] in
