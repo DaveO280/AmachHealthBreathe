@@ -42,20 +42,13 @@ private struct CalibrationActiveView: View {
                 .font(.caption2)
                 .foregroundStyle(Color.amachTextSecondary)
 
-            ZStack {
-                Circle()
-                    .stroke(Color.amachPrimary.opacity(0.2), lineWidth: 3)
-                    .frame(width: 76, height: 76)
-                Circle()
-                    .stroke(Color.amachPrimary, lineWidth: 3)
-                    .frame(width: 76, height: 76)
-                    .scaleEffect(calibrationRunner.pacerState.ringScale)
-                    .animation(.linear(duration: 1.0 / 60.0),
-                               value: calibrationRunner.pacerState.ringScale)
-                Text(calibrationRunner.pacerState.breathPhase == .inhale ? "In" : "Out")
-                    .font(.caption)
-                    .foregroundStyle(Color.amachTextPrimary)
-            }
+            BreathingCoachView(
+                pacerState: calibrationRunner.pacerState,
+                isPaused: false,
+                isRecovery: false,
+                coherence: nil,
+                sessionProgress: nil
+            )
 
             if case .running(let idx, let bpm, _) = calibrationRunner.calibrationState {
                 HStack(spacing: 4) {
@@ -89,30 +82,13 @@ private struct ActiveSessionView: View {
         VStack(spacing: 6) {
             phaseHeader
 
-            // Expanding ring
-            ZStack {
-                Circle()
-                    .stroke(ringColor.opacity(0.2), lineWidth: 3)
-                    .frame(width: 76, height: 76)
-
-                Circle()
-                    .stroke(ringColor, lineWidth: 3)
-                    .frame(width: 76, height: 76)
-                    .scaleEffect(runner.pacerState.ringScale)
-                    .animation(.linear(duration: 1.0 / 60.0),
-                               value: runner.pacerState.ringScale)
-
-                VStack(spacing: 1) {
-                    Text(runner.pacerState.breathPhase == .inhale ? "In" : "Out")
-                        .font(.caption)
-                        .foregroundStyle(Color.amachTextPrimary)
-                    if runner.isPaused {
-                        Image(systemName: "pause.fill")
-                            .font(.system(size: 8))
-                            .foregroundStyle(Color.amachTextSecondary)
-                    }
-                }
-            }
+            BreathingCoachView(
+                pacerState: runner.pacerState,
+                isPaused: runner.isPaused,
+                isRecovery: isRecovery,
+                coherence: isRecovery ? nil : runner.currentCoherence,
+                sessionProgress: sessionProgress
+            )
 
             // Metrics row
             HStack(spacing: 10) {
@@ -163,10 +139,15 @@ private struct ActiveSessionView: View {
         .buttonStyle(.plain)
     }
 
-    private var ringColor: Color {
-        runner.isPaused ? Color.amachTextSecondary
-            : isRecovery ? Color.amachTextSecondary
-            : Color.amachPrimary
+    /// 0…1 progress through the current session phase. Used to draw the
+    /// outer arc on BreathingCoachView. Returns nil when there's no
+    /// well-defined target duration (idle / reflection / complete).
+    private var sessionProgress: Double? {
+        guard let target = runner.phase.targetDurationSeconds, target > 0 else {
+            return nil
+        }
+        let p = runner.pacerState.sessionPhaseElapsed / Double(target)
+        return min(max(p, 0), 1)
     }
 
     private var phaseName: String {

@@ -40,7 +40,8 @@ public final class AudioPacer {
 
     private func setupEngine() {
         engine.attach(playerNode)
-        engine.connect(playerNode, to: engine.mainMixerNode, format: nil)
+        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: format)
         do {
             try engine.start()
             isEngineRunning = true
@@ -74,6 +75,9 @@ public final class AudioPacer {
             data[i] = env * sin(omega * Float(i)) * 0.3
         }
 
+        // scheduleBuffer raises NSException if the engine has stopped or the
+        // node was detached (e.g. simulator audio failures). Guard explicitly.
+        guard engine.isRunning else { return }
         playerNode.scheduleBuffer(buffer, completionHandler: nil)
         if !playerNode.isPlaying { playerNode.play() }
     }

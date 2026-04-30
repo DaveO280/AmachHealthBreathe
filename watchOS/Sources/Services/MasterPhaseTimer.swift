@@ -90,11 +90,16 @@ public final class MasterPhaseTimer: ObservableObject {
         let src = DispatchSource.makeTimerSource(queue: timerQueue)
         src.schedule(deadline: .now(), repeating: tickInterval,
                      leeway: .microseconds(500))
-        src.setEventHandler { [weak self] in
-            // Capture now on timerQueue for accuracy, then post to main actor.
+        // The handler runs on `timerQueue` (non-MainActor). Mark it nonisolated
+        // explicitly so Swift 6 doesn't inherit the class's @MainActor isolation
+        // and assert on entry.
+        let handler: @Sendable () -> Void = { [weak self] in
             let now = Date()
-            Task { @MainActor [weak self] in self?.processTick(now: now) }
+            Task { @MainActor in
+                self?.processTick(now: now)
+            }
         }
+        src.setEventHandler(handler: handler)
         src.resume()
         timer = src
     }
