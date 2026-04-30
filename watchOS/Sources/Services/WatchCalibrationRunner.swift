@@ -55,12 +55,21 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         try await workoutManager.requestAuthorization()
     }
 
-    public func start() async throws {
+    public func start() async {
         guard case .idle = calibrationState else { return }
         collectedSamples = [:]
         currentRateIndex = 0
         isRunning = true
-        try await workoutManager.startWorkout()
+
+        // HealthKit workout is best-effort — without it we lose RR intervals
+        // (so calibration can't produce a result), but the breath pacer must
+        // still run. Kick HK off in a detached Task instead of awaiting:
+        // on the watchOS simulator the missing entitlement causes
+        // beginCollection(at:) to hang forever, which would block the pacer
+        // start indefinitely.
+        Task { [workoutManager] in
+            try? await workoutManager.startWorkout()
+        }
         await startNextRate()
     }
 
