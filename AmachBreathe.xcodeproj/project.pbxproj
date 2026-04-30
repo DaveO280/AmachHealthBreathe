@@ -34,6 +34,7 @@
 		77F39EAE717ADBBE0B4E796F /* iPhoneSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61F607DE6D903C2422B6C73 /* iPhoneSessionView.swift */; };
 		7BDF839BFCC256A7D6F60D50 /* HapticPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86809B0C92727B7E6DA5C05F /* HapticPacer.swift */; };
 		83E1BFDC2187FE7DD0A8A729 /* iPhoneMasterPhaseTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE84AA551BEBEEF710872306 /* iPhoneMasterPhaseTimer.swift */; };
+		8C01FEA5C311E2DD00A7AC3E /* BreathingCoachView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6930951633B4554736898114 /* BreathingCoachView.swift */; };
 		907334C15011F406CC93E2D3 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = 76A2C03C0ADCBD8F834AD57F /* AmachBreatheShared */; };
 		973CEEB939F48AE990397161 /* HKWorkoutSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C7941BAA5A18ECA5EF1B00 /* HKWorkoutSessionManager.swift */; };
 		97964E41D131BF25C9F08A0D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B24AFAA8857113DBEDDF3786 /* HealthKit.framework */; };
@@ -145,6 +146,7 @@
 		5E60979A3399B86409CCD6E2 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
 		638F0521598AD140B365B1BF /* ComplicationEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationEntry.swift; sourceTree = "<group>"; };
 		6868E973C8D5B7EBEC49ED7D /* AppSettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsService.swift; sourceTree = "<group>"; };
+		6930951633B4554736898114 /* BreathingCoachView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreathingCoachView.swift; sourceTree = "<group>"; };
 		6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AmachBreatheTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6D8A03DA4404BCCBD3414D68 /* TrendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendView.swift; sourceTree = "<group>"; };
 		71F6072B414FB21FE9AF277F /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
@@ -464,6 +466,7 @@
 		B6892B264A127422C13F5E69 /* SessionView */ = {
 			isa = PBXGroup;
 			children = (
+				6930951633B4554736898114 /* BreathingCoachView.swift */,
 				EF98D57B21EDC714D27771A0 /* SessionView.swift */,
 			);
 			path = SessionView;
@@ -721,6 +724,7 @@
 			files = (
 				D4863F57713FB5A59BB28D33 /* AmachBreatheWatchApp.swift in Sources */,
 				1D28DFDD83F197CDD535832F /* AudioPacer.swift in Sources */,
+				8C01FEA5C311E2DD00A7AC3E /* BreathingCoachView.swift in Sources */,
 				973CEEB939F48AE990397161 /* HKWorkoutSessionManager.swift in Sources */,
 				7BDF839BFCC256A7D6F60D50 /* HapticPacer.swift in Sources */,
 				FBE87AD063CB88858CD75049 /* MasterPhaseTimer.swift in Sources */,

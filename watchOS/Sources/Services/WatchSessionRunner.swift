@@ -86,7 +86,14 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         self.coherenceSamples = []
         hrvProcessor.reset()
 
-        try await workoutManager.startWorkout()
+        // HealthKit workout is best-effort — without it we lose HRV/coherence
+        // but the breathing pacer must still run. (Also fails on the watchOS
+        // simulator, where HKWorkoutSession isn't fully simulated.)
+        do {
+            try await workoutManager.startWorkout()
+        } catch {
+            // continue without HK data
+        }
         timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
         isPaused = false

@@ -2,47 +2,32 @@ import AVFoundation
 import Combine
 import AmachBreatheShared
 
-/// Continuous pitch-shift breathing pacer.
-///
-/// Synthesises a single, gapless sine tone whose pitch ramps with the breath:
-/// 110 Hz → 220 Hz across the inhale, 220 Hz → 110 Hz across the exhale. The
-/// tone passes through a one-pole low-pass at ~700 Hz to soften timbre and
-/// damp any micro-clicks from parameter steps. Output is muted whenever the
-/// session phase is not active.
+/// Soft-thump breath pacer. At each phase transition — inhale start and
+/// exhale start — plays one short percussive sine burst whose pitch slides
+/// 60 → 30 Hz over 180 ms while the gain decays exponentially to silence by
+/// 350 ms. There is no audio between thumps; the haptic engine fires on the
+/// same transitions, so thump and tap land together.
 @MainActor
 public final class AudioPacer {
 
     private let engine = AVAudioEngine()
-    private var sourceNode: AVAudioSourceNode!
-
+    private let playerNode = AVAudioPlayerNode()
     private var cancellable: AnyCancellable?
+    private var lastBreathPhase: BreathPhase?
     private var isEngineRunning = false
+    private var thumpBuffer: AVAudioPCMBuffer?
 
-    private let sampleRate: Double = 44_100
-    private let minFreq: Double = 110
-    private let maxFreq: Double = 220
-    private let outputGain: Float = 0.22
-    private let lowPassCutoff: Double = 700
-
-    // Pre-computed one-pole low-pass coefficient: alpha = 1 - exp(-2π·fc/fs)
-    private let lowPassAlpha: Double
-
-    // Cross-thread parameters: written on main, read on the audio render
-    // thread. Aligned 8-byte loads/stores are atomic on aarch64; the in-render
-    // ramp masks any sample-level step.
-    private var targetFrequency: Double = 110
-    private var targetGain: Double = 0
-
-    // Render-thread-only state.
-    private var phase: Double = 0
-    private var lastRenderedFrequency: Double = 110
-    private var lastRenderedGain: Double = 0
-    private var lowPassState: Double = 0
+    private let sampleRate: Double = 22_050
+    private let startFreq: Double = 60
+    private let endFreq: Double = 30
+    private let pitchRampDuration: TimeInterval = 0.180
+    private let totalDuration: TimeInterval = 0.400
+    private let attackGain: Float = 0.5
 
     public init(timer: MasterPhaseTimer) {
-        self.lowPassAlpha = 1.0 - exp(-2.0 * Double.pi * lowPassCutoff / sampleRate)
         configureAudioSession()
         setupEngine()
+        thumpBuffer = renderThumpBuffer()
         cancellable = timer.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] state in
@@ -52,111 +37,102 @@ public final class AudioPacer {
 
     public func stop() {
         cancellable = nil
-        targetGain = 0
+        lastBreathPhase = nil
         if isEngineRunning {
             engine.stop()
             isEngineRunning = false
         }
-        try? AVAudioSession.sharedInstance().setActive(
-            false, options: [.notifyOthersOnDeactivation])
     }
 
     // MARK: - Setup
 
     private func configureAudioSession() {
+        #if !os(macOS)
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(
                 .playback, mode: .default, options: [.mixWithOthers])
-            try session.setActive(true)
+            try session.setActive(true, options: [])
         } catch {
-            // Audio unavailable — pacer degrades silently.
+            // Audio unavailable — pacer degrades gracefully to silent.
         }
+        #endif
     }
 
     private func setupEngine() {
+        engine.attach(playerNode)
         let format = AVAudioFormat(
-            standardFormatWithSampleRate: sampleRate, channels: 1)!
-
-        sourceNode = AVAudioSourceNode(format: format) {
-            [weak self] _, _, frameCount, audioBufferList in
-            guard let self else { return noErr }
-            return self.render(
-                frameCount: frameCount, audioBufferList: audioBufferList)
-        }
-
-        engine.attach(sourceNode)
-        engine.connect(sourceNode, to: engine.mainMixerNode, format: format)
-        engine.mainMixerNode.outputVolume = outputGain
-
+            standardFormatWithSampleRate: sampleRate, channels: 1)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: format)
         do {
             try engine.start()
             isEngineRunning = true
         } catch {
-            // Audio unavailable — pacer degrades silently.
+            // Audio unavailable — pacer degrades gracefully to silent.
         }
     }
 
-    // MARK: - Render (audio thread)
+    // MARK: - Buffer synthesis
 
-    private func render(
-        frameCount: AVAudioFrameCount,
-        audioBufferList: UnsafeMutablePointer<AudioBufferList>
-    ) -> OSStatus {
-        let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
-        let frames = Int(frameCount)
+    /// Render the thump once at init: a sine whose frequency falls
+    /// geometrically from 60 Hz to 30 Hz across the first 180 ms (constant
+    /// thereafter), shaped by an exponential gain envelope that's at the
+    /// 0.5 attack at t = 0 and ≈ -40 dB by t = 350 ms.
+    private func renderThumpBuffer() -> AVAudioPCMBuffer? {
+        guard let format = AVAudioFormat(
+            standardFormatWithSampleRate: sampleRate, channels: 1) else { return nil }
+
+        let frameCount = AVAudioFrameCount(sampleRate * totalDuration)
+        guard let buffer = AVAudioPCMBuffer(
+            pcmFormat: format, frameCapacity: frameCount) else { return nil }
+        buffer.frameLength = frameCount
+
+        guard let data = buffer.floatChannelData?[0] else { return nil }
+
+        let sr = sampleRate
+        let pitchRampFrames = Int(sr * pitchRampDuration)
+        // Per-sample geometric multiplier that takes startFreq → endFreq in
+        // exactly pitchRampFrames samples.
+        let freqRatio = pow(endFreq / startFreq, 1.0 / Double(pitchRampFrames))
+        // Envelope time constant: g(t) = attack * exp(-t/τ). Pick τ so that
+        // by t = 350 ms the envelope is at attack/100 (~ -40 dB).
+        let tau = 0.350 / log(100.0)
         let twoPi = 2.0 * Double.pi
 
-        let startFreq = lastRenderedFrequency
-        let endFreq = targetFrequency
-        let startGain = lastRenderedGain
-        let endGain = targetGain
-        let invDenom = frames > 1 ? 1.0 / Double(frames - 1) : 1.0
+        var phase: Double = 0
+        var freq = startFreq
 
-        var localPhase = phase
-        var lp = lowPassState
-        let alpha = lowPassAlpha
+        for i in 0 ..< Int(frameCount) {
+            let t = Double(i) / sr
+            let env = Float(Double(attackGain) * exp(-t / tau))
+            data[i] = Float(sin(phase)) * env
 
-        for buffer in abl {
-            guard let raw = buffer.mData else { continue }
-            let ptr = raw.assumingMemoryBound(to: Float.self)
-            for i in 0..<frames {
-                let t = frames > 1 ? Double(i) * invDenom : 1.0
-                let f = startFreq + (endFreq - startFreq) * t
-                let g = startGain + (endGain - startGain) * t
-                let raw = sin(localPhase) * g
-                lp += alpha * (raw - lp)
-                ptr[i] = Float(lp)
-                localPhase += twoPi * f / sampleRate
-                if localPhase >= twoPi { localPhase -= twoPi }
+            phase += twoPi * freq / sr
+            if phase > twoPi { phase -= twoPi }
+            if i < pitchRampFrames {
+                freq *= freqRatio
             }
         }
-
-        phase = localPhase
-        lowPassState = lp
-        lastRenderedFrequency = endFreq
-        lastRenderedGain = endGain
-        return noErr
+        return buffer
     }
 
-    // MARK: - State updates (main thread)
+    // MARK: - State (MainActor)
 
     private func handleState(_ state: PacerState) {
-        guard isEngineRunning else { return }
+        guard state.sessionPhase.isActive, isEngineRunning else { return }
+        let breath = state.breathPhase
+        guard breath != lastBreathPhase else { return }
+        lastBreathPhase = breath
+        playThump()
+    }
 
-        guard state.sessionPhase.isActive else {
-            targetGain = 0
-            return
-        }
-
-        let progress = max(0.0, min(1.0, state.breathProgress))
-        let span = maxFreq - minFreq
-        switch state.breathPhase {
-        case .inhale:
-            targetFrequency = minFreq + span * progress
-        case .exhale:
-            targetFrequency = maxFreq - span * progress
-        }
-        targetGain = 1.0
+    private func playThump() {
+        guard let buffer = thumpBuffer else { return }
+        // scheduleBuffer raises NSException if the engine has stopped or the
+        // node was detached (e.g. simulator audio failures). Guard explicitly.
+        guard engine.isRunning else { return }
+        playerNode.scheduleBuffer(
+            buffer, at: nil, options: [], completionHandler: nil)
+        if !playerNode.isPlaying { playerNode.play() }
     }
 }
