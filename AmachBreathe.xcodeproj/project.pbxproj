@@ -372,7 +372,6 @@
 			isa = PBXGroup;
 			children = (
 				7963214589E3F477180419DF /* App */,
-				A55986494109714D7DD0E8F3 /* Models */,
 				08117B906245DC9D7A71FDF6 /* Services */,
 				FBF08FA423F50FEB7C674AF3 /* Views */,
 			);
@@ -440,13 +439,6 @@
 				856FCA6E5389EF2006D8FC9F /* CalibrationRunnerView.swift */,
 			);
 			path = Calibration;
-			sourceTree = "<group>";
-		};
-		A55986494109714D7DD0E8F3 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Models;
 			sourceTree = "<group>";
 		};
 		A7A31F86AB9132B90E083C69 /* Frameworks */ = {
