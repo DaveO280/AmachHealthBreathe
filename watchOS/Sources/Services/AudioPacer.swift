@@ -119,7 +119,14 @@ public final class AudioPacer {
     // MARK: - State (MainActor)
 
     private func handleState(_ state: PacerState) {
-        guard state.sessionPhase.isActive, isEngineRunning else { return }
+        // Reset on inactive so the next active phase (e.g. the next
+        // calibration rate after timer.stop/start) plays a thump on its
+        // first inhale even if it matches the last seen breath phase.
+        guard state.sessionPhase.isActive else {
+            lastBreathPhase = nil
+            return
+        }
+        guard isEngineRunning else { return }
         let breath = state.breathPhase
         guard breath != lastBreathPhase else { return }
         lastBreathPhase = breath
