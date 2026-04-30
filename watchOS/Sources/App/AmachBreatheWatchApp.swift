@@ -12,7 +12,11 @@ struct AmachBreatheWatchApp: App {
             SessionView()
                 .environmentObject(runner)
                 .environmentObject(calibrationRunner)
-                .onAppear { runner.calibrationRunner = calibrationRunner }
+                .onAppear {
+                    runner.calibrationRunner = calibrationRunner
+                    CalibrationTestLoop.shared.startIfRequested(
+                        runner: calibrationRunner)
+                }
                 .onOpenURL { url in
                     handleDeepLink(url)
                 }

@@ -37,6 +37,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     private var audioPacer: AudioPacer!
 
     private var currentRateIndex: Int = 0
+    private var currentRateBPM: Double = 0
     private var collectedSamples: [Double: [Double]] = [:]
     private var rateTimer: Timer?
 
@@ -44,6 +45,11 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     /// fires on the next inhale start so we never cut a breath in half.
     private var pendingRateTransition: Bool = false
     private var lastBreathPhase: BreathPhase?
+
+    /// Last ringScale we forwarded to the UI — used to detect discontinuities
+    /// for diagnostic logging. Reset on each rate boundary so a legitimate
+    /// 0.6→0.6 handoff is not flagged.
+    private var lastRingScale: Double?
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -71,6 +77,19 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         collectedSamples = [:]
         currentRateIndex = 0
         isRunning = true
+        lastRingScale = nil
+
+        // Single persistent subscription across all 6 rates. Holding one sink
+        // for the whole calibration prevents the brief `.idle` frame between
+        // `timer.stop()` and `timer.start()` from popping `pacerState.ringScale`
+        // back to 1.0 — that pop was the visible "expand and snap" glitch at
+        // rate boundaries.
+        timer.$state
+            .receive(on: RunLoop.main)
+            .sink { [weak self] state in
+                self?.handleTimerState(state)
+            }
+            .store(in: &cancellables)
 
         // HealthKit workout is best-effort — without it we lose RR intervals
         // (so calibration can't produce a result), but the breath pacer must
@@ -81,6 +100,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         Task { [workoutManager] in
             try? await workoutManager.startWorkout()
         }
+        Self.log.info("Calibration start (rates: \(CalibrationEngine.candidateBPMs.map { "\($0)" }.joined(separator: ","), privacy: .public))")
         await startNextRate()
     }
 
@@ -91,10 +111,16 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         cancellables.removeAll()
         pendingRateTransition = false
         lastBreathPhase = nil
-        await workoutManager.stopWorkout()
+        lastRingScale = nil
+        // Stop HK in a detached Task — endCollection/finishWorkout can hang on
+        // the simulator (same reason startWorkout() is detached above).
+        Task { [workoutManager] in
+            await workoutManager.stopWorkout()
+        }
         isRunning = false
         pacerState = .idle
         calibrationState = .idle
+        Self.log.info("Calibration canceled")
     }
 
     // MARK: - Per-rate steps
@@ -107,32 +133,22 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         }
 
         let bpm = candidates[currentRateIndex]
+        currentRateBPM = bpm
         hrvProcessor.reset()
         pendingRateTransition = false
         lastBreathPhase = nil
+        // Allow continuity from end-of-rate-N's inhale start (~0.6) to
+        // start-of-rate-N+1's inhale (~0.6). Don't reset lastRingScale to nil
+        // BEFORE starting; reset it AFTER one frame so the discontinuity check
+        // doesn't fire on the boundary itself.
+        lastRingScale = nil
 
         // Start visual/haptic/audio pacer at this rate (warmup phase, no HK session phase change)
         timer.start(bpm: bpm, mainDurationSeconds: Int(sampleDurationPerRate),
                     ratio: .fourToSix)
 
         calibrationState = .running(rateIndex: currentRateIndex, bpm: bpm, elapsed: 0)
-        Self.log.info("Rate \(self.currentRateIndex, privacy: .public) start: \(bpm, privacy: .public) BPM")
-
-        // Subscribe to timer for elapsed display, pacer ring animation, and
-        // detection of the next inhale start when a rate transition is pending.
-        timer.$state
-            .receive(on: RunLoop.main)
-            .sink { [weak self] state in
-                guard let self else { return }
-                self.pacerState = state
-                if case .running(let idx, _, _) = self.calibrationState {
-                    self.calibrationState = .running(
-                        rateIndex: idx, bpm: bpm,
-                        elapsed: state.sessionPhaseElapsed)
-                }
-                self.handleBreathPhaseForTransition(state, bpm: bpm)
-            }
-            .store(in: &cancellables)
+        Self.log.info("RATE_START idx=\(self.currentRateIndex, privacy: .public) bpm=\(bpm, privacy: .public)")
 
         // Mark the rate window as expired; the next inhale start triggers
         // rateCompleted so the breath cycle is never cut mid-phase.
@@ -142,15 +158,43 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.pendingRateTransition = true
-                Self.log.info("Rate \(self.currentRateIndex, privacy: .public) (\(bpm, privacy: .public) BPM) window expired — awaiting next inhale")
+                Self.log.info("RATE_WINDOW_EXPIRED idx=\(self.currentRateIndex, privacy: .public) bpm=\(bpm, privacy: .public) — awaiting next inhale")
             }
         }
     }
 
-    /// Called from the timer.$state sink. When a rate transition is pending
-    /// and we observe an exhale→inhale transition, run rateCompleted.
-    private func handleBreathPhaseForTransition(_ state: PacerState, bpm: Double) {
+    /// Single sink for `timer.$state`. Filters out the brief `.idle` state
+    /// emitted between rates so `pacerState` (and therefore the ring scale)
+    /// stays continuous, and drives both the rate-transition and elapsed-time
+    /// updates.
+    private func handleTimerState(_ state: PacerState) {
+        // Suppress `.idle` (between rates / on stop). Keep the last active
+        // PacerState so the BreathingCoachView ring doesn't pop to 1.0.
         guard state.sessionPhase.isActive else { return }
+
+        // Discontinuity diagnostic: log a warning if the ring jumps more than
+        // 0.3 between consecutive frames (a legitimate 60 Hz tick should move
+        // by < 0.05 at any of our breath rates).
+        if let prev = lastRingScale,
+           abs(state.ringScale - prev) > 0.3 {
+            Self.log.error("RING_JUMP idx=\(self.currentRateIndex, privacy: .public) bpm=\(self.currentRateBPM, privacy: .public) prev=\(prev, privacy: .public) curr=\(state.ringScale, privacy: .public) breath=\(state.breathPhase.rawValue, privacy: .public)")
+        }
+        lastRingScale = state.ringScale
+
+        pacerState = state
+
+        if case .running(let idx, let bpm, _) = calibrationState {
+            calibrationState = .running(
+                rateIndex: idx, bpm: bpm,
+                elapsed: state.sessionPhaseElapsed)
+        }
+
+        handleBreathPhaseForTransition(state)
+    }
+
+    /// When a rate transition is pending and we observe an exhale→inhale
+    /// boundary, run rateCompleted.
+    private func handleBreathPhaseForTransition(_ state: PacerState) {
         let prev = lastBreathPhase
         lastBreathPhase = state.breathPhase
 
@@ -159,13 +203,19 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
               state.breathPhase == .inhale else { return }
 
         pendingRateTransition = false
-        Self.log.info("Inhale start at \(state.sessionPhaseElapsed, privacy: .public)s — closing rate \(self.currentRateIndex, privacy: .public) (\(bpm, privacy: .public) BPM)")
+        let bpm = currentRateBPM
+        Self.log.info("INHALE_BOUNDARY idx=\(self.currentRateIndex, privacy: .public) bpm=\(bpm, privacy: .public) elapsed=\(state.sessionPhaseElapsed, privacy: .public) ring=\(state.ringScale, privacy: .public) — closing rate")
         Task { @MainActor [weak self] in await self?.rateCompleted(bpm: bpm) }
     }
 
     private func rateCompleted(bpm: Double) async {
+        // Hold onto the persistent subscription across the timer.stop/start
+        // handoff — we deliberately DO NOT removeAll() here. The single sink's
+        // `isActive` filter swallows the brief `.idle` state that timer.stop
+        // publishes, keeping ringScale continuous into the next rate.
         timer.stop()
-        cancellables.removeAll()
+        rateTimer?.invalidate()
+        rateTimer = nil
         pendingRateTransition = false
         lastBreathPhase = nil
 
@@ -174,22 +224,37 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         if !window.isEmpty {
             collectedSamples[bpm] = window
         }
+        Self.log.info("RATE_DONE idx=\(self.currentRateIndex, privacy: .public) bpm=\(bpm, privacy: .public) samples=\(window.count, privacy: .public)")
 
         currentRateIndex += 1
         await startNextRate()
     }
 
     private func finalize() async {
-        await workoutManager.stopWorkout()
+        // Flip isRunning FIRST so the SessionView immediately swaps out of
+        // CalibrationActiveView. On the simulator HKLiveWorkoutBuilder's
+        // endCollection / finishWorkout can hang indefinitely; awaiting them
+        // before flipping isRunning was the post-calibration freeze.
+        rateTimer?.invalidate()
+        rateTimer = nil
+        cancellables.removeAll()
         isRunning = false
+        pacerState = .idle
+
+        // Stop HK in a detached Task — same simulator-hang reason as start().
+        Task { [workoutManager] in
+            await workoutManager.stopWorkout()
+        }
 
         guard let result = engine.findResonance(samples: collectedSamples) else {
             calibrationState = .failed
+            Self.log.info("CALIBRATION_FAILED no resonance from \(self.collectedSamples.count, privacy: .public) rate samples")
             return
         }
 
         let record = CalibrationRecord(result: result)
         calibrationState = .complete(result: record)
+        Self.log.info("CALIBRATION_COMPLETE bpm=\(result.resonanceBPM, privacy: .public)")
         sendResultToPhone(result)
     }
 
