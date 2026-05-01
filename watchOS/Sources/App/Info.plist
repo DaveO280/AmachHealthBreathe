@@ -26,5 +26,9 @@
 	<string>Amach Breathe reads your heart rate to calculate HRV and coherence during breathing sessions.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Amach Breathe saves breathing sessions to Apple Health.</string>
+	<key>WKBackgroundModes</key>
+	<array>
+		<string>workout-processing</string>
+	</array>
 </dict>
 </plist>

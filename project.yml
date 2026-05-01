@@ -24,6 +24,7 @@ targets:
     sources:
       - path: iOS/Sources
         type: group
+      - path: iOS/Assets.xcassets
       - path: iOS/PrivacyInfo.xcprivacy
         type: file
     dependencies:
@@ -78,6 +79,7 @@ targets:
     sources:
       - path: watchOS/Sources
         type: group
+      - path: watchOS/Assets.xcassets
     dependencies:
       - package: AmachBreatheShared
       - sdk: HealthKit.framework

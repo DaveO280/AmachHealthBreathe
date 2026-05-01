@@ -57,7 +57,9 @@
 		BCE145BAA9757D2FA1185B4C /* AmachBreatheComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7868117686521185B8FAB75 /* AmachBreatheComplication.swift */; };
 		C0052E081D4D345F501E5B30 /* SessionSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93758483C5AF10DFD6BC5811 /* SessionSetupView.swift */; };
 		C3E0BE071F23F14F269F5631 /* iPhoneSessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D01A1C4DF9CDCCE9D7C6A8F /* iPhoneSessionRunner.swift */; };
+		C87AF1FCEF02EE70999C870A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D14E94E5AE606F2258FE46ED /* Assets.xcassets */; };
 		CBA98E3A9653DFD2F49D77A7 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = 2A4BA8C7FAA7AFF50FFA0707 /* AmachBreatheShared */; };
+		CBEA1C54145BF724E50D7353 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 62DFADCA87F38656027CB82E /* Assets.xcassets */; };
 		CE9B02CB4CC38536302D3D97 /* SoftSupportPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD98D74B655E1D40CD31BD0 /* SoftSupportPromptView.swift */; };
 		D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263B6EE690602C261C511609 /* CalibrationStore.swift */; };
 		D4863F57713FB5A59BB28D33 /* AmachBreatheWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF23B5FEADFC0762F10EE429 /* AmachBreatheWatchApp.swift */; };
@@ -145,6 +147,7 @@
 		5931AE145EF39A2F94FC290C /* VisualPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualPacer.swift; sourceTree = "<group>"; };
 		59ED365DB6BABB4AC05AEF87 /* SessionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRecord.swift; sourceTree = "<group>"; };
 		5E60979A3399B86409CCD6E2 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
+		62DFADCA87F38656027CB82E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		638F0521598AD140B365B1BF /* ComplicationEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationEntry.swift; sourceTree = "<group>"; };
 		6868E973C8D5B7EBEC49ED7D /* AppSettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsService.swift; sourceTree = "<group>"; };
 		6930951633B4554736898114 /* BreathingCoachView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreathingCoachView.swift; sourceTree = "<group>"; };
@@ -179,6 +182,7 @@
 		C1C19F147B70E63AB4405A85 /* ComplicationEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationEntryView.swift; sourceTree = "<group>"; };
 		C7C78C02F70EF29210960B99 /* ComplicationTimelineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationTimelineProvider.swift; sourceTree = "<group>"; };
 		CE84AA551BEBEEF710872306 /* iPhoneMasterPhaseTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneMasterPhaseTimer.swift; sourceTree = "<group>"; };
+		D14E94E5AE606F2258FE46ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E3F60C1EAA25495145BBAE56 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E41C5DC53807B47DF56C59A7 /* WalletStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletStatusBanner.swift; sourceTree = "<group>"; };
 		E45697449E49A8290893DB85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -414,6 +418,7 @@
 			children = (
 				0B7DE26DA3DFD68AFD065818 /* Sources */,
 				8E19228BFD8D2F4F0262D62C /* Tests */,
+				D14E94E5AE606F2258FE46ED /* Assets.xcassets */,
 				7A09F0E641E3D6BCF914B8AD /* PrivacyInfo.xcprivacy */,
 			);
 			path = iOS;
@@ -462,6 +467,7 @@
 			children = (
 				13664F456A241C7E2E5D9E3A /* Complication */,
 				738DB7A99F7C687D39CBEB40 /* Sources */,
+				62DFADCA87F38656027CB82E /* Assets.xcassets */,
 			);
 			path = watchOS;
 			sourceTree = "<group>";
@@ -583,6 +589,7 @@
 			buildConfigurationList = FCC8E1F01204C86193E094B5 /* Build configuration list for PBXNativeTarget "AmachBreatheWatch" */;
 			buildPhases = (
 				F3BBDA2406A6AB8DC7ACCB07 /* Sources */,
+				856845D48E4FB69179D9ED05 /* Resources */,
 				5A112E3A8C1ADC7F43234F2D /* Frameworks */,
 				5F0A70AF0C2E5B54E9A5EEA2 /* Embed Foundation Extensions */,
 			);
@@ -655,7 +662,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C87AF1FCEF02EE70999C870A /* Assets.xcassets in Resources */,
 				2A6892F971D28BDC04341850 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		856845D48E4FB69179D9ED05 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBEA1C54145BF724E50D7353 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
