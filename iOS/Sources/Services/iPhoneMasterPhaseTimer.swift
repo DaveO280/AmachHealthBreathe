@@ -89,7 +89,11 @@ final class iPhoneMasterPhaseTimer: ObservableObject {
     }
 
     private func buildPacerState(from result: SessionPhaseController.TickResult) -> PacerState {
-        let cyclePos = result.phaseElapsed.truncatingRemainder(dividingBy: breathPeriod)
+        // Drive the breath cycle from totalElapsed (continuous across phase
+        // transitions, already excludes paused intervals) rather than
+        // phaseElapsed, which resets at every phase boundary and would snap
+        // the ring back to the start of an inhale mid-breath.
+        let cyclePos = result.totalElapsed.truncatingRemainder(dividingBy: breathPeriod)
         let (breathPhase, breathProgress) = breathPhaseAndProgress(cyclePos: cyclePos)
         return PacerState(
             sessionPhase: result.phase,

@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import WatchConnectivity
+import WatchKit
 import os
 import AmachBreatheShared
 
@@ -53,7 +54,14 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
-    private static let log = Logger(
+    /// Keeps the watch awake for the full calibration. HKWorkoutSession should
+    /// theoretically do this, but we kick the workout off in a detached Task
+    /// (to avoid a simulator hang) so it may not start fast enough on real
+    /// hardware. WKExtendedRuntimeSession is the supported API for keeping the
+    /// watch awake during non-workout flows like guided breathing.
+    private var extendedRuntimeSession: WKExtendedRuntimeSession?
+
+    nonisolated private static let log = Logger(
         subsystem: "com.amach.AmachBreathe", category: "Calibration")
 
     // MARK: - Init
@@ -78,6 +86,8 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         currentRateIndex = 0
         isRunning = true
         lastRingScale = nil
+
+        startExtendedRuntimeSession()
 
         // Single persistent subscription across all 6 rates. Holding one sink
         // for the whole calibration prevents the brief `.idle` frame between
@@ -117,6 +127,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         Task { [workoutManager] in
             await workoutManager.stopWorkout()
         }
+        invalidateExtendedRuntimeSession()
         isRunning = false
         pacerState = .idle
         calibrationState = .idle
@@ -245,6 +256,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         Task { [workoutManager] in
             await workoutManager.stopWorkout()
         }
+        invalidateExtendedRuntimeSession()
 
         guard let result = engine.findResonance(samples: collectedSamples) else {
             calibrationState = .failed
@@ -264,6 +276,20 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         hrvProcessor.addRRInterval(rrMs)
     }
 
+    // MARK: - Extended runtime session
+
+    private func startExtendedRuntimeSession() {
+        let session = WKExtendedRuntimeSession()
+        session.delegate = self
+        session.start()
+        extendedRuntimeSession = session
+    }
+
+    private func invalidateExtendedRuntimeSession() {
+        extendedRuntimeSession?.invalidate()
+        extendedRuntimeSession = nil
+    }
+
     // MARK: - WatchConnectivity
 
     private func sendResultToPhone(_ result: ResonanceFrequencyResult) {
@@ -276,6 +302,35 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         } else {
             // iPhone not in foreground — deliver when it next becomes active
             session.transferUserInfo(message)
+        }
+    }
+}
+
+// MARK: - WKExtendedRuntimeSessionDelegate
+
+extension WatchCalibrationRunner: WKExtendedRuntimeSessionDelegate {
+
+    nonisolated public func extendedRuntimeSessionDidStart(
+        _ extendedRuntimeSession: WKExtendedRuntimeSession
+    ) {
+        Self.log.info("EXTENDED_RUNTIME_STARTED calibration")
+    }
+
+    nonisolated public func extendedRuntimeSessionWillExpire(
+        _ extendedRuntimeSession: WKExtendedRuntimeSession
+    ) {
+        Self.log.info("EXTENDED_RUNTIME_WILL_EXPIRE calibration")
+    }
+
+    nonisolated public func extendedRuntimeSession(
+        _ extendedRuntimeSession: WKExtendedRuntimeSession,
+        didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason,
+        error: Error?
+    ) {
+        if let error {
+            Self.log.error("EXTENDED_RUNTIME_INVALIDATED calibration reason=\(reason.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)")
+        } else {
+            Self.log.info("EXTENDED_RUNTIME_INVALIDATED calibration reason=\(reason.rawValue, privacy: .public)")
         }
     }
 }

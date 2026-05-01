@@ -1,7 +1,9 @@
 import Foundation
 import Combine
 import WatchConnectivity
+import WatchKit
 import WidgetKit
+import os
 import AmachBreatheShared
 
 /// Orchestrates a complete breathing session on Apple Watch.
@@ -47,6 +49,16 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     private var coherenceSamples: [Double] = []
 
     private var cancellables = Set<AnyCancellable>()
+
+    /// Keeps the watch awake for the full session. HKWorkoutSession should
+    /// theoretically do this, but we kick it off in a detached Task (to avoid a
+    /// simulator hang) so on real hardware it may not start fast enough.
+    /// WKExtendedRuntimeSession is the supported API for keeping the watch
+    /// awake during guided activities like breathing sessions.
+    private var extendedRuntimeSession: WKExtendedRuntimeSession?
+
+    nonisolated private static let log = Logger(
+        subsystem: "com.amach.AmachBreathe", category: "Session")
 
     // MARK: - Init
 
@@ -94,6 +106,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         Task { [workoutManager] in
             try? await workoutManager.startWorkout()
         }
+        startExtendedRuntimeSession()
         timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
         isPaused = false
@@ -104,6 +117,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         hapticPacer.stop()
         audioPacer.stop()
         await workoutManager.stopWorkout()
+        invalidateExtendedRuntimeSession()
         isRunning = false
         isPaused = false
         updateComplicationState(inSession: false)
@@ -196,6 +210,20 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         Task { await sendRecordToPhone(record) }
     }
 
+    // MARK: - Extended runtime session
+
+    private func startExtendedRuntimeSession() {
+        let session = WKExtendedRuntimeSession()
+        session.delegate = self
+        session.start()
+        extendedRuntimeSession = session
+    }
+
+    private func invalidateExtendedRuntimeSession() {
+        extendedRuntimeSession?.invalidate()
+        extendedRuntimeSession = nil
+    }
+
     // MARK: - Complication state
 
     private func updateComplicationState(inSession: Bool) {
@@ -273,6 +301,35 @@ extension WatchSessionRunner: WCSessionDelegate {
         let address   = applicationContext["walletAddress"] as? String
         Task { @MainActor in
             WatchWalletStore.shared.applyState(isConnected: connected, walletAddress: address)
+        }
+    }
+}
+
+// MARK: - WKExtendedRuntimeSessionDelegate
+
+extension WatchSessionRunner: WKExtendedRuntimeSessionDelegate {
+
+    nonisolated public func extendedRuntimeSessionDidStart(
+        _ extendedRuntimeSession: WKExtendedRuntimeSession
+    ) {
+        Self.log.info("EXTENDED_RUNTIME_STARTED session")
+    }
+
+    nonisolated public func extendedRuntimeSessionWillExpire(
+        _ extendedRuntimeSession: WKExtendedRuntimeSession
+    ) {
+        Self.log.info("EXTENDED_RUNTIME_WILL_EXPIRE session")
+    }
+
+    nonisolated public func extendedRuntimeSession(
+        _ extendedRuntimeSession: WKExtendedRuntimeSession,
+        didInvalidateWith reason: WKExtendedRuntimeSessionInvalidationReason,
+        error: Error?
+    ) {
+        if let error {
+            Self.log.error("EXTENDED_RUNTIME_INVALIDATED session reason=\(reason.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)")
+        } else {
+            Self.log.info("EXTENDED_RUNTIME_INVALIDATED session reason=\(reason.rawValue, privacy: .public)")
         }
     }
 }

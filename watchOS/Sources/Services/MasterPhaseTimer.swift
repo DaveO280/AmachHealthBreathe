@@ -130,7 +130,13 @@ public final class MasterPhaseTimer: ObservableObject {
         from result: SessionPhaseController.TickResult,
         now: Date
     ) -> PacerState {
-        let cyclePos = result.phaseElapsed.truncatingRemainder(
+        // Drive the breath cycle from totalElapsed, not phaseElapsed.
+        // phaseElapsed RESETS to ~0 at every phase boundary (baseline→warmup,
+        // warmup→main, main→recovery), which would snap the ring back to the
+        // start of an inhale mid-breath. totalElapsed is continuous across
+        // phase transitions and already accounts for paused intervals, so the
+        // breath cycle stays smooth from session start to recovery end.
+        let cyclePos = result.totalElapsed.truncatingRemainder(
             dividingBy: breathPeriod)
         let (breathPhase, breathProgress) = breathPhaseAndProgress(
             cyclePos: cyclePos)
