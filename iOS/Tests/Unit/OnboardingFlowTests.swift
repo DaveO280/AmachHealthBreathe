@@ -56,40 +56,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertFalse(freshService.hasCompletedOnboarding)
     }
 
-    // MARK: - AppSettings written on completion
-
-    func testOnboardingWritesDefaultRatio() {
-        let settings = AppSettingsService()
-        settings.updateRatio(.oneToOne)
-        XCTAssertEqual(settings.settings.defaultRatio, .oneToOne)
-        settings.updateRatio(.fourToSix)
-        XCTAssertEqual(settings.settings.defaultRatio, .fourToSix)
-    }
-
-    func testOnboardingWritesReminderTimes() {
-        let settings = AppSettingsService()
-        let times = [28800, 64800]  // 8am, 6pm
-        settings.updateReminders(times)
-        XCTAssertEqual(settings.settings.reminderSecondsFromMidnight, times)
-    }
-
-    func testOnboardingReminderTimesRoundTrip() throws {
-        let settings = AppSettingsService()
-        let times = [8 * 3600, 18 * 3600]
-        settings.updateReminders(times)
-        // Simulate restart: create new instance (reads from UserDefaults)
-        let fresh = AppSettingsService()
-        XCTAssertEqual(fresh.settings.reminderSecondsFromMidnight, times)
-    }
-
-    func testOnboardingClearsRemindersWhenEmpty() {
-        let settings = AppSettingsService()
-        settings.updateReminders([28800])
-        settings.updateReminders([])
-        XCTAssertTrue(settings.settings.reminderSecondsFromMidnight.isEmpty)
-    }
-
-    // MARK: - Privacy: notification permission key
+    // MARK: - Key format
 
     func testOnboardingServiceKeyFormat() {
         XCTAssertTrue(OnboardingService.userDefaultsKey.hasPrefix("com.amach.breathe."))

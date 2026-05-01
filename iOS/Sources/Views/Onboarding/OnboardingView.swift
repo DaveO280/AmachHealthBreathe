@@ -1,35 +1,32 @@
 import SwiftUI
 import AmachBreatheShared
 
-/// Five-page first-launch onboarding shown as a fullScreenCover.
-/// On completion: writes default ratio, reminder times, and schedules notifications.
+/// Four-page first-launch onboarding shown as a fullScreenCover.
+/// Walks the user through: the resonance concept, that everyone's frequency
+/// differs, the Apple Watch requirement, and a "start calibration" CTA that
+/// fires `sendStartCalibration` and marks onboarding complete.
 struct OnboardingView: View {
 
-    @EnvironmentObject private var settingsService: AppSettingsService
-    @EnvironmentObject private var calibrationStore: CalibrationStore
+    @EnvironmentObject private var watchConnectivity: WatchConnectivityService
     @EnvironmentObject private var onboardingService: OnboardingService
 
     @State private var currentPage = 0
-    @State private var selectedRatio: BreathRatio = .fourToSix
-    @State private var selectedDuration = 300        // seconds
-    @State private var reminderTimes: [Int] = []
-    @State private var notificationGranted = false
 
-    private let totalPages = 5
+    private let totalPages = 4
 
     var body: some View {
         ZStack {
             Color.amachBg.ignoresSafeArea()
+
             VStack(spacing: 0) {
                 progressDots
                     .padding(.top, AmachSpacing.lg)
 
                 TabView(selection: $currentPage) {
-                    welcomePage.tag(0)
-                    permissionsPage.tag(1)
-                    calibrationPage.tag(2)
-                    sessionLengthPage.tag(3)
-                    reminderPage.tag(4)
+                    frequencyPage.tag(0)
+                    everyoneIsDifferentPage.tag(1)
+                    watchRequiredPage.tag(2)
+                    startCalibrationPage.tag(3)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut, value: currentPage)
@@ -50,300 +47,142 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Page 1: Welcome
+    // MARK: - Page 1 — Resonance concept
 
-    private var welcomePage: some View {
-        VStack(spacing: AmachSpacing.lg) {
-            Spacer()
-
-            AmachBrandMark(layout: .stacked)
-
-            Spacer()
-
-            VStack(spacing: AmachSpacing.sm) {
-                Text("Resonant breathing, effortlessly calibrated.")
-                    .font(AmachType.body)
-                    .foregroundStyle(Color.amachPrimary)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.center)
-                Text("Synchronise your breath with your heart rate variability. Your Apple Watch finds your perfect frequency.")
-                    .font(AmachType.caption)
-                    .foregroundStyle(Color.amachTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, AmachSpacing.lg)
-            }
-
-            Spacer()
-
-            Button { advance() } label: {
-                Text("Get Started")
-                    .font(AmachType.caption.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color.amachPrimary)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
-            }
-            .padding(.horizontal, AmachSpacing.screenEdge)
-            .padding(.bottom, AmachSpacing.xl)
-        }
-    }
-
-    // MARK: - Page 2: Permissions
-
-    private var permissionsPage: some View {
-        ScrollView {
-            VStack(spacing: AmachSpacing.lg) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: AmachType.iconHero))
-                    .foregroundStyle(Color.amachPrimary)
-                    .padding(.top, AmachSpacing.xl)
-
-                VStack(spacing: AmachSpacing.xs) {
-                    Text("Permissions")
-                        .font(AmachType.h1)
-                        .foregroundStyle(Color.amachTextPrimary)
-                    Text("Amach Breathe needs access to HealthKit for heart rate data and notifications for daily reminders.")
-                        .font(AmachType.caption)
-                        .foregroundStyle(Color.amachTextSecondary)
-                        .multilineTextAlignment(.center)
-                }
-
-                VStack(spacing: AmachSpacing.sm) {
-                    permissionRow(
-                        icon: "heart.fill", iconColor: Color.amachDestructive,
-                        title: "Health",
-                        detail: "Heart rate during breathing sessions"
-                    )
-                    permissionRow(
-                        icon: "bell.fill", iconColor: Color.amachWarning,
-                        title: "Notifications",
-                        detail: "Optional daily breathing reminders"
-                    )
-                }
-                .padding(.horizontal, AmachSpacing.screenEdge)
-
-                Button {
-                    Task {
-                        notificationGranted = await NotificationService.shared.requestAuthorization()
-                        advance()
-                    }
-                } label: {
-                    Text("Allow & Continue")
-                        .font(AmachType.caption.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color.amachPrimary)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
-                }
-                .padding(.horizontal, AmachSpacing.screenEdge)
-
-                Button("Skip") { advance() }
-                    .font(AmachType.caption)
-                    .foregroundStyle(Color.amachTextSecondary)
-                    .padding(.bottom, AmachSpacing.xl)
-            }
-        }
-    }
-
-    private func permissionRow(icon: String, iconColor: Color, title: String, detail: String) -> some View {
-        HStack(spacing: AmachSpacing.sm) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(iconColor)
-                .frame(width: 36)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(AmachType.body)
-                    .foregroundStyle(Color.amachTextPrimary)
-                Text(detail)
-                    .font(AmachType.tiny)
-                    .foregroundStyle(Color.amachTextSecondary)
-            }
-            Spacer()
-        }
-        .padding(AmachSpacing.md)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
-    }
-
-    // MARK: - Page 3: Calibration
-
-    private var calibrationPage: some View {
-        let hasCalibration = calibrationStore.record != nil
-        return onboardingPage(
-            icon: hasCalibration ? "checkmark.circle.fill" : "waveform.path.ecg",
-            title: hasCalibration ? "Rate Found" : "Find Your Rate",
-            subtitle: hasCalibration
-                ? "Resonance at \(String(format: "%.1f", calibrationStore.resonanceBPM)) BPM"
-                : "Your Apple Watch will measure your resonance frequency.",
-            body: hasCalibration
-                ? "Your resonance BPM is saved. You're ready to breathe."
-                : "Run a short calibration on your Watch to personalise sessions. You can skip this and do it later.",
-            cta: "Continue"
-        ) { advance() }
-    }
-
-    // MARK: - Page 4: Session Length
-
-    private var sessionLengthPage: some View {
-        VStack(spacing: AmachSpacing.lg) {
-            Image(systemName: "clock.fill")
-                .font(.system(size: AmachType.iconHero))
+    private var frequencyPage: some View {
+        slide {
+            Image(systemName: "waveform.path")
+                .font(.system(size: AmachType.iconLg, weight: .light))
                 .foregroundStyle(Color.amachPrimary)
                 .padding(.top, AmachSpacing.xl)
-
-            VStack(spacing: AmachSpacing.xs) {
-                Text("Default Session")
+        } content: {
+            VStack(spacing: AmachSpacing.md) {
+                Text("Your nervous system has a frequency")
                     .font(AmachType.h1)
                     .foregroundStyle(Color.amachTextPrimary)
-                Text("How long is your typical breathing session?")
-                    .font(AmachType.caption)
+                    .multilineTextAlignment(.center)
+
+                Text("Heart rate variability peaks at a specific breathing rate unique to you, typically between 4.5 and 7 breaths per minute. Breathing at your resonance frequency activates the vagus nerve, synchronises your heart and breath, and shifts your body into a state of calm coherence.")
+                    .font(AmachType.body)
                     .foregroundStyle(Color.amachTextSecondary)
                     .multilineTextAlignment(.center)
+                    .lineSpacing(4)
             }
-
-            VStack(spacing: AmachSpacing.sm) {
-                ForEach([(5, 300), (10, 600), (15, 900)], id: \.1) { label, seconds in
-                    Button {
-                        selectedDuration = seconds
-                    } label: {
-                        HStack {
-                            Text("\(label) minutes")
-                                .font(AmachType.body)
-                                .foregroundStyle(Color.amachTextPrimary)
-                            Spacer()
-                            if selectedDuration == seconds {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(Color.amachPrimary)
-                                    .fontWeight(.semibold)
-                            }
-                        }
-                        .padding(AmachSpacing.md)
-                        .background(Color.amachSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
-                    }
-                }
-            }
-            .padding(.horizontal, AmachSpacing.screenEdge)
-
-            Spacer()
-
-            Button {
-                advance()
-            } label: {
-                Text("Continue")
-                    .font(AmachType.caption.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color.amachPrimary)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
-            }
-            .padding(.horizontal, AmachSpacing.screenEdge)
-            .padding(.bottom, AmachSpacing.xl)
+            .padding(.horizontal, AmachSpacing.lg)
+        } cta: {
+            primaryButton("Continue") { advance() }
         }
     }
 
-    // MARK: - Page 5: Reminders
+    // MARK: - Page 2 — Everyone's is different
 
-    private var reminderPage: some View {
-        VStack(spacing: AmachSpacing.lg) {
-            Image(systemName: "bell.badge.fill")
-                .font(.system(size: AmachType.iconHero))
-                .foregroundStyle(Color.amachWarning)
+    private var everyoneIsDifferentPage: some View {
+        slide {
+            BPMRateRow(rates: Self.calibrationRates, peakIndex: 2)
                 .padding(.top, AmachSpacing.xl)
-
-            VStack(spacing: AmachSpacing.xs) {
-                Text("Daily Reminder")
+                .padding(.horizontal, AmachSpacing.md)
+        } content: {
+            VStack(spacing: AmachSpacing.md) {
+                Text("Everyone's is different")
                     .font(AmachType.h1)
                     .foregroundStyle(Color.amachTextPrimary)
-                Text("Set a daily time to breathe. You can add up to 2 reminders in Settings.")
-                    .font(AmachType.caption)
+                    .multilineTextAlignment(.center)
+
+                Text("Most people land between 5 and 6 breaths per minute, but yours could be anywhere in the range. Amach finds it by measuring your HRV while you breathe at six different rates — about 60 seconds each — then identifies where your coherence peaks.")
+                    .font(AmachType.body)
                     .foregroundStyle(Color.amachTextSecondary)
                     .multilineTextAlignment(.center)
+                    .lineSpacing(4)
             }
-
-            ReminderTimePicker(selectedTimes: $reminderTimes)
-                .padding(.horizontal, AmachSpacing.screenEdge)
-
-            Spacer()
-
-            VStack(spacing: AmachSpacing.sm) {
-                Button {
-                    completeOnboarding()
-                } label: {
-                    Text("Done")
-                        .font(AmachType.caption.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(Color.amachPrimary)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
-                }
-                Button("Skip Reminders") { completeOnboarding() }
-                    .font(AmachType.caption)
-                    .foregroundStyle(Color.amachTextSecondary)
-            }
-            .padding(.horizontal, AmachSpacing.screenEdge)
-            .padding(.bottom, AmachSpacing.xl)
+            .padding(.horizontal, AmachSpacing.lg)
+        } cta: {
+            primaryButton("Continue") { advance() }
         }
     }
 
-    // MARK: - Page builder
+    // MARK: - Page 3 — Apple Watch required
 
-    private func onboardingPage(
-        icon: String,
-        title: String,
-        subtitle: String,
-        body: String,
-        cta: String,
-        shimmerTitle: Bool = false,
-        action: @escaping () -> Void
+    private var watchRequiredPage: some View {
+        slide {
+            Image(systemName: "applewatch.watchface")
+                .font(.system(size: AmachType.iconLg, weight: .light))
+                .foregroundStyle(Color.amachPrimary)
+                .padding(.top, AmachSpacing.xl)
+        } content: {
+            VStack(spacing: AmachSpacing.md) {
+                Text("Apple Watch required")
+                    .font(AmachType.h1)
+                    .foregroundStyle(Color.amachTextPrimary)
+                    .multilineTextAlignment(.center)
+
+                Text("Amach Breathe uses your Apple Watch to measure HRV in real time during calibration and sessions. Make sure your watch is paired and on your wrist.")
+                    .font(AmachType.body)
+                    .foregroundStyle(Color.amachTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+
+                WatchReachabilityPill(isReachable: watchConnectivity.isWatchReachable)
+                    .padding(.top, AmachSpacing.sm)
+            }
+            .padding(.horizontal, AmachSpacing.lg)
+        } cta: {
+            primaryButton("Continue") { advance() }
+        }
+    }
+
+    // MARK: - Page 4 — Start calibration
+
+    private var startCalibrationPage: some View {
+        slide {
+            BreathingRing()
+                .frame(width: 160, height: 160)
+                .padding(.top, AmachSpacing.xl)
+        } content: {
+            VStack(spacing: AmachSpacing.md) {
+                Text("Let's find your frequency")
+                    .font(AmachType.h1)
+                    .foregroundStyle(Color.amachTextPrimary)
+                    .multilineTextAlignment(.center)
+
+                Text("Calibration takes about 6 minutes. Sit comfortably, put your watch on, and follow the breathing coach on your watch.")
+                    .font(AmachType.body)
+                    .foregroundStyle(Color.amachTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+            .padding(.horizontal, AmachSpacing.lg)
+        } cta: {
+            primaryButton("Start calibration") { startCalibration() }
+        }
+    }
+
+    // MARK: - Slide layout
+
+    private func slide<Hero: View, Content: View, CTA: View>(
+        @ViewBuilder hero: () -> Hero,
+        @ViewBuilder content: () -> Content,
+        @ViewBuilder cta: () -> CTA
     ) -> some View {
         VStack(spacing: AmachSpacing.lg) {
-            Image(systemName: icon)
-                .font(.system(size: AmachType.iconLg))
-                .foregroundStyle(Color.amachPrimary)
-                .padding(.top, AmachSpacing.xl)
-
-            VStack(spacing: AmachSpacing.sm) {
-                Group {
-                    if shimmerTitle {
-                        Text(title)
-                            .foregroundStyle(Color.amachPrimaryWordmark)
-                            .amachShimmer(delay: 0.8)
-                    } else {
-                        Text(title)
-                            .foregroundStyle(Color.amachTextPrimary)
-                    }
-                }
-                .font(AmachType.h1)
-                Text(subtitle)
-                    .font(AmachType.body)
-                    .foregroundStyle(Color.amachPrimary)
-                    .fontWeight(.medium)
-                Text(body)
-                    .font(AmachType.caption)
-                    .foregroundStyle(Color.amachTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, AmachSpacing.lg)
-            }
-
+            hero()
+            Spacer(minLength: AmachSpacing.lg)
+            content()
             Spacer()
+            cta()
+                .padding(.horizontal, AmachSpacing.screenEdge)
+                .padding(.bottom, AmachSpacing.xl)
+        }
+    }
 
-            Button(action: action) {
-                Text(cta)
-                    .font(AmachType.caption.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color.amachPrimary)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
-            }
-            .padding(.horizontal, AmachSpacing.screenEdge)
-            .padding(.bottom, AmachSpacing.xl)
+    private func primaryButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(AmachType.h3)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(Color.amachPrimary)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
         }
     }
 
@@ -353,101 +192,162 @@ struct OnboardingView: View {
         withAnimation { currentPage = min(currentPage + 1, totalPages - 1) }
     }
 
-    private func completeOnboarding() {
-        // Write selected settings
-        settingsService.updateRatio(selectedRatio)
-        settingsService.updateReminders(reminderTimes)
-
-        // Schedule notifications
-        if !reminderTimes.isEmpty {
-            Task { await NotificationService.shared.scheduleReminders(reminderTimes) }
-        }
-
-        // Mark complete
+    private func startCalibration() {
+        watchConnectivity.sendStartCalibration()
         onboardingService.markComplete()
     }
+
+    // MARK: - Calibration rates
+
+    /// The six rates that calibration sweeps. Mid-range entry is highlighted as
+    /// the on-screen "your peak" example.
+    private static let calibrationRates: [Double] = [4.5, 5.0, 5.5, 6.0, 6.5, 7.0]
 }
 
-// MARK: - Reminder time picker (inline)
+// MARK: - BPM rate row (Page 2 visual)
 
-private struct ReminderTimePicker: View {
+private struct BPMRateRow: View {
 
-    @Binding var selectedTimes: [Int]
-    @State private var pickerDate = Date()
-    @State private var showPicker = false
+    let rates: [Double]
+    let peakIndex: Int
 
     var body: some View {
         VStack(spacing: AmachSpacing.sm) {
-            if selectedTimes.isEmpty {
-                Button {
-                    showPicker = true
-                } label: {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(Color.amachPrimary)
-                        Text("Set a reminder time")
-                            .font(AmachType.body)
-                            .foregroundStyle(Color.amachPrimary)
-                    }
-                    .padding(AmachSpacing.md)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.amachSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
-                }
-            } else {
-                ForEach(Array(selectedTimes.enumerated()), id: \.offset) { _, seconds in
-                    HStack {
-                        Image(systemName: "bell.fill")
-                            .foregroundStyle(Color.amachWarning)
-                        Text(NotificationScheduler.displayTime(secondsFromMidnight: seconds))
-                            .font(AmachType.body)
-                            .foregroundStyle(Color.amachTextPrimary)
-                        Spacer()
-                        Button {
-                            selectedTimes.removeAll { $0 == seconds }
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundStyle(Color.amachDestructive)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(AmachSpacing.md)
-                    .background(Color.amachSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
+            HStack(spacing: 8) {
+                ForEach(rates.indices, id: \.self) { i in
+                    capsule(for: rates[i], isPeak: i == peakIndex)
                 }
             }
-        }
-        .sheet(isPresented: $showPicker) {
-            NavigationStack {
-                ZStack {
-                    Color.amachBg.ignoresSafeArea()
-                    DatePicker("", selection: $pickerDate, displayedComponents: .hourAndMinute)
-                        .datePickerStyle(.wheel)
-                        .labelsHidden()
-                }
-                .navigationTitle("Reminder Time")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Add") {
-                            let cal = Calendar.current
-                            let comps = cal.dateComponents([.hour, .minute], from: pickerDate)
-                            let seconds = (comps.hour ?? 0) * 3600 + (comps.minute ?? 0) * 60
-                            if !selectedTimes.contains(seconds) {
-                                selectedTimes.append(seconds)
-                            }
-                            showPicker = false
-                        }
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.amachPrimary)
-                    }
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") { showPicker = false }
-                            .foregroundStyle(Color.amachTextSecondary)
-                    }
-                }
-            }
-            .presentationDetents([.medium])
+
+            Text("your peak")
+                .font(AmachType.tiny)
+                .foregroundStyle(Color.amachPrimary)
+                .fontWeight(.medium)
+                .opacity(0.9)
+                .padding(.top, AmachSpacing.xs)
         }
     }
+
+    private func capsule(for rate: Double, isPeak: Bool) -> some View {
+        VStack(spacing: 6) {
+            Capsule()
+                .fill(isPeak ? Color.amachPrimary : Color.amachSurface)
+                .frame(width: 36, height: 56)
+                .overlay(
+                    Capsule()
+                        .stroke(
+                            isPeak ? Color.amachPrimary : Color.amachPrimary.opacity(0.18),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(
+                    color: isPeak ? Color.amachPrimary.opacity(0.45) : .clear,
+                    radius: isPeak ? 10 : 0
+                )
+
+            Text(String(format: "%.1f", rate))
+                .font(AmachType.tiny)
+                .foregroundStyle(isPeak ? Color.amachPrimary : Color.amachTextSecondary)
+                .fontWeight(isPeak ? .semibold : .regular)
+        }
+    }
+}
+
+// MARK: - Watch reachability pill (Page 3)
+
+private struct WatchReachabilityPill: View {
+
+    let isReachable: Bool
+
+    var body: some View {
+        HStack(spacing: AmachSpacing.sm) {
+            Circle()
+                .fill(isReachable ? Color.amachSuccess : Color.amachWarning)
+                .frame(width: 8, height: 8)
+            Text(isReachable ? "Watch connected" : "Open Amach Breathe on your watch")
+                .font(AmachType.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(isReachable ? Color.amachSuccess : Color.amachWarning)
+        }
+        .padding(.horizontal, AmachSpacing.md)
+        .padding(.vertical, AmachSpacing.sm)
+        .background(
+            (isReachable ? Color.amachSuccess : Color.amachWarning)
+                .opacity(0.12)
+        )
+        .clipShape(Capsule())
+    }
+}
+
+// MARK: - Animated breathing ring (Page 4)
+
+/// Self-contained breathing ring for onboarding. Mirrors the BreathingCoachView
+/// aesthetic from the watch (track ring + halo + animated emerald ring) but
+/// drives itself off a simple repeating animation rather than the master phase
+/// timer — onboarding doesn't need a real pacer.
+private struct BreathingRing: View {
+
+    @State private var inhaling = false
+    @State private var phaseLabel = "Inhale"
+    @State private var labelTimer: Timer?
+
+    /// 4s in / 4s out — sits in the resonance range without committing to a
+    /// specific BPM. Honors Reduce Motion by skipping the animation.
+    private static let cycleSeconds: Double = 4
+
+    var body: some View {
+        let scale: CGFloat = inhaling ? 1.15 : 0.7
+        let intensity: Double = inhaling ? 1.0 : 0.0
+
+        ZStack {
+            // Halo
+            Circle()
+                .fill(Color.amachPrimary)
+                .scaleEffect(0.95 + 0.25 * scale)
+                .opacity(0.18 + 0.32 * intensity)
+                .blur(radius: 18)
+
+            // Track
+            Circle()
+                .stroke(Color.amachPrimary.opacity(0.18), lineWidth: 2)
+
+            // Animated ring
+            Circle()
+                .stroke(Color.amachPrimary, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .scaleEffect(scale)
+                .shadow(color: Color.amachPrimary.opacity(0.55), radius: 4 + 8 * intensity)
+
+            Text(phaseLabel)
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.amachTextPrimary)
+                .tracking(0.5)
+        }
+        .onAppear { start() }
+        .onDisappear { labelTimer?.invalidate() }
+    }
+
+    private func start() {
+        guard !AmachAccessibility.isReduceMotionEnabled() else {
+            inhaling = true
+            return
+        }
+        withAnimation(.easeInOut(duration: Self.cycleSeconds).repeatForever(autoreverses: true)) {
+            inhaling = true
+        }
+        // Crossfade the label in sync with the cycle. Start on inhale, flip on
+        // each exhale boundary.
+        labelTimer = Timer.scheduledTimer(withTimeInterval: Self.cycleSeconds, repeats: true) { _ in
+            Task { @MainActor in
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    phaseLabel = (phaseLabel == "Inhale") ? "Exhale" : "Inhale"
+                }
+            }
+        }
+    }
+}
+
+#Preview {
+    OnboardingView()
+        .environmentObject(WatchConnectivityService())
+        .environmentObject(OnboardingService())
 }
