@@ -493,6 +493,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA53FC1BB186502CE3D2D33B /* Build configuration list for PBXNativeTarget "AmachBreathe" */;
 			buildPhases = (
+				3ECA28B03B93611036972172 /* Set Build Number from Git Commit Count */,
 				438019DED4A585C23329DF22 /* Sources */,
 				4241518CF3F2ADFFB381228B /* Resources */,
 				5E4085E664AD1CA3373583B4 /* Frameworks */,
@@ -515,6 +516,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FCC8E1F01204C86193E094B5 /* Build configuration list for PBXNativeTarget "AmachBreatheWatch" */;
 			buildPhases = (
+				2E5C751B2171E0409D566670 /* Set Build Number from Git Commit Count */,
 				F3BBDA2406A6AB8DC7ACCB07 /* Sources */,
 				856845D48E4FB69179D9ED05 /* Resources */,
 				5A112E3A8C1ADC7F43234F2D /* Frameworks */,
@@ -596,6 +598,47 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		2E5C751B2171E0409D566670 /* Set Build Number from Git Commit Count */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Set Build Number from Git Commit Count";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  BUILD_NUMBER=$(git -C \"$SRCROOT\" rev-list --count HEAD)\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$INFOPLIST_FILE\"\nfi\n";
+		};
+		3ECA28B03B93611036972172 /* Set Build Number from Git Commit Count */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Set Build Number from Git Commit Count";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  BUILD_NUMBER=$(git -C \"$SRCROOT\" rev-list --count HEAD)\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$INFOPLIST_FILE\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		23D0029FF92D0A2708929A6D /* Sources */ = {
@@ -691,6 +734,7 @@
 				CODE_SIGN_ENTITLEMENTS = watchOS/AmachBreatheWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6VDX3QKK79;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = watchOS/Sources/App/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp;
 				PRODUCT_NAME = "Amach Breathe Watch";
@@ -770,6 +814,7 @@
 				CODE_SIGN_ENTITLEMENTS = watchOS/AmachBreatheWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6VDX3QKK79;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = watchOS/Sources/App/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp;
 				PRODUCT_NAME = "Amach Breathe Watch";
@@ -879,6 +924,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6VDX3QKK79;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = iOS/Sources/App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -903,6 +949,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6VDX3QKK79;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = iOS/Sources/App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
