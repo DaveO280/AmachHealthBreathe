@@ -12,6 +12,9 @@ public struct SessionView: View {
 
             if calibrationRunner.isRunning {
                 CalibrationActiveView()
+            } else if case .complete(let record) = calibrationRunner.calibrationState,
+                      runner.phase == .idle {
+                CalibrationResultView(record: record)
             } else {
                 switch runner.phase {
                 case .idle:
