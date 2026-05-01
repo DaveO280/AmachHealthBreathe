@@ -84,8 +84,6 @@ targets:
       - sdk: HealthKit.framework
       - sdk: WatchConnectivity.framework
       - sdk: WidgetKit.framework
-      - target: AmachBreatheWatchComplication
-        embed: true
     entitlements:
       path: watchOS/AmachBreatheWatch.entitlements
       properties:
@@ -100,29 +98,6 @@ targets:
       CODE_SIGNING_REQUIRED: "YES"
       DEVELOPMENT_TEAM: 6VDX3QKK79
       WKApplication: "YES"
-
-  # ── watchOS Complication Extension ────────────────────────────
-  AmachBreatheWatchComplication:
-    type: app-extension
-    platform: watchOS
-    deploymentTarget: "10.0"
-    bundleId: com.amach.AmachBreathe.watchkitapp.complication
-    sources:
-      - path: watchOS/Complication
-        type: group
-    dependencies:
-      - package: AmachBreatheShared
-      - sdk: WidgetKit.framework
-    settings:
-      PRODUCT_NAME: AmachBreatheWatchComplication
-      PRODUCT_BUNDLE_IDENTIFIER: com.amach.AmachBreathe.watchkitapp.complication
-      SWIFT_VERSION: "6.0"
-      TARGETED_DEVICE_FAMILY: "4"
-      INFOPLIST_FILE: watchOS/Complication/Info.plist
-      CODE_SIGN_STYLE: Automatic
-      CODE_SIGNING_REQUIRED: "YES"
-      DEVELOPMENT_TEAM: 6VDX3QKK79
-      SKIP_INSTALL: "YES"
 
 schemes:
   AmachBreathe:

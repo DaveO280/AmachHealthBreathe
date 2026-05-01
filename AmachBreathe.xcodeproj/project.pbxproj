@@ -12,7 +12,6 @@
 		0299171278E8E7156C977E95 /* TrendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D8A03DA4404BCCBD3414D68 /* TrendView.swift */; };
 		0BC23BE00404ED5A84CBF141 /* VisualPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5931AE145EF39A2F94FC290C /* VisualPacer.swift */; };
 		0BDB271FED778525A4853675 /* WalletStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E41C5DC53807B47DF56C59A7 /* WalletStatusBanner.swift */; };
-		0E109ADF9C657462EF64BC10 /* AmachBreatheComplicationApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320D77C6EF216982941D97E8 /* AmachBreatheComplicationApp.swift */; };
 		0E43BF66DC59A336E2E698D8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E45697449E49A8290893DB85 /* ContentView.swift */; };
 		1625B300201045307ADDECD7 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B124493F97494B75F4B683E /* WatchConnectivity.framework */; };
 		176F04183593FC92BFB2966A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504A408CB22767A580218235 /* SettingsView.swift */; };
@@ -44,18 +43,14 @@
 		9B67E00BDB0A43DA018C3BA2 /* SyncOrSubscribeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 799695DA9EA4E1614A0FA00B /* SyncOrSubscribeSheet.swift */; };
 		9BBF4B2F0D40E5FD6A766408 /* CancelSubscriptionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2046516E1BE0560918CD049 /* CancelSubscriptionSheet.swift */; };
 		A8E96A1F82921C4CDB5103AA /* CalibrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5F443328E39EC5515A7C72 /* CalibrationService.swift */; };
-		AA818F4710703F7DA0A52019 /* ComplicationEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C19F147B70E63AB4405A85 /* ComplicationEntryView.swift */; };
 		ACF65313336D3EBD8FFA6D1F /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E60979A3399B86409CCD6E2 /* HealthKitService.swift */; };
-		B00499B9F3768F77D23463BB /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 408FF7624E4F4EBC2E34BAE9 /* WidgetKit.framework */; };
 		B3A6C8C9496A006A7BD1D311 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDD3CB2D5AB2E56346F25CCF /* NotificationService.swift */; };
 		B5242B1FAF2B9471D38F1195 /* OnboardingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5360833FE27979DA018BC929 /* OnboardingService.swift */; };
 		B7EDA7934D9F5EEC406FEDE9 /* iPhoneAudioPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16A89FB81E578F153AF28F25 /* iPhoneAudioPacer.swift */; };
 		B9141817F7D9999D6468605A /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 408FF7624E4F4EBC2E34BAE9 /* WidgetKit.framework */; };
 		B9A0D406AF8AF7207EFC70EB /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52AAD1FBD98F5C606430B96 /* HistoryView.swift */; };
-		BABCF54B11549CF37B8D5D1F /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = 02D2538A6ED2D5EF85A543B0 /* AmachBreatheShared */; };
 		BAE283A904EDC5D5D0B200E3 /* ConversionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49397AD6FA69F0D8D12DAA47 /* ConversionView.swift */; };
 		BCA5021795609855575CD5FE /* WatchContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E95C15232BEA6143056723A /* WatchContentView.swift */; };
-		BCE145BAA9757D2FA1185B4C /* AmachBreatheComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7868117686521185B8FAB75 /* AmachBreatheComplication.swift */; };
 		C0052E081D4D345F501E5B30 /* SessionSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93758483C5AF10DFD6BC5811 /* SessionSetupView.swift */; };
 		C3E0BE071F23F14F269F5631 /* iPhoneSessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D01A1C4DF9CDCCE9D7C6A8F /* iPhoneSessionRunner.swift */; };
 		C87AF1FCEF02EE70999C870A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D14E94E5AE606F2258FE46ED /* Assets.xcassets */; };
@@ -64,10 +59,7 @@
 		CE9B02CB4CC38536302D3D97 /* SoftSupportPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD98D74B655E1D40CD31BD0 /* SoftSupportPromptView.swift */; };
 		D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263B6EE690602C261C511609 /* CalibrationStore.swift */; };
 		D4863F57713FB5A59BB28D33 /* AmachBreatheWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF23B5FEADFC0762F10EE429 /* AmachBreatheWatchApp.swift */; };
-		DC5DC4DF1948B9FE35B7535E /* AmachBreatheWatchComplication.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BA10C2A9856F3B1B26091382 /* AmachBreatheWatchComplication.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E4E3086EF3D12C425A011035 /* ComplicationTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C78C02F70EF29210960B99 /* ComplicationTimelineProvider.swift */; };
 		E72484FBE37CAAE6DC175659 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B124493F97494B75F4B683E /* WatchConnectivity.framework */; };
-		EAA1DEB2B739002C29FAA3B9 /* ComplicationEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 638F0521598AD140B365B1BF /* ComplicationEntry.swift */; };
 		EBF53FD16A3B741F8173F35E /* QuickStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBE62B915290896069736D0 /* QuickStartView.swift */; };
 		ED6F82016C1EFFC418C68D91 /* WatchCalibrationRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5715B445ECAAE832393EC61C /* WatchCalibrationRunner.swift */; };
 		F05F3A7561021647AB83F036 /* OnboardingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */; };
@@ -93,13 +85,6 @@
 			remoteGlobalIDString = F933C606C00E41B756403FCA;
 			remoteInfo = AmachBreatheWatch;
 		};
-		4F987AAB738A0A1495E44FFF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 080D6D09391BB7CA9DF2F786 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C1EB844D7A73828E528CB43A;
-			remoteInfo = AmachBreatheWatchComplication;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -114,17 +99,6 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		5F0A70AF0C2E5B54E9A5EEA2 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				DC5DC4DF1948B9FE35B7535E /* AmachBreatheWatchComplication.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -135,7 +109,6 @@
 		1EBE62B915290896069736D0 /* QuickStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStartView.swift; sourceTree = "<group>"; };
 		263B6EE690602C261C511609 /* CalibrationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationStore.swift; sourceTree = "<group>"; };
 		29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheTests.swift; sourceTree = "<group>"; };
-		320D77C6EF216982941D97E8 /* AmachBreatheComplicationApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheComplicationApp.swift; sourceTree = "<group>"; };
 		3378D047788A9D962CB5121A /* ConnectWalletSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectWalletSheet.swift; sourceTree = "<group>"; };
 		392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWalletStore.swift; sourceTree = "<group>"; };
 		3FC5800DD5B16BFAE4612A9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -150,7 +123,6 @@
 		5D5DE1EBD9756544665251D1 /* CalibrationResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationResultView.swift; sourceTree = "<group>"; };
 		5E60979A3399B86409CCD6E2 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
 		62DFADCA87F38656027CB82E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		638F0521598AD140B365B1BF /* ComplicationEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationEntry.swift; sourceTree = "<group>"; };
 		6868E973C8D5B7EBEC49ED7D /* AppSettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsService.swift; sourceTree = "<group>"; };
 		6930951633B4554736898114 /* BreathingCoachView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreathingCoachView.swift; sourceTree = "<group>"; };
 		6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AmachBreatheTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -178,18 +150,13 @@
 		AD5F443328E39EC5515A7C72 /* CalibrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationService.swift; sourceTree = "<group>"; };
 		AD9953583514A39FE07FD064 /* SessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionService.swift; sourceTree = "<group>"; };
 		B24AFAA8857113DBEDDF3786 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
-		BA10C2A9856F3B1B26091382 /* AmachBreatheWatchComplication.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AmachBreatheWatchComplication.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFCDEB98EDBB3DCFD0AA253C /* AudioPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPacer.swift; sourceTree = "<group>"; };
 		C19FAC1F75D0942CA96513C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		C1C19F147B70E63AB4405A85 /* ComplicationEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationEntryView.swift; sourceTree = "<group>"; };
-		C7C78C02F70EF29210960B99 /* ComplicationTimelineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComplicationTimelineProvider.swift; sourceTree = "<group>"; };
 		CE84AA551BEBEEF710872306 /* iPhoneMasterPhaseTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneMasterPhaseTimer.swift; sourceTree = "<group>"; };
 		D14E94E5AE606F2258FE46ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		E3F60C1EAA25495145BBAE56 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E41C5DC53807B47DF56C59A7 /* WalletStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletStatusBanner.swift; sourceTree = "<group>"; };
 		E45697449E49A8290893DB85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E52AAD1FBD98F5C606430B96 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
-		E7868117686521185B8FAB75 /* AmachBreatheComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheComplication.swift; sourceTree = "<group>"; };
 		E7B395C9AE603753725D2390 /* MasterPhaseTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterPhaseTimer.swift; sourceTree = "<group>"; };
 		EDD3CB2D5AB2E56346F25CCF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		EF23B5FEADFC0762F10EE429 /* AmachBreatheWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheWatchApp.swift; sourceTree = "<group>"; };
@@ -218,15 +185,6 @@
 				97964E41D131BF25C9F08A0D /* HealthKit.framework in Frameworks */,
 				E72484FBE37CAAE6DC175659 /* WatchConnectivity.framework in Frameworks */,
 				00AC09B744BDE09106DD1EA8 /* StoreKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8681F4494F49920DA41C0EC6 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BABCF54B11549CF37B8D5D1F /* AmachBreatheShared in Frameworks */,
-				B00499B9F3768F77D23463BB /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,19 +248,6 @@
 				4A74AA9B200A55F559802C12 /* Subscription */,
 			);
 			path = Views;
-			sourceTree = "<group>";
-		};
-		13664F456A241C7E2E5D9E3A /* Complication */ = {
-			isa = PBXGroup;
-			children = (
-				E7868117686521185B8FAB75 /* AmachBreatheComplication.swift */,
-				320D77C6EF216982941D97E8 /* AmachBreatheComplicationApp.swift */,
-				638F0521598AD140B365B1BF /* ComplicationEntry.swift */,
-				C1C19F147B70E63AB4405A85 /* ComplicationEntryView.swift */,
-				C7C78C02F70EF29210960B99 /* ComplicationTimelineProvider.swift */,
-				E3F60C1EAA25495145BBAE56 /* Info.plist */,
-			);
-			path = Complication;
 			sourceTree = "<group>";
 		};
 		2F0A769992BE80C397DEDBA9 /* Settings */ = {
@@ -383,7 +328,6 @@
 			isa = PBXGroup;
 			children = (
 				7963214589E3F477180419DF /* App */,
-				A55986494109714D7DD0E8F3 /* Models */,
 				08117B906245DC9D7A71FDF6 /* Services */,
 				FBF08FA423F50FEB7C674AF3 /* Views */,
 			);
@@ -454,13 +398,6 @@
 			path = Calibration;
 			sourceTree = "<group>";
 		};
-		A55986494109714D7DD0E8F3 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
 		A7A31F86AB9132B90E083C69 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -475,7 +412,6 @@
 		B3290946BE3650D73C13C2EF /* watchOS */ = {
 			isa = PBXGroup;
 			children = (
-				13664F456A241C7E2E5D9E3A /* Complication */,
 				738DB7A99F7C687D39CBEB40 /* Sources */,
 				62DFADCA87F38656027CB82E /* Assets.xcassets */,
 			);
@@ -498,7 +434,6 @@
 				189E3A52ECD338569B679F86 /* AmachBreathe.app */,
 				6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */,
 				172C4A356E8CFD3E9CCC085E /* AmachBreatheWatch.app */,
-				BA10C2A9856F3B1B26091382 /* AmachBreatheWatchComplication.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -554,25 +489,6 @@
 			productReference = 6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C1EB844D7A73828E528CB43A /* AmachBreatheWatchComplication */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 604A7089DFB7DCE923C2DE4F /* Build configuration list for PBXNativeTarget "AmachBreatheWatchComplication" */;
-			buildPhases = (
-				288D916388FD14EB5E5AD508 /* Sources */,
-				8681F4494F49920DA41C0EC6 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = AmachBreatheWatchComplication;
-			packageProductDependencies = (
-				02D2538A6ED2D5EF85A543B0 /* AmachBreatheShared */,
-			);
-			productName = AmachBreatheWatchComplication;
-			productReference = BA10C2A9856F3B1B26091382 /* AmachBreatheWatchComplication.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		D5E24FFB8A57E26E03D39354 /* AmachBreathe */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA53FC1BB186502CE3D2D33B /* Build configuration list for PBXNativeTarget "AmachBreathe" */;
@@ -602,12 +518,10 @@
 				F3BBDA2406A6AB8DC7ACCB07 /* Sources */,
 				856845D48E4FB69179D9ED05 /* Resources */,
 				5A112E3A8C1ADC7F43234F2D /* Frameworks */,
-				5F0A70AF0C2E5B54E9A5EEA2 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				36B63C1276A6055FDAC4CFB9 /* PBXTargetDependency */,
 			);
 			name = AmachBreatheWatch;
 			packageProductDependencies = (
@@ -628,10 +542,6 @@
 				TargetAttributes = {
 					1840F8FB88A78A167D58C60D = {
 						ProvisioningStyle = Manual;
-					};
-					C1EB844D7A73828E528CB43A = {
-						DevelopmentTeam = 6VDX3QKK79;
-						ProvisioningStyle = Automatic;
 					};
 					D5E24FFB8A57E26E03D39354 = {
 						DevelopmentTeam = 6VDX3QKK79;
@@ -663,7 +573,6 @@
 				D5E24FFB8A57E26E03D39354 /* AmachBreathe */,
 				1840F8FB88A78A167D58C60D /* AmachBreatheTests */,
 				F933C606C00E41B756403FCA /* AmachBreatheWatch */,
-				C1EB844D7A73828E528CB43A /* AmachBreatheWatchComplication */,
 			);
 		};
 /* End PBXProject section */
@@ -696,18 +605,6 @@
 				F91941A76702CE3ECA1901A5 /* AmachBreatheTests.swift in Sources */,
 				F05F3A7561021647AB83F036 /* OnboardingFlowTests.swift in Sources */,
 				4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		288D916388FD14EB5E5AD508 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BCE145BAA9757D2FA1185B4C /* AmachBreatheComplication.swift in Sources */,
-				0E109ADF9C657462EF64BC10 /* AmachBreatheComplicationApp.swift in Sources */,
-				EAA1DEB2B739002C29FAA3B9 /* ComplicationEntry.swift in Sources */,
-				AA818F4710703F7DA0A52019 /* ComplicationEntryView.swift in Sources */,
-				E4E3086EF3D12C425A011035 /* ComplicationTimelineProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -778,11 +675,6 @@
 			target = D5E24FFB8A57E26E03D39354 /* AmachBreathe */;
 			targetProxy = 22BCFE0BD6CB7716D15B7B86 /* PBXContainerItemProxy */;
 		};
-		36B63C1276A6055FDAC4CFB9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C1EB844D7A73828E528CB43A /* AmachBreatheWatchComplication */;
-			targetProxy = 4F987AAB738A0A1495E44FFF /* PBXContainerItemProxy */;
-		};
 		56909514EA4BF1E37DF2FA62 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F933C606C00E41B756403FCA /* AmachBreatheWatch */;
@@ -808,28 +700,6 @@
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 				WKApplication = YES;
-			};
-			name = Debug;
-		};
-		0F8E7FFF469A80C7727A16A6 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6VDX3QKK79;
-				INFOPLIST_FILE = watchOS/Complication/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp.complication;
-				PRODUCT_NAME = AmachBreatheWatchComplication;
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
 		};
@@ -906,28 +776,6 @@
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 				WKApplication = YES;
-			};
-			name = Release;
-		};
-		5EC21FF2E72F730649D228C5 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6VDX3QKK79;
-				INFOPLIST_FILE = watchOS/Complication/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.amach.AmachBreathe.watchkitapp.complication;
-				PRODUCT_NAME = AmachBreatheWatchComplication;
-				SDKROOT = watchos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
 		};
@@ -1098,15 +946,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		604A7089DFB7DCE923C2DE4F /* Build configuration list for PBXNativeTarget "AmachBreatheWatchComplication" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				0F8E7FFF469A80C7727A16A6 /* Debug */,
-				5EC21FF2E72F730649D228C5 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		CA53FC1BB186502CE3D2D33B /* Build configuration list for PBXNativeTarget "AmachBreathe" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1144,10 +983,6 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		02D2538A6ED2D5EF85A543B0 /* AmachBreatheShared */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = AmachBreatheShared;
-		};
 		2A4BA8C7FAA7AFF50FFA0707 /* AmachBreatheShared */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AmachBreatheShared;
