@@ -130,7 +130,7 @@ private struct SessionRowView: View {
     }
 }
 
-extension SessionHistoryModel.Row: Hashable {
+extension SessionHistoryModel.Row: @retroactive Hashable {
     public static func == (lhs: SessionHistoryModel.Row, rhs: SessionHistoryModel.Row) -> Bool {
         lhs.id == rhs.id
     }

@@ -83,7 +83,7 @@ public final class SessionService: ObservableObject {
                 )
                 // Skip if we already have this session by id
                 guard !sessions.contains(where: { $0.id == record.id }) else { continue }
-                var sr = SessionRecord(from: record, uploadStatus: .uploaded, storjUri: item.uri)
+                let sr = SessionRecord(from: record, uploadStatus: .uploaded, storjUri: item.uri)
                 restored.append(sr)
             } catch {
                 continue
