@@ -1,9 +1,24 @@
 import HealthKit
 import Combine
+import os
 import AmachBreatheShared
 
 /// Manages a HKWorkoutSession to keep the Watch screen awake and streams
-/// live heart rate data, converting beat-to-beat intervals to RR intervals (ms).
+/// live heart rate samples, converting each instantaneous BPM to a synthetic
+/// RR interval (ms = 60_000/bpm). The HR oscillation across the breath cycle
+/// (RSA) is what calibration / coherence Goertzel detects.
+///
+/// Two parallel sample sources, both feeding `onRRInterval`:
+///   1. `HKLiveWorkoutBuilder` delegate — fires when the workout collects a
+///      new heart-rate batch (typically every few seconds during a workout).
+///   2. `HKAnchoredObjectQuery` on `.heartRate` — streams every new sample
+///      written to the HealthKit store while the workout is active.
+///
+/// The anchored query exists because the workout-builder delegate has, on
+/// real Watch SE hardware, occasionally not fired at all for `.mindAndBody`
+/// configurations — leaving calibration with zero samples and no resonance.
+/// Duplicates are harmless: HRVProcessor's window is time-pruned and the
+/// repeated value just slightly over-weights one bin in the Goertzel.
 @MainActor
 public final class HKWorkoutSessionManager: NSObject, ObservableObject {
 
@@ -14,12 +29,17 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
 
     @Published public private(set) var isActive: Bool = false
     @Published public private(set) var latestHeartRate: Double = 0   // BPM
+    @Published public private(set) var sampleCount: Int = 0          // diagnostic
 
     // MARK: - Private
 
     private let healthStore = HKHealthStore()
     private var workoutSession: HKWorkoutSession?
     private var liveBuilder: HKLiveWorkoutBuilder?
+    private var hrAnchorQuery: HKAnchoredObjectQuery?
+
+    nonisolated private static let log = Logger(
+        subsystem: "com.amach.AmachBreathe", category: "HK")
 
     // MARK: - Lifecycle
 
@@ -46,24 +66,53 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
         config.activityType = .mindAndBody
         config.locationType = .indoor
 
-        let session = try HKWorkoutSession(healthStore: healthStore, configuration: config)
+        let session: HKWorkoutSession
+        do {
+            session = try HKWorkoutSession(healthStore: healthStore, configuration: config)
+        } catch {
+            Self.log.error("HK_WORKOUT_INIT_FAILED \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
         let builder = session.associatedWorkoutBuilder()
-        builder.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: config)
+        let dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: config)
+        // Defaults for `.mindAndBody` are not contractual — be explicit so the
+        // builder definitely collects heart rate. Without this, the
+        // didCollectDataOf delegate may never fire on real hardware.
+        dataSource.enableCollection(for: HKQuantityType(.heartRate), predicate: nil)
+        builder.dataSource = dataSource
 
         session.delegate = self
         builder.delegate = self
 
         workoutSession = session
         liveBuilder = builder
+        sampleCount = 0
 
-        session.startActivity(with: Date())
-        try await builder.beginCollection(at: Date())
+        let startDate = Date()
+        session.startActivity(with: startDate)
+        do {
+            try await builder.beginCollection(at: startDate)
+        } catch {
+            Self.log.error("HK_BEGIN_COLLECTION_FAILED \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+
+        // Belt-and-suspenders parallel HR stream — see class doc above.
+        startHeartRateAnchorQuery(from: startDate)
 
         isActive = true
+        Self.log.info("HK_WORKOUT_STARTED at \(startDate, privacy: .public)")
     }
 
     public func stopWorkout() async {
-        guard let session = workoutSession, let builder = liveBuilder else { return }
+        if let q = hrAnchorQuery {
+            healthStore.stop(q)
+            hrAnchorQuery = nil
+        }
+        guard let session = workoutSession, let builder = liveBuilder else {
+            isActive = false
+            return
+        }
         session.end()
         do {
             try await builder.endCollection(at: Date())
@@ -72,6 +121,48 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
         workoutSession = nil
         liveBuilder = nil
         isActive = false
+        Self.log.info("HK_WORKOUT_STOPPED samples=\(self.sampleCount, privacy: .public)")
+    }
+
+    // MARK: - Anchored heart-rate stream
+
+    private func startHeartRateAnchorQuery(from start: Date) {
+        let hrType = HKQuantityType(.heartRate)
+        // Only samples added AFTER the workout starts — past samples are
+        // irrelevant and would pollute the HRVProcessor window.
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: nil, options: [])
+        let query = HKAnchoredObjectQuery(
+            type: hrType,
+            predicate: predicate,
+            anchor: nil,
+            limit: HKObjectQueryNoLimit
+        ) { [weak self] _, samples, _, _, _ in
+            self?.deliver(samples: samples)
+        }
+        query.updateHandler = { [weak self] _, samples, _, _, _ in
+            self?.deliver(samples: samples)
+        }
+        healthStore.execute(query)
+        hrAnchorQuery = query
+        Self.log.info("HK_ANCHOR_QUERY_STARTED")
+    }
+
+    nonisolated private func deliver(samples: [HKSample]?) {
+        guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else { return }
+        let bpmUnit = HKUnit.count().unitDivided(by: .minute())
+        let rrPairs: [(Double, Double)] = quantitySamples.compactMap {
+            let bpm = $0.quantity.doubleValue(for: bpmUnit)
+            return bpm > 0 ? (bpm, 60_000.0 / bpm) : nil
+        }
+        guard !rrPairs.isEmpty else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            for (bpm, rrMs) in rrPairs {
+                self.latestHeartRate = bpm
+                self.sampleCount += 1
+                self.onRRInterval?(rrMs)
+            }
+        }
     }
 }
 
@@ -83,12 +174,16 @@ extension HKWorkoutSessionManager: HKWorkoutSessionDelegate {
         didChangeTo toState: HKWorkoutSessionState,
         from fromState: HKWorkoutSessionState,
         date: Date
-    ) { }
+    ) {
+        Self.log.info("HK_SESSION_STATE \(fromState.rawValue, privacy: .public)→\(toState.rawValue, privacy: .public)")
+    }
 
     nonisolated public func workoutSession(
         _ workoutSession: HKWorkoutSession,
         didFailWithError error: Error
-    ) { }
+    ) {
+        Self.log.error("HK_SESSION_FAILED \(error.localizedDescription, privacy: .public)")
+    }
 }
 
 // MARK: - HKLiveWorkoutBuilderDelegate
@@ -112,8 +207,10 @@ extension HKWorkoutSessionManager: HKLiveWorkoutBuilderDelegate {
         let rrMs = 60_000.0 / bpm
 
         Task { @MainActor [weak self] in
-            self?.latestHeartRate = bpm
-            self?.onRRInterval?(rrMs)
+            guard let self else { return }
+            self.latestHeartRate = bpm
+            self.sampleCount += 1
+            self.onRRInterval?(rrMs)
         }
     }
 }

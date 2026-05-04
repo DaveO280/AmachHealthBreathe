@@ -115,7 +115,14 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         // on the watchOS simulator the missing entitlement causes
         // beginCollection(at:) to hang forever, which would block the pacer
         // start indefinitely.
+        //
+        // Authorization is awaited *inside* the detached Task. Calibration is
+        // typically initiated from iPhone via WCSession, which means the
+        // QuickStartView `.task` (where auth was previously requested) may
+        // not have fired before .start() runs. Without auth, the workout
+        // collects zero samples and calibration fails.
         Task { [workoutManager] in
+            try? await workoutManager.requestAuthorization()
             try? await workoutManager.startWorkout()
         }
         // Diagnostic: workout session is what keeps the display awake on
@@ -124,7 +131,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard let self else { return }
-            Self.log.info("WORKOUT_ACTIVE_CHECK calibration active=\(self.workoutManager.isActive, privacy: .public)")
+            Self.log.info("WORKOUT_ACTIVE_CHECK calibration active=\(self.workoutManager.isActive, privacy: .public) samples=\(self.workoutManager.sampleCount, privacy: .public)")
         }
         Self.log.info("Calibration start (rates: \(CalibrationEngine.candidateBPMs.map { "\($0)" }.joined(separator: ","), privacy: .public))")
         await startNextRate()
@@ -274,12 +281,15 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         }
         invalidateExtendedRuntimeSession()
 
+        let totalSamples = workoutManager.sampleCount
+        let perRate = collectedSamples.map { "\($0.key)=\($0.value.count)" }.sorted().joined(separator: ",")
         guard let result = engine.findResonance(samples: collectedSamples) else {
             calibrationState = .failed
-            Self.log.info("CALIBRATION_FAILED no resonance from \(self.collectedSamples.count, privacy: .public) rate samples")
+            Self.log.error("CALIBRATION_FAILED rates=\(self.collectedSamples.count, privacy: .public) hkSamples=\(totalSamples, privacy: .public) perRate=[\(perRate, privacy: .public)]")
             sendFailureToPhone()
             return
         }
+        Self.log.info("CALIBRATION_PIPELINE hkSamples=\(totalSamples, privacy: .public) perRate=[\(perRate, privacy: .public)]")
 
         let record = CalibrationRecord(result: result)
         calibrationState = .complete(result: record)
