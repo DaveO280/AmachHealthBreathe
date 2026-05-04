@@ -66,10 +66,16 @@ final class iPhoneMasterPhaseTimer: ObservableObject {
         cancelTimer()
         let src = DispatchSource.makeTimerSource(queue: timerQueue)
         src.schedule(deadline: .now(), repeating: tickInterval, leeway: .microseconds(500))
-        src.setEventHandler { [weak self] in
+        // The handler runs on `timerQueue` (non-MainActor). Type the closure as
+        // @Sendable explicitly so Swift 6 doesn't inherit the class's @MainActor
+        // isolation and trap on entry when DispatchSource invokes it.
+        let handler: @Sendable () -> Void = { [weak self] in
             let now = Date()
-            Task { @MainActor [weak self] in self?.processTick(now: now) }
+            Task { @MainActor in
+                self?.processTick(now: now)
+            }
         }
+        src.setEventHandler(handler: handler)
         src.resume()
         timer = src
     }

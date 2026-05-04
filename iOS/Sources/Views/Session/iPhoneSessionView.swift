@@ -30,80 +30,158 @@ private struct ActivePhaseView: View {
 
     @EnvironmentObject private var runner: iPhoneSessionRunner
 
-    private let ringDiameter: CGFloat = 200
+    /// 240 pt ring per spec — fills most of the iPhone screen width.
+    private let ringDiameter: CGFloat = 240
+
+    /// Last known ringScale from an active session phase. Held in @State so a
+    /// stray idle PacerState (post-stop, pre-tick) can't snap the ring back.
+    @State private var displayedRingScale: Double = 1.0
+    @State private var displayedBreathPhase: BreathPhase = .inhale
 
     var body: some View {
         VStack(spacing: AmachSpacing.xl) {
             Spacer()
 
-            // Phase label
-            Text(phaseName)
-                .font(AmachType.caption)
-                .foregroundStyle(Color.amachTextSecondary)
-                .animation(.easeInOut, value: runner.phase)
+            phaseLabel
 
-            // Breathing ring
             ZStack {
-                Circle()
-                    .stroke(ringColor.opacity(0.15), lineWidth: 5)
-                    .frame(width: ringDiameter, height: ringDiameter)
-
-                Circle()
-                    .stroke(ringColor, lineWidth: 5)
-                    .frame(width: ringDiameter, height: ringDiameter)
-                    .scaleEffect(runner.pacerState.ringScale)
-                    .animation(.linear(duration: 1.0 / 60.0),
-                               value: runner.pacerState.ringScale)
-
-                VStack(spacing: AmachSpacing.xs) {
-                    Text(runner.pacerState.breathPhase == .inhale ? "inhale" : "exhale")
-                        .font(AmachType.h3)
-                        .foregroundStyle(Color.amachTextPrimary)
-                    if runner.isPaused {
-                        Image(systemName: "pause.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Color.amachTextSecondary)
-                    }
-                }
+                haloLayer
+                trackRing
+                animatedRing
+                centerLabel
             }
+            .frame(width: ringDiameter, height: ringDiameter)
+            .animation(.linear(duration: 1.0 / 60.0), value: displayedRingScale)
+            .animation(.easeInOut(duration: 0.35), value: displayedBreathPhase)
 
-            // Phase timer
-            if let remaining = runner.pacerState.sessionPhaseRemaining {
-                Text(timeString(remaining))
-                    .font(AmachType.metricValue(size: 18))
-                    .foregroundStyle(Color.amachTextSecondary)
-                    .monospacedDigit()
-            }
+            phaseTimer
 
             Spacer()
 
-            // Controls
-            HStack(spacing: AmachSpacing.lg) {
-                Button {
-                    if runner.isPaused { runner.resume() } else { runner.pause() }
-                } label: {
-                    Image(systemName: runner.isPaused ? "play.fill" : "pause.fill")
-                        .font(.system(size: 20))
-                        .frame(width: 56, height: 56)
-                        .background(Color.amachSurface)
-                        .foregroundStyle(Color.amachTextPrimary)
-                        .clipShape(Circle())
-                }
+            controls
+                .padding(.bottom, AmachSpacing.xxl)
+        }
+        .padding(.horizontal, AmachSpacing.screenEdge)
+        .onAppear { syncFromPacerState() }
+        .onChange(of: runner.pacerState.ringScale) { _, _ in syncFromPacerState() }
+        .onChange(of: runner.pacerState.breathPhase) { _, _ in syncFromPacerState() }
+        .onChange(of: runner.pacerState.sessionPhase) { _, _ in syncFromPacerState() }
+    }
 
-                Button {
-                    runner.submitReflection(rating: nil)
-                } label: {
-                    Text("End")
-                        .font(AmachType.caption.weight(.semibold))
-                        .frame(width: 80, height: 56)
-                        .background(Color.amachSurface)
+    private func syncFromPacerState() {
+        guard runner.pacerState.sessionPhase.isActive else { return }
+        displayedRingScale = runner.pacerState.ringScale
+        displayedBreathPhase = runner.pacerState.breathPhase
+    }
+
+    // MARK: - Layers
+
+    private var phaseLabel: some View {
+        Text(phaseName)
+            .font(AmachType.caption)
+            .foregroundStyle(Color.amachTextSecondary)
+            .tracking(2)
+            .textCase(.uppercase)
+            .animation(.easeInOut, value: runner.phase)
+    }
+
+    private var haloLayer: some View {
+        let breath = (displayedRingScale - 0.6) / 0.8
+        let intensity = max(0, min(1, breath))
+        return Circle()
+            .fill(haloColor)
+            .frame(width: ringDiameter, height: ringDiameter)
+            .scaleEffect(0.95 + 0.25 * displayedRingScale)
+            .opacity(0.18 + 0.32 * intensity)
+            .blur(radius: 28)
+    }
+
+    private var trackRing: some View {
+        Circle()
+            .stroke(ringColor.opacity(0.18), lineWidth: 3)
+            .frame(width: ringDiameter, height: ringDiameter)
+    }
+
+    private var animatedRing: some View {
+        Circle()
+            .stroke(
+                ringColor,
+                style: StrokeStyle(lineWidth: 5, lineCap: .round)
+            )
+            .frame(width: ringDiameter, height: ringDiameter)
+            .scaleEffect(displayedRingScale)
+            .shadow(color: ringColor.opacity(0.55), radius: ringGlowRadius)
+    }
+
+    private var centerLabel: some View {
+        ZStack {
+            phaseText("Inhale")
+                .opacity(displayedBreathPhase == .inhale ? 1 : 0)
+            phaseText("Exhale")
+                .opacity(displayedBreathPhase == .exhale ? 1 : 0)
+
+            if runner.isPaused {
+                VStack(spacing: 2) {
+                    Spacer().frame(height: 36)
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 14))
                         .foregroundStyle(Color.amachTextSecondary)
-                        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
                 }
             }
-            .padding(.bottom, AmachSpacing.xxl)
         }
     }
+
+    private func phaseText(_ label: String) -> some View {
+        Text(label)
+            .font(.system(size: 28, weight: .semibold, design: .rounded))
+            .foregroundStyle(Color.amachTextPrimary)
+            .tracking(0.5)
+    }
+
+    @ViewBuilder
+    private var phaseTimer: some View {
+        if let remaining = runner.pacerState.sessionPhaseRemaining {
+            Text(timeString(remaining))
+                .font(AmachType.metricValue(size: 20))
+                .foregroundStyle(Color.amachTextSecondary)
+                .monospacedDigit()
+        } else {
+            Color.clear.frame(height: 24)
+        }
+    }
+
+    private var controls: some View {
+        VStack(spacing: AmachSpacing.md) {
+            Button {
+                if runner.isPaused { runner.resume() } else { runner.pause() }
+            } label: {
+                Image(systemName: runner.isPaused ? "play.fill" : "pause.fill")
+                    .font(.system(size: 22))
+                    .frame(width: 64, height: 64)
+                    .background(Color.amachSurface)
+                    .foregroundStyle(Color.amachTextPrimary)
+                    .clipShape(Circle())
+            }
+
+            Button {
+                runner.submitReflection(rating: nil)
+            } label: {
+                Text("End Session")
+                    .font(AmachType.caption.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.amachSurface)
+                    .foregroundStyle(Color.amachTextPrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AmachRadius.md)
+                            .stroke(Color.amachPrimary.opacity(0.30), lineWidth: 1)
+                    )
+            }
+        }
+    }
+
+    // MARK: - Style helpers
 
     private var ringColor: Color {
         if runner.isPaused { return Color.amachTextSecondary }
@@ -111,11 +189,23 @@ private struct ActivePhaseView: View {
         return Color.amachPrimary
     }
 
+    private var haloColor: Color {
+        if runner.isPaused { return Color.amachTextSecondary }
+        if case .recovery = runner.phase { return Color.amachTextSecondary }
+        return Color.amachPrimary
+    }
+
+    private var ringGlowRadius: CGFloat {
+        let breath = (displayedRingScale - 0.6) / 0.8
+        let intensity = max(0, min(1, breath))
+        return 8 + 16 * intensity
+    }
+
     private var phaseName: String {
         switch runner.phase {
-        case .baseline: return "Baseline"
+        case .baseline: return "Settling"
         case .warmup:   return "Warm Up"
-        case .main:     return "Breathing"
+        case .main:     return "Breathe"
         case .recovery: return "Recovery"
         default:        return ""
         }

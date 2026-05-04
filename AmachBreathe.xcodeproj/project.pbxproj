@@ -61,6 +61,7 @@
 		D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263B6EE690602C261C511609 /* CalibrationStore.swift */; };
 		D4863F57713FB5A59BB28D33 /* AmachBreatheWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF23B5FEADFC0762F10EE429 /* AmachBreatheWatchApp.swift */; };
 		E72484FBE37CAAE6DC175659 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B124493F97494B75F4B683E /* WatchConnectivity.framework */; };
+		E9B0BF4EB580D39EB314B303 /* iPhoneSessionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE7F5FE3D3B19D0CF710B16B /* iPhoneSessionRunnerTests.swift */; };
 		EBF53FD16A3B741F8173F35E /* QuickStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBE62B915290896069736D0 /* QuickStartView.swift */; };
 		ED6F82016C1EFFC418C68D91 /* WatchCalibrationRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5715B445ECAAE832393EC61C /* WatchCalibrationRunner.swift */; };
 		F05F3A7561021647AB83F036 /* OnboardingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */; };
@@ -150,6 +151,7 @@
 		A61F607DE6D903C2422B6C73 /* iPhoneSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneSessionView.swift; sourceTree = "<group>"; };
 		AD5F443328E39EC5515A7C72 /* CalibrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationService.swift; sourceTree = "<group>"; };
 		AD9953583514A39FE07FD064 /* SessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionService.swift; sourceTree = "<group>"; };
+		AE7F5FE3D3B19D0CF710B16B /* iPhoneSessionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneSessionRunnerTests.swift; sourceTree = "<group>"; };
 		B12EAE041394A779382B627E /* CompactWatchEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactWatchEnvironment.swift; sourceTree = "<group>"; };
 		B24AFAA8857113DBEDDF3786 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		BFCDEB98EDBB3DCFD0AA253C /* AudioPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPacer.swift; sourceTree = "<group>"; };
@@ -301,6 +303,7 @@
 			isa = PBXGroup;
 			children = (
 				29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */,
+				AE7F5FE3D3B19D0CF710B16B /* iPhoneSessionRunnerTests.swift */,
 				8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */,
 				8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */,
 			);
@@ -651,6 +654,7 @@
 				F91941A76702CE3ECA1901A5 /* AmachBreatheTests.swift in Sources */,
 				F05F3A7561021647AB83F036 /* OnboardingFlowTests.swift in Sources */,
 				4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */,
+				E9B0BF4EB580D39EB314B303 /* iPhoneSessionRunnerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

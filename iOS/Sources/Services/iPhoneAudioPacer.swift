@@ -2,25 +2,31 @@ import AVFoundation
 import Combine
 import AmachBreatheShared
 
-/// Plays rising/falling sine tones on breath phase transitions.
-/// Mirrors the watchOS AudioPacer; adds iOS AVAudioSession category setup.
+/// Soft-thump breath pacer for iOS. Mirrors watchOS `AudioPacer`: a single
+/// short percussive sine burst on every breath transition (inhale start /
+/// exhale start). The pitch slides 60 → 30 Hz over the first 180 ms while the
+/// gain decays exponentially toward silence by ~350 ms. Silence in between.
 @MainActor
 final class iPhoneAudioPacer {
 
     private let engine = AVAudioEngine()
-    private let player = AVAudioPlayerNode()
+    private let playerNode = AVAudioPlayerNode()
     private var cancellable: AnyCancellable?
     private var lastBreathPhase: BreathPhase?
     private var isEngineRunning = false
+    private var thumpBuffer: AVAudioPCMBuffer?
 
-    private let sampleRate: Double = 44_100
-    private let inhaleFreq: Float  = 528   // Hz
-    private let exhaleFreq: Float  = 396   // Hz
-    private let toneDuration: TimeInterval = 0.15
+    private let sampleRate: Double = 22_050
+    private let startFreq: Double = 60
+    private let endFreq: Double = 30
+    private let pitchRampDuration: TimeInterval = 0.180
+    private let totalDuration: TimeInterval = 0.400
+    private let attackGain: Float = 0.5
 
     init(timer: iPhoneMasterPhaseTimer) {
         configureAudioSession()
         setupEngine()
+        thumpBuffer = renderThumpBuffer()
         cancellable = timer.$state
             .receive(on: RunLoop.main)
             .sink { [weak self] state in self?.handleState(state) }
@@ -29,52 +35,102 @@ final class iPhoneAudioPacer {
     func stop() {
         cancellable = nil
         lastBreathPhase = nil
-        if isEngineRunning { engine.stop(); isEngineRunning = false }
+        if isEngineRunning {
+            engine.stop()
+            isEngineRunning = false
+        }
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
-    // MARK: - Private
+    // MARK: - Setup
 
     private func configureAudioSession() {
-        try? AVAudioSession.sharedInstance().setCategory(
-            .playback, mode: .default, options: .mixWithOthers)
-        try? AVAudioSession.sharedInstance().setActive(true)
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true, options: [])
+        } catch {
+            // Audio unavailable — pacer degrades gracefully to silent.
+        }
     }
 
     private func setupEngine() {
-        engine.attach(player)
-        engine.connect(player, to: engine.mainMixerNode, format: nil)
-        do { try engine.start(); isEngineRunning = true } catch { }
+        engine.attach(playerNode)
+        // Connect with an explicit mono format. Passing nil here can raise an
+        // exception when the player node has no scheduled audio yet, because
+        // the engine cannot infer the format on iOS.
+        let format = AVAudioFormat(
+            standardFormatWithSampleRate: sampleRate, channels: 1)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: format)
+        do {
+            try engine.start()
+            isEngineRunning = true
+        } catch {
+            isEngineRunning = false
+        }
     }
+
+    // MARK: - Buffer synthesis
+
+    /// Render the thump once: a sine whose frequency falls geometrically from
+    /// 60 Hz to 30 Hz across the first 180 ms (constant thereafter), shaped by
+    /// an exponential gain envelope at attack/2 at t = 0 and ≈ -40 dB by
+    /// t = 350 ms.
+    private func renderThumpBuffer() -> AVAudioPCMBuffer? {
+        guard let format = AVAudioFormat(
+            standardFormatWithSampleRate: sampleRate, channels: 1) else { return nil }
+
+        let frameCount = AVAudioFrameCount(sampleRate * totalDuration)
+        guard let buffer = AVAudioPCMBuffer(
+            pcmFormat: format, frameCapacity: frameCount) else { return nil }
+        buffer.frameLength = frameCount
+
+        guard let data = buffer.floatChannelData?[0] else { return nil }
+
+        let sr = sampleRate
+        let pitchRampFrames = Int(sr * pitchRampDuration)
+        let freqRatio = pow(endFreq / startFreq, 1.0 / Double(pitchRampFrames))
+        let tau = 0.350 / log(100.0)
+        let twoPi = 2.0 * Double.pi
+
+        var phase: Double = 0
+        var freq = startFreq
+
+        for i in 0 ..< Int(frameCount) {
+            let t = Double(i) / sr
+            let env = Float(Double(attackGain) * exp(-t / tau))
+            data[i] = Float(sin(phase)) * env
+
+            phase += twoPi * freq / sr
+            if phase > twoPi { phase -= twoPi }
+            if i < pitchRampFrames {
+                freq *= freqRatio
+            }
+        }
+        return buffer
+    }
+
+    // MARK: - State
 
     private func handleState(_ state: PacerState) {
-        guard state.sessionPhase.isActive, isEngineRunning else { return }
-        let phase = state.breathPhase
-        guard phase != lastBreathPhase else { return }
-        lastBreathPhase = phase
-        playTone(frequency: phase == .inhale ? inhaleFreq : exhaleFreq)
-    }
-
-    private func playTone(frequency: Float) {
-        let frameCount = AVAudioFrameCount(sampleRate * toneDuration)
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return }
-        buffer.frameLength = frameCount
-        let data  = buffer.floatChannelData![0]
-        let omega = 2.0 * Float.pi * frequency / Float(sampleRate)
-        let total = Int(frameCount)
-        for i in 0 ..< total {
-            let env = envelope(i: i, total: total)
-            data[i] = env * sin(omega * Float(i)) * 0.3
+        // Reset on inactive so the next active phase plays a thump on its
+        // first inhale even if it matches the last seen breath phase.
+        guard state.sessionPhase.isActive else {
+            lastBreathPhase = nil
+            return
         }
-        player.scheduleBuffer(buffer, completionHandler: nil)
-        if !player.isPlaying { player.play() }
+        guard isEngineRunning else { return }
+        let breath = state.breathPhase
+        guard breath != lastBreathPhase else { return }
+        lastBreathPhase = breath
+        playThump()
     }
 
-    private func envelope(i: Int, total: Int) -> Float {
-        let fade = min(total / 10, 441)
-        if i < fade      { return Float(i) / Float(fade) }
-        if i > total - fade { return Float(total - i) / Float(fade) }
-        return 1.0
+    private func playThump() {
+        guard let buffer = thumpBuffer else { return }
+        guard engine.isRunning else { return }
+        playerNode.scheduleBuffer(
+            buffer, at: nil, options: [], completionHandler: nil)
+        if !playerNode.isPlaying { playerNode.play() }
     }
 }
