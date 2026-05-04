@@ -80,8 +80,10 @@ private struct ActiveSessionView: View {
     @EnvironmentObject private var runner: WatchSessionRunner
     var isRecovery: Bool = false
 
+    @State private var showEndConfirm: Bool = false
+
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: WatchLayout.isCompact ? 4 : 6) {
             phaseHeader
 
             BreathingCoachView(
@@ -92,7 +94,7 @@ private struct ActiveSessionView: View {
             )
 
             // Metrics row
-            HStack(spacing: 10) {
+            HStack(spacing: WatchLayout.isCompact ? 8 : 10) {
                 metricView(label: "HRV",
                            value: String(format: "%.0f", runner.currentHRV),
                            unit: "ms")
@@ -104,8 +106,8 @@ private struct ActiveSessionView: View {
                 }
             }
 
-            // Remaining time + pause/resume
-            HStack(spacing: 8) {
+            // Remaining time + pause/resume + end
+            HStack(spacing: WatchLayout.isCompact ? 4 : 8) {
                 if let remaining = runner.pacerState.sessionPhaseRemaining {
                     Text(timeString(remaining))
                         .font(.caption2)
@@ -114,9 +116,10 @@ private struct ActiveSessionView: View {
                 }
                 Spacer()
                 pauseResumeButton
+                endButton
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, WatchLayout.isCompact ? 4 : 8)
         .padding(.top, 4)
     }
 
@@ -138,6 +141,29 @@ private struct ActiveSessionView: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
+    }
+
+    private var endButton: some View {
+        Button {
+            showEndConfirm = true
+        } label: {
+            Image(systemName: "xmark")
+                .font(.caption2)
+                .foregroundStyle(Color.amachTextSecondary)
+                .frame(width: 24, height: 24)
+                .background(Color.amachSurface)
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("End session")
+        .confirmationDialog("End session?",
+                            isPresented: $showEndConfirm,
+                            titleVisibility: .visible) {
+            Button("End", role: .destructive) {
+                Task { await runner.stopSession() }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
     }
 
     private var phaseName: String {

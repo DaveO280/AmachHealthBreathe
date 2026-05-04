@@ -17,7 +17,13 @@ struct BreathingCoachView: View {
     /// Coherence score 0…1 (tints the halo a touch when high). nil = ignore.
     let coherence: Double?
 
-    private let ringDiameter: CGFloat = 110
+    private var ringDiameter: CGFloat {
+        WatchLayout.isCompact ? 88 : 110
+    }
+
+    private var phaseLabelSize: CGFloat {
+        WatchLayout.isCompact ? 14 : 17
+    }
 
     /// Last known ringScale from an active session phase. Held as @State so a
     /// wake-triggered re-render (or a stray idle PacerState slipping through)
@@ -105,7 +111,7 @@ struct BreathingCoachView: View {
 
     private func phaseText(_ label: String) -> some View {
         Text(label)
-            .font(.system(size: 17, weight: .semibold, design: .rounded))
+            .font(.system(size: phaseLabelSize, weight: .semibold, design: .rounded))
             .foregroundStyle(Color.amachTextPrimary)
             .tracking(0.5)
     }

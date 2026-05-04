@@ -110,6 +110,14 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         Task { [workoutManager] in
             try? await workoutManager.startWorkout()
         }
+        // Diagnostic: workout session is what keeps the display awake on
+        // device. If `isActive` stays false past startup, the screen will
+        // sleep normally and we know the detached Task failed silently.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard let self else { return }
+            Self.log.info("WORKOUT_ACTIVE_CHECK calibration active=\(self.workoutManager.isActive, privacy: .public)")
+        }
         Self.log.info("Calibration start (rates: \(CalibrationEngine.candidateBPMs.map { "\($0)" }.joined(separator: ","), privacy: .public))")
         await startNextRate()
     }

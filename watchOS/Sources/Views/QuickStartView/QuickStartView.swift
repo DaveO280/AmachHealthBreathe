@@ -18,9 +18,9 @@ public struct QuickStartView: View {
     public var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 10) {
+                VStack(spacing: WatchLayout.isCompact ? 6 : 10) {
                     Text("Breathe")
-                        .font(.headline)
+                        .font(WatchLayout.isCompact ? .subheadline : .headline)
                         .foregroundStyle(Color.amachTextPrimary)
 
                     bpmPicker
@@ -28,7 +28,7 @@ public struct QuickStartView: View {
                     ratioPicker
                     startButton
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, WatchLayout.isCompact ? 4 : 8)
                 .padding(.bottom, 8)
             }
             .navigationTitle("")
@@ -49,7 +49,7 @@ public struct QuickStartView: View {
                 }
             }
             .pickerStyle(.wheel)
-            .frame(height: 60)
+            .frame(height: WatchLayout.isCompact ? 48 : 60)
         }
     }
 
@@ -113,12 +113,12 @@ public struct QuickStartView: View {
                 ProgressView().tint(Color.amachTextPrimary)
             } else {
                 Text("Start")
-                    .font(.headline)
+                    .font(WatchLayout.isCompact ? .subheadline : .headline)
                     .frame(maxWidth: .infinity)
             }
         }
         .buttonStyle(.plain)
-        .padding(.vertical, 10)
+        .padding(.vertical, WatchLayout.isCompact ? 8 : 10)
         .background(Color.amachPrimary)
         .foregroundStyle(Color.amachTextPrimary)
         .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))

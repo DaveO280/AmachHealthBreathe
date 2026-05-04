@@ -110,6 +110,15 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
         isPaused = false
+
+        // Diagnostic: confirm the workout session actually started on device.
+        // If `isActive` stays false past startup, the display will sleep
+        // normally and we know the detached Task failed silently.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard let self else { return }
+            Self.log.info("WORKOUT_ACTIVE_CHECK session active=\(self.workoutManager.isActive, privacy: .public)")
+        }
     }
 
     public func stopSession() async {

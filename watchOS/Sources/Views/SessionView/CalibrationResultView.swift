@@ -18,14 +18,14 @@ struct CalibrationResultView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 10) {
+            VStack(spacing: WatchLayout.isCompact ? 6 : 10) {
                 headline
                 bpmDisplay
                 scoreBars
                 beginButton
                 recalibrateButton
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, WatchLayout.isCompact ? 4 : 8)
             .padding(.top, 4)
             .padding(.bottom, 8)
         }
@@ -43,7 +43,8 @@ struct CalibrationResultView: View {
     private var bpmDisplay: some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text(String(format: "%.1f", record.resonanceBPM))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .font(.system(size: WatchLayout.isCompact ? 28 : 34,
+                              weight: .bold, design: .rounded))
                 .foregroundStyle(Color.amachTextPrimary)
                 .monospacedDigit()
             Text("BPM")
@@ -106,12 +107,12 @@ struct CalibrationResultView: View {
                     .frame(maxWidth: .infinity)
             } else {
                 Text("Begin session")
-                    .font(.headline)
+                    .font(WatchLayout.isCompact ? .subheadline : .headline)
                     .frame(maxWidth: .infinity)
             }
         }
         .buttonStyle(.plain)
-        .padding(.vertical, 10)
+        .padding(.vertical, WatchLayout.isCompact ? 8 : 10)
         .background(Color.amachPrimary)
         .foregroundStyle(Color.amachTextPrimary)
         .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))

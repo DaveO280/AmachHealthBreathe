@@ -29,6 +29,7 @@
 		4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */; };
 		58A75FF9451077BF75DC2B4F /* WatchWalletStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */; };
 		59E306DBE63E4F56D0FC53D0 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = AD5D80E56CC0C91F666C2ED6 /* AmachBreatheShared */; };
+		5B9C01A7687634389DF4DCF6 /* CompactWatchEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B12EAE041394A779382B627E /* CompactWatchEnvironment.swift */; };
 		5C73510208F54B6714D216CE /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F79C7B1B3FD3E998C6D7AE /* OnboardingView.swift */; };
 		6582F2F683FCFDDB4AE438E8 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 752F2168AC07F32821D54F3B /* SubscriptionService.swift */; };
 		70E1371A995DC4D3D97DC750 /* CalibrationResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D5DE1EBD9756544665251D1 /* CalibrationResultView.swift */; };
@@ -149,6 +150,7 @@
 		A61F607DE6D903C2422B6C73 /* iPhoneSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneSessionView.swift; sourceTree = "<group>"; };
 		AD5F443328E39EC5515A7C72 /* CalibrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationService.swift; sourceTree = "<group>"; };
 		AD9953583514A39FE07FD064 /* SessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionService.swift; sourceTree = "<group>"; };
+		B12EAE041394A779382B627E /* CompactWatchEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactWatchEnvironment.swift; sourceTree = "<group>"; };
 		B24AFAA8857113DBEDDF3786 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		BFCDEB98EDBB3DCFD0AA253C /* AudioPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPacer.swift; sourceTree = "<group>"; };
 		C19FAC1F75D0942CA96513C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -462,6 +464,7 @@
 			children = (
 				4F19345752ED3E203CBB6D74 /* QuickStartView */,
 				B6892B264A127422C13F5E69 /* SessionView */,
+				B12EAE041394A779382B627E /* CompactWatchEnvironment.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -493,7 +496,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA53FC1BB186502CE3D2D33B /* Build configuration list for PBXNativeTarget "AmachBreathe" */;
 			buildPhases = (
-				3ECA28B03B93611036972172 /* Set Build Number from Git Commit Count */,
+				D59F74C4E87B492216682E43 /* Increment Build Number */,
 				438019DED4A585C23329DF22 /* Sources */,
 				4241518CF3F2ADFFB381228B /* Resources */,
 				5E4085E664AD1CA3373583B4 /* Frameworks */,
@@ -516,7 +519,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FCC8E1F01204C86193E094B5 /* Build configuration list for PBXNativeTarget "AmachBreatheWatch" */;
 			buildPhases = (
-				2E5C751B2171E0409D566670 /* Set Build Number from Git Commit Count */,
+				2F43BE9CCFBE1D362F306511 /* Increment Build Number */,
 				F3BBDA2406A6AB8DC7ACCB07 /* Sources */,
 				856845D48E4FB69179D9ED05 /* Resources */,
 				5A112E3A8C1ADC7F43234F2D /* Frameworks */,
@@ -600,7 +603,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		2E5C751B2171E0409D566670 /* Set Build Number from Git Commit Count */ = {
+		2F43BE9CCFBE1D362F306511 /* Increment Build Number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -610,16 +613,16 @@
 			);
 			inputPaths = (
 			);
-			name = "Set Build Number from Git Commit Count";
+			name = "Increment Build Number";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  BUILD_NUMBER=$(git -C \"$SRCROOT\" rev-list --count HEAD)\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$INFOPLIST_FILE\"\nfi\n";
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  CURRENT=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleVersion\" \"$INFOPLIST_FILE\")\n  NEW=$((CURRENT + 1))\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $NEW\" \"$INFOPLIST_FILE\"\nfi\n";
 		};
-		3ECA28B03B93611036972172 /* Set Build Number from Git Commit Count */ = {
+		D59F74C4E87B492216682E43 /* Increment Build Number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -629,14 +632,14 @@
 			);
 			inputPaths = (
 			);
-			name = "Set Build Number from Git Commit Count";
+			name = "Increment Build Number";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  BUILD_NUMBER=$(git -C \"$SRCROOT\" rev-list --count HEAD)\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$INFOPLIST_FILE\"\nfi\n";
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  CURRENT=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleVersion\" \"$INFOPLIST_FILE\")\n  NEW=$((CURRENT + 1))\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $NEW\" \"$INFOPLIST_FILE\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -697,6 +700,7 @@
 				8C01FEA5C311E2DD00A7AC3E /* BreathingCoachView.swift in Sources */,
 				70E1371A995DC4D3D97DC750 /* CalibrationResultView.swift in Sources */,
 				2F999373FA6A157E5198C3BD /* CalibrationTestLoop.swift in Sources */,
+				5B9C01A7687634389DF4DCF6 /* CompactWatchEnvironment.swift in Sources */,
 				973CEEB939F48AE990397161 /* HKWorkoutSessionManager.swift in Sources */,
 				7BDF839BFCC256A7D6F60D50 /* HapticPacer.swift in Sources */,
 				FBE87AD063CB88858CD75049 /* MasterPhaseTimer.swift in Sources */,
