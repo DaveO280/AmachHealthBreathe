@@ -21,7 +21,7 @@ struct CalibrationResultView: View {
             VStack(spacing: WatchLayout.isCompact ? 6 : 10) {
                 headline
                 bpmDisplay
-                scoreBars
+                rateBreakdown
                 beginButton
                 recalibrateButton
             }
@@ -54,46 +54,63 @@ struct CalibrationResultView: View {
         .shadow(color: Color.amachPrimary.opacity(0.45), radius: 8)
     }
 
-    // MARK: - Score bars
+    // MARK: - Per-rate HRV breakdown
 
-    private var scoreBars: some View {
+    /// One row per candidate rate: BPM label + horizontal coherence bar +
+    /// percentage. The winning rate is filled in emerald, others use a faded
+    /// emerald. Scores in `record.scores` are normalized 0–1 against the
+    /// winning rate's raw amplitude (see `CalibrationEngine.findResonance`).
+    private var rateBreakdown: some View {
         let bpms = CalibrationEngine.candidateBPMs
-        let maxBarHeight: CGFloat = 32
 
-        return VStack(spacing: 4) {
-            HStack(alignment: .bottom, spacing: 4) {
-                ForEach(bpms, id: \.self) { bpm in
-                    let score = record.scores[bpm] ?? 0
-                    let isWinner = abs(bpm - record.resonanceBPM) < 0.01
-                    Capsule()
-                        .fill(barColor(isWinner: isWinner))
-                        .frame(width: 10,
-                               height: max(3, CGFloat(score) * maxBarHeight))
-                        .shadow(
-                            color: isWinner
-                                ? Color.amachPrimary.opacity(0.55)
-                                : .clear,
-                            radius: isWinner ? 4 : 0
-                        )
-                }
-            }
-            .frame(height: maxBarHeight, alignment: .bottom)
+        return VStack(spacing: 3) {
+            Text("HRV coherence")
+                .font(.system(size: 9))
+                .foregroundStyle(Color.amachTextTertiary)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack {
-                Text(String(format: "%.1f", bpms.first ?? 0))
-                Spacer()
-                Text(String(format: "%.1f", bpms.last ?? 0))
+            ForEach(bpms, id: \.self) { bpm in
+                rateRow(bpm: bpm,
+                        score: record.scores[bpm] ?? 0,
+                        isWinner: abs(bpm - record.resonanceBPM) < 0.01)
             }
-            .font(.system(size: 9))
-            .foregroundStyle(Color.amachTextTertiary)
-            .frame(maxWidth: 84)
         }
     }
 
-    private func barColor(isWinner: Bool) -> Color {
-        isWinner
+    private func rateRow(bpm: Double, score: Double, isWinner: Bool) -> some View {
+        let labelColor = isWinner
+            ? Color.amachPrimary
+            : Color.amachTextSecondary
+        let barFill = isWinner
             ? Color.amachPrimary
             : Color.amachPrimary.opacity(0.35)
+        let barTrack = Color.amachTextTertiary.opacity(0.2)
+        let pct = Int((score * 100).rounded())
+
+        return HStack(spacing: 4) {
+            Text(String(format: "%.1f", bpm))
+                .font(.system(size: 10, weight: isWinner ? .semibold : .regular,
+                              design: .rounded))
+                .foregroundStyle(labelColor)
+                .monospacedDigit()
+                .frame(width: 22, alignment: .trailing)
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(barTrack)
+                    Capsule()
+                        .fill(barFill)
+                        .frame(width: max(2, geo.size.width * CGFloat(min(max(score, 0), 1))))
+                }
+            }
+            .frame(height: 6)
+
+            Text("\(pct)%")
+                .font(.system(size: 9, design: .rounded))
+                .foregroundStyle(labelColor)
+                .monospacedDigit()
+                .frame(width: 24, alignment: .trailing)
+        }
     }
 
     // MARK: - Buttons

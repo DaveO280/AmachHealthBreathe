@@ -44,6 +44,26 @@ public final class AudioPacer {
         }
     }
 
+    /// Re-activate the AVAudioSession and restart the engine if needed.
+    /// Call this right before a session/calibration begins. The session can
+    /// be deactivated by the system between AudioPacer.init (at runner init,
+    /// often app launch) and the actual moment audio needs to play, especially
+    /// when an HKWorkoutSession then claims the audio route.
+    public func prepare() {
+        configureAudioSession()
+        if !engine.isRunning {
+            do {
+                try engine.start()
+                isEngineRunning = true
+            } catch {
+                isEngineRunning = false
+            }
+        } else {
+            isEngineRunning = true
+        }
+        lastBreathPhase = nil
+    }
+
     // MARK: - Setup
 
     private func configureAudioSession() {

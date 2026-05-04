@@ -24,6 +24,8 @@ struct CalibrationRunnerView: View {
                             idleView
                         case let .running(bpm, elapsed, total):
                             runningView(bpm: bpm, elapsed: elapsed, total: total)
+                        case .awaitingResult:
+                            awaitingResultView
                         case let .complete(result):
                             completeView(result: result)
                         case .failed:
@@ -186,6 +188,34 @@ struct CalibrationRunnerView: View {
         .padding(AmachSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .amachCard()
+    }
+
+    // MARK: - Awaiting result
+
+    private var awaitingResultView: some View {
+        VStack(spacing: AmachSpacing.lg) {
+            Spacer()
+            ProgressView()
+                .progressViewStyle(.circular)
+                .tint(Color.amachPrimary)
+                .scaleEffect(1.4)
+            VStack(spacing: AmachSpacing.sm) {
+                Text("Calibration complete")
+                    .font(AmachType.h2)
+                    .foregroundStyle(Color.amachTextPrimary)
+                Text("Analyzing your resonance frequency on Apple Watch…")
+                    .font(AmachType.caption)
+                    .foregroundStyle(Color.amachTextSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+            Button("Cancel") {
+                calibrationService.cancel()
+                dismiss()
+            }
+            .font(AmachType.body)
+            .foregroundStyle(Color.amachTextSecondary)
+        }
     }
 
     // MARK: - Complete

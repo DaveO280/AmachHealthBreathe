@@ -36,6 +36,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     private let timer = MasterPhaseTimer()
     private let hrvProcessor = HRVProcessor(windowDuration: 90)
     private var audioPacer: AudioPacer!
+    private var hapticPacer: HapticPacer!
 
     private var currentRateIndex: Int = 0
     private var currentRateBPM: Double = 0
@@ -69,6 +70,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     public override init() {
         super.init()
         audioPacer = AudioPacer(timer: timer)
+        hapticPacer = HapticPacer(timer: timer)
         workoutManager.onRRInterval = { [weak self] rrMs in
             self?.handleRRInterval(rrMs)
         }
@@ -86,6 +88,12 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         currentRateIndex = 0
         isRunning = true
         lastRingScale = nil
+
+        // Re-arm AVAudioSession in case it was deactivated since init —
+        // the AudioPacer is created at app launch, but the audio route can
+        // be reclaimed (e.g. by another app) before the user gets to
+        // calibration. Re-preparing makes the first thump audible.
+        audioPacer.prepare()
 
         startExtendedRuntimeSession()
 
@@ -269,6 +277,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         guard let result = engine.findResonance(samples: collectedSamples) else {
             calibrationState = .failed
             Self.log.info("CALIBRATION_FAILED no resonance from \(self.collectedSamples.count, privacy: .public) rate samples")
+            sendFailureToPhone()
             return
         }
 
@@ -309,6 +318,19 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             session.sendMessage(message, replyHandler: nil)
         } else {
             // iPhone not in foreground — deliver when it next becomes active
+            session.transferUserInfo(message)
+        }
+    }
+
+    /// Tell the phone calibration finished without producing a usable result so
+    /// it can drop the awaiting-result state instead of waiting forever.
+    private func sendFailureToPhone() {
+        guard WCSession.isSupported() else { return }
+        let message = makeWatchMessage(type: .calibrationFailed)
+        let session = WCSession.default
+        if session.isReachable {
+            session.sendMessage(message, replyHandler: nil)
+        } else {
             session.transferUserInfo(message)
         }
     }

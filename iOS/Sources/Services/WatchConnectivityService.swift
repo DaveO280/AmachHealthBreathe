@@ -9,6 +9,7 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
 
     public var onSessionReceived: ((BreathingSessionRecord) -> Void)?
     public var onCalibrationReceived: ((ResonanceFrequencyResult) -> Void)?
+    public var onCalibrationFailed: (() -> Void)?
     /// Set by the app root to push current wallet state when Watch requests it.
     public var onWalletStateRequested: (() -> Void)?
 
@@ -119,6 +120,8 @@ extension WatchConnectivityService: WCSessionDelegate {
         case .calibrationResult:
             guard let result = try? decodeWatchPayload(ResonanceFrequencyResult.self, from: message) else { return }
             Task { @MainActor [weak self] in self?.onCalibrationReceived?(result) }
+        case .calibrationFailed:
+            Task { @MainActor [weak self] in self?.onCalibrationFailed?() }
         case .walletStateRequest:
             Task { @MainActor [weak self] in self?.onWalletStateRequested?() }
         default:

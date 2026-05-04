@@ -98,6 +98,11 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         self.coherenceSamples = []
         hrvProcessor.reset()
 
+        // Re-arm AVAudioSession (see WatchCalibrationRunner.start for the
+        // same rationale — pacer init at app launch can leave the audio
+        // route stale by the time the user starts a session).
+        audioPacer.prepare()
+
         // HealthKit workout is best-effort — without it we lose HRV/coherence
         // but the breathing pacer must still run. Kick HK off in a detached
         // Task rather than awaiting: on the watchOS simulator the missing

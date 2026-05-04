@@ -12,9 +12,12 @@ public struct SessionView: View {
 
             if calibrationRunner.isRunning {
                 CalibrationActiveView()
-            } else if case .complete(let record) = calibrationRunner.calibrationState,
-                      runner.phase == .idle {
+            } else if runner.phase == .idle,
+                      case .complete(let record) = calibrationRunner.calibrationState {
                 CalibrationResultView(record: record)
+            } else if runner.phase == .idle,
+                      case .failed = calibrationRunner.calibrationState {
+                CalibrationFailedView()
             } else {
                 switch runner.phase {
                 case .idle:
@@ -30,6 +33,49 @@ public struct SessionView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Calibration failed view
+
+private struct CalibrationFailedView: View {
+
+    @EnvironmentObject private var calibrationRunner: WatchCalibrationRunner
+
+    var body: some View {
+        VStack(spacing: WatchLayout.isCompact ? 6 : 10) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.title2)
+                .foregroundStyle(Color.amachWarning)
+            Text("Couldn't measure resonance")
+                .font(.caption)
+                .foregroundStyle(Color.amachTextPrimary)
+                .multilineTextAlignment(.center)
+            Text("Make sure your watch is snug and try again.")
+                .font(.caption2)
+                .foregroundStyle(Color.amachTextSecondary)
+                .multilineTextAlignment(.center)
+            Button("Try again") {
+                Task {
+                    await calibrationRunner.cancel()
+                    await calibrationRunner.start()
+                }
+            }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity)
+            .background(Color.amachPrimary)
+            .foregroundStyle(Color.amachTextPrimary)
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
+            Button("Close") {
+                Task { await calibrationRunner.cancel() }
+            }
+            .buttonStyle(.plain)
+            .font(.caption2)
+            .foregroundStyle(Color.amachTextSecondary)
+        }
+        .padding(.horizontal, WatchLayout.isCompact ? 4 : 8)
     }
 }
 

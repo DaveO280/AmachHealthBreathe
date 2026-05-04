@@ -10,6 +10,7 @@ public enum WatchMessageKey: String, Sendable {
 public enum WatchMessageType: String, Codable, Sendable {
     case sessionComplete      // Watch → iPhone: BreathingSessionRecord JSON
     case calibrationResult    // Watch → iPhone: ResonanceFrequencyResult JSON
+    case calibrationFailed    // Watch → iPhone: no payload (insufficient HRV)
     case startSession         // iPhone → Watch: StartSessionCommand JSON
     case startCalibration     // iPhone → Watch: no payload
     case cancelSession        // iPhone → Watch: no payload

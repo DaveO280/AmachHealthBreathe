@@ -12,6 +12,10 @@ public final class CalibrationService: ObservableObject {
     public enum CalibrationState {
         case idle
         case running(currentBPM: Double, elapsed: TimeInterval, total: TimeInterval)
+        /// Local timer expired but Watch hasn't sent the result back yet.
+        /// Watch finalize includes per-rate analysis after the last tone, so
+        /// the iPhone may sit here for a couple of seconds.
+        case awaitingResult
         case complete(result: ResonanceFrequencyResult)
         case failed
     }
@@ -52,6 +56,13 @@ public final class CalibrationService: ObservableObject {
         calibrationState = .complete(result: result)
     }
 
+    /// Called when the Watch reports calibration finished without enough HRV
+    /// data to identify a resonance frequency.
+    public func failFromWatch() {
+        stopProgressTimer()
+        calibrationState = .failed
+    }
+
     // MARK: - Local progress timer
 
     private func startLocalProgressTimer() {
@@ -66,6 +77,12 @@ public final class CalibrationService: ObservableObject {
                 let elapsed = Date().timeIntervalSince(startTime)
                 if elapsed >= total {
                     self.stopProgressTimer()
+                    // Don't leave the UI frozen on "1 min left" — the Watch
+                    // still has to evaluate per-rate scores and ship the
+                    // result over WC. Show an explicit waiting state until
+                    // completeWithResult is called.
+                    if case .complete = self.calibrationState { return }
+                    self.calibrationState = .awaitingResult
                     return
                 }
                 let rateIndex = min(Int(elapsed / self.perRateDuration), self.candidates.count - 1)
