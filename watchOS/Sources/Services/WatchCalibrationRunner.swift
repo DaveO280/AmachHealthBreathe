@@ -109,25 +109,43 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             }
             .store(in: &cancellables)
 
-        // HealthKit workout is best-effort — without it we lose RR intervals
-        // (so calibration can't produce a result), but the breath pacer must
-        // still run. Kick HK off in a detached Task instead of awaiting:
-        // on the watchOS simulator the missing entitlement causes
-        // beginCollection(at:) to hang forever, which would block the pacer
-        // start indefinitely.
+        // Bring up the HealthKit workout BEFORE starting rate 0. On real
+        // Apple Watch the workout takes 1-3s to enter `running` and the first
+        // HR sample arrives ~5-15s after beginCollection — fire-and-forget
+        // means rate 0's 60s window can elapse with zero samples, so
+        // findResonance returns nil and the user sees "Couldn't measure
+        // resonance".
         //
-        // Authorization is awaited *inside* the detached Task. Calibration is
-        // typically initiated from iPhone via WCSession, which means the
-        // QuickStartView `.task` (where auth was previously requested) may
-        // not have fired before .start() runs. Without auth, the workout
-        // collects zero samples and calibration fails.
+        // Simulator carve-out: beginCollection(at:) hangs forever there
+        // because the entitlement is missing. Awaiting would freeze
+        // calibration at startup, so keep the historical fire-and-forget
+        // behaviour so the pacer/test loop still run.
+        #if targetEnvironment(simulator)
         Task { [workoutManager] in
             try? await workoutManager.requestAuthorization()
             try? await workoutManager.startWorkout()
         }
-        // Diagnostic: workout session is what keeps the display awake on
-        // device. If `isActive` stays false past startup, the screen will
-        // sleep normally and we know the detached Task failed silently.
+        #else
+        do {
+            try await workoutManager.requestAuthorization()
+            try await workoutManager.startWorkout()
+            Self.log.info("HK_READY active=\(self.workoutManager.isActive, privacy: .public)")
+        } catch {
+            Self.log.error("HK_STARTUP_FAILED \(error.localizedDescription, privacy: .public) — continuing without HK")
+        }
+        // cancel() may have run on MainActor while we were awaiting HK
+        // startup (user tapped the close button). Bail before we re-arm
+        // calibrationState in startNextRate.
+        guard isRunning else {
+            Self.log.info("HK_STARTUP cancelled mid-await")
+            return
+        }
+        #endif
+
+        // Diagnostic: confirms HK is actually streaming samples a few seconds
+        // into rate 0. If `isActive` is true but `sampleCount` is still 0
+        // here, the workout started but no HR is reaching us — investigate
+        // the data source / anchor query path.
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard let self else { return }
