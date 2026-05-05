@@ -27,6 +27,7 @@
 	<key>WKBackgroundModes</key>
 	<array>
 		<string>workout-processing</string>
+		<string>mindfulness</string>
 	</array>
 	<key>WKCompanionAppBundleIdentifier</key>
 	<string>com.amach.AmachBreathe</string>

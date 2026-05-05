@@ -84,38 +84,66 @@ private struct CalibrationFailedView: View {
 private struct CalibrationActiveView: View {
 
     @EnvironmentObject private var calibrationRunner: WatchCalibrationRunner
+    @State private var showCancelConfirm: Bool = false
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text("Calibrating")
-                .font(.caption2)
-                .foregroundStyle(Color.amachTextSecondary)
-
-            BreathingCoachView(
-                pacerState: calibrationRunner.pacerState,
-                isPaused: false,
-                isRecovery: false,
-                coherence: nil
-            )
-
-            if case .running(let idx, let bpm, _) = calibrationRunner.calibrationState {
-                HStack(spacing: 4) {
-                    ForEach(0..<CalibrationEngine.candidateBPMs.count, id: \.self) { i in
-                        Circle()
-                            .fill(i < idx
-                                  ? Color.amachPrimary
-                                  : i == idx
-                                    ? Color.amachPrimary.opacity(0.6)
-                                    : Color.amachTextTertiary.opacity(0.3))
-                            .frame(width: 8, height: 8)
-                    }
-                }
-                Text(String(format: "%.1f BPM", bpm))
+        ZStack(alignment: .topTrailing) {
+            VStack(spacing: 6) {
+                Text("Calibrating")
                     .font(.caption2)
                     .foregroundStyle(Color.amachTextSecondary)
+
+                BreathingCoachView(
+                    pacerState: calibrationRunner.pacerState,
+                    isPaused: false,
+                    isRecovery: false,
+                    coherence: nil
+                )
+
+                if case .running(let idx, let bpm, _) = calibrationRunner.calibrationState {
+                    HStack(spacing: 4) {
+                        ForEach(0..<CalibrationEngine.candidateBPMs.count, id: \.self) { i in
+                            Circle()
+                                .fill(i < idx
+                                      ? Color.amachPrimary
+                                      : i == idx
+                                        ? Color.amachPrimary.opacity(0.6)
+                                        : Color.amachTextTertiary.opacity(0.3))
+                                .frame(width: 8, height: 8)
+                        }
+                    }
+                    Text(String(format: "%.1f BPM", bpm))
+                        .font(.caption2)
+                        .foregroundStyle(Color.amachTextSecondary)
+                }
             }
+            .padding(.horizontal, 8)
+
+            cancelButton
         }
-        .padding(.horizontal, 8)
+        .confirmationDialog("Cancel calibration?",
+                            isPresented: $showCancelConfirm,
+                            titleVisibility: .visible) {
+            Button("End", role: .destructive) {
+                Task { await calibrationRunner.cancel() }
+            }
+            Button("Keep going", role: .cancel) { }
+        }
+    }
+
+    private var cancelButton: some View {
+        Button {
+            showCancelConfirm = true
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Color.amachTextSecondary)
+                .frame(width: 22, height: 22)
+                .background(Color.amachSurface.opacity(0.85))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Cancel calibration")
     }
 }
 
