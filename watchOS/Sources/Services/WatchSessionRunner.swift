@@ -112,7 +112,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
             try? await workoutManager.startWorkout()
         }
         startExtendedRuntimeSession()
-        WKExtension.shared().isFrontmostTimeoutExtended = true
+        // Screen stays on via active HKWorkoutSession (.running state)
         timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
         isPaused = false
@@ -133,7 +133,6 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         audioPacer.stop()
         await workoutManager.stopWorkout()
         invalidateExtendedRuntimeSession()
-        WKExtension.shared().isFrontmostTimeoutExtended = false
         isRunning = false
         isPaused = false
         updateComplicationState(inSession: false)
