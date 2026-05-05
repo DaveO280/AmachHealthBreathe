@@ -89,6 +89,8 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         isRunning = true
         lastRingScale = nil
 
+        WKExtension.shared().isFrontmostTimeoutExtended = true
+
         // Re-arm AVAudioSession in case it was deactivated since init —
         // the AudioPacer is created at app launch, but the audio route can
         // be reclaimed (e.g. by another app) before the user gets to
@@ -169,6 +171,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             await workoutManager.stopWorkout()
         }
         invalidateExtendedRuntimeSession()
+        WKExtension.shared().isFrontmostTimeoutExtended = false
         isRunning = false
         pacerState = .idle
         calibrationState = .idle
@@ -298,6 +301,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             await workoutManager.stopWorkout()
         }
         invalidateExtendedRuntimeSession()
+        WKExtension.shared().isFrontmostTimeoutExtended = false
 
         let totalSamples = workoutManager.sampleCount
         let perRate = collectedSamples.map { "\($0.key)=\($0.value.count)" }.sorted().joined(separator: ",")
