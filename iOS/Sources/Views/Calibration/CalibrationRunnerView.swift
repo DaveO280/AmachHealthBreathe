@@ -10,7 +10,7 @@ struct CalibrationRunnerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showWatchPrompt = false
 
-    private static let fastCalibrationRateSeconds: TimeInterval = 10
+    private static let fastCalibrationRateSeconds: TimeInterval = 30
 
     var body: some View {
         NavigationStack {
@@ -92,7 +92,7 @@ struct CalibrationRunnerView: View {
             }
             .amachPrimaryButtonStyle()
             if shouldShowFastCalibration {
-                Button("Fast Test Calibration") {
+                Button("Diagnostic Calibration") {
                     if !calibrationService.startCalibration(
                         sampleDurationPerRate: Self.fastCalibrationRateSeconds) {
                         showWatchPrompt = true
@@ -101,7 +101,7 @@ struct CalibrationRunnerView: View {
                 .font(AmachType.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(Color.amachPrimary)
-                Text("TestFlight debug run: about 1 minute total.")
+                Text("TestFlight diagnostic run: about 3 minutes total.")
                     .font(AmachType.tiny)
                     .foregroundStyle(Color.amachTextTertiary)
                     .multilineTextAlignment(.center)
@@ -257,7 +257,7 @@ struct CalibrationRunnerView: View {
             }
             amplitudeChart(scores: result.scores, resonanceBPM: result.resonanceBPM)
             Spacer()
-            Button("Done") { dismiss() }
+            Button("Done") { calibrationService.finishViewingResult() }
                 .amachPrimaryButtonStyle()
         }
     }

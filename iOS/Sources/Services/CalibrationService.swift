@@ -51,14 +51,18 @@ public final class CalibrationService: ObservableObject {
         watchService?.sendCancelSession()
     }
 
+    public func finishViewingResult() {
+        calibrationState = .idle
+    }
+
     /// Called by `AmachBreatheApp` when the Watch sends back a `ResonanceFrequencyResult`.
     public func completeWithResult(_ result: ResonanceFrequencyResult) {
         stopProgressTimer()
         calibrationState = .complete(result: result)
     }
 
-    /// Called when the Watch reports calibration finished without enough HRV
-    /// data to identify a resonance frequency.
+    /// Called when the Watch reports calibration finished without enough live
+    /// heart-rate samples to identify a resonance frequency.
     public func failFromWatch(_ payload: CalibrationFailurePayload? = nil) {
         stopProgressTimer()
         calibrationState = .failed(
@@ -104,13 +108,19 @@ public final class CalibrationService: ObservableObject {
 
     private func failureMessage(from payload: CalibrationFailurePayload?) -> String {
         guard let payload else {
-            return "Not enough HRV data was collected. Make sure your Apple Watch is snug and try again."
+            return "Not enough Apple Watch heart-rate data was collected. Make sure your watch is snug and try again."
+        }
+        if !payload.workoutWasActive {
+            return "Apple Watch did not start the HealthKit workout, so no live heart-rate samples were captured. Check Health permissions on the watch and try again."
+        }
+        if payload.hkSampleCount == 0 {
+            return "Apple Watch started calibration, but no live heart-rate samples arrived. Keep the watch snug on your wrist and try again."
         }
         switch payload.reason {
         case .insufficientSamples:
-            return "Insufficient HRV readings were captured. Wear your Apple Watch snugly, keep your wrist still, and try again."
+            return "Too few live heart-rate samples were captured to calculate resonance. Wear your Apple Watch snugly, keep your wrist still, and try again."
         case .noResonanceSignal:
-            return "Your readings were captured, but no clear resonance signal was detected. Try again in a quieter resting position."
+            return "Heart-rate samples were captured, but no clear resonance signal was detected. Try again in a quieter resting position."
         }
     }
 
@@ -127,7 +137,7 @@ public final class CalibrationService: ObservableObject {
         return """
         Reason: \(payload.reason.rawValue)
         HK active: \(payload.workoutWasActive ? "yes" : "no")
-        HK samples: \(payload.hkSampleCount)
+        Watch HR samples: \(payload.hkSampleCount)
         Accepted rates: \(payload.acceptedRateCount)/\(payload.totalRateCount)
         Latest HR: \(heartRate)
         Per-rate: \(perRate)

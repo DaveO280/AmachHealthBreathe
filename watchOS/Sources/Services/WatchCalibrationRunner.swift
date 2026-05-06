@@ -28,7 +28,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     // MARK: - Config
 
     /// Per-rate sample window. DEBUG cuts this to 10s so a full 6-rate
-    /// calibration completes in ~1 minute instead of 6 — for fast iteration
+    /// calibration completes in ~1 minute instead of 6 — for fast simulator iteration
     /// during development. Compile-time (not runtime) so release builds
     /// always use the real 60s window.
     #if DEBUG

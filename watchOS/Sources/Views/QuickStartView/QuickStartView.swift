@@ -16,7 +16,7 @@ public struct QuickStartView: View {
     private let durationOptions: [(label: String, seconds: Int)] = [
         ("5", 300), ("10", 600), ("15", 900)
     ]
-    private static let fastCalibrationRateSeconds: TimeInterval = 10
+    private static let fastCalibrationRateSeconds: TimeInterval = 30
 
     public var body: some View {
         NavigationStack {
@@ -138,7 +138,7 @@ public struct QuickStartView: View {
             if isStartingCalibration {
                 ProgressView().tint(Color.amachTextPrimary)
             } else {
-                Text("Fast Cal")
+                Text("Diag Cal")
                     .font(.caption)
                     .frame(maxWidth: .infinity)
             }

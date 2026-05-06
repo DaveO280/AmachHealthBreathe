@@ -109,7 +109,7 @@ private struct CalibrationActiveView: View {
     @State private var showCancelConfirm: Bool = false
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .topLeading) {
             VStack(spacing: 6) {
                 Text("Calibrating")
                     .font(.caption2)
@@ -140,9 +140,13 @@ private struct CalibrationActiveView: View {
                 }
             }
             .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             cancelButton
+                .padding(.top, WatchLayout.isCompact ? 0 : 2)
+                .padding(.leading, WatchLayout.isCompact ? 0 : 2)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .confirmationDialog("Cancel calibration?",
                             isPresented: $showCancelConfirm,
                             titleVisibility: .visible) {
