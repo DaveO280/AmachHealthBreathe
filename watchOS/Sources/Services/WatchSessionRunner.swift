@@ -289,7 +289,12 @@ extension WatchSessionRunner: WCSessionDelegate {
                     bpm: cmd.bpm, durationSeconds: cmd.durationSeconds, ratio: ratio)
             }
         case .startCalibration:
+            let cmd = try? decodeWatchPayload(
+                StartCalibrationCommand.self, from: message)
             Task { @MainActor [weak self] in
+                let duration = cmd?.sampleDurationPerRate
+                    ?? WatchCalibrationRunner.defaultRateDuration
+                self?.calibrationRunner?.sampleDurationPerRate = duration
                 await self?.calibrationRunner?.start()
             }
         case .cancelSession:

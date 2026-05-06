@@ -17,13 +17,13 @@ public final class CalibrationService: ObservableObject {
         /// the iPhone may sit here for a couple of seconds.
         case awaitingResult
         case complete(result: ResonanceFrequencyResult)
-        case failed
+        case failed(message: String)
     }
 
     @Published public private(set) var calibrationState: CalibrationState = .idle
 
     private let candidates = CalibrationEngine.candidateBPMs
-    private let perRateDuration: TimeInterval = 60
+    private let defaultPerRateDuration: TimeInterval = 60
 
     private var watchService: WatchConnectivityService?
     private var progressTimer: Timer?
@@ -38,9 +38,10 @@ public final class CalibrationService: ObservableObject {
     /// Sends `.startCalibration` to Watch and starts the local progress display.
     /// Returns `false` when Watch is not reachable — caller should prompt the user.
     @discardableResult
-    public func startCalibration() -> Bool {
-        guard watchService?.sendStartCalibration() == true else { return false }
-        startLocalProgressTimer()
+    public func startCalibration(sampleDurationPerRate: TimeInterval? = nil) -> Bool {
+        guard watchService?.sendStartCalibration(
+            sampleDurationPerRate: sampleDurationPerRate) == true else { return false }
+        startLocalProgressTimer(perRateDuration: sampleDurationPerRate ?? defaultPerRateDuration)
         return true
     }
 
@@ -58,14 +59,14 @@ public final class CalibrationService: ObservableObject {
 
     /// Called when the Watch reports calibration finished without enough HRV
     /// data to identify a resonance frequency.
-    public func failFromWatch() {
+    public func failFromWatch(_ payload: CalibrationFailurePayload? = nil) {
         stopProgressTimer()
-        calibrationState = .failed
+        calibrationState = .failed(message: failureMessage(from: payload))
     }
 
     // MARK: - Local progress timer
 
-    private func startLocalProgressTimer() {
+    private func startLocalProgressTimer(perRateDuration: TimeInterval) {
         stopProgressTimer()
         let total = Double(candidates.count) * perRateDuration
         let startTime = Date()
@@ -85,7 +86,7 @@ public final class CalibrationService: ObservableObject {
                     self.calibrationState = .awaitingResult
                     return
                 }
-                let rateIndex = min(Int(elapsed / self.perRateDuration), self.candidates.count - 1)
+                let rateIndex = min(Int(elapsed / perRateDuration), self.candidates.count - 1)
                 self.calibrationState = .running(
                     currentBPM: self.candidates[rateIndex],
                     elapsed: elapsed,
@@ -97,5 +98,17 @@ public final class CalibrationService: ObservableObject {
     private func stopProgressTimer() {
         progressTimer?.invalidate()
         progressTimer = nil
+    }
+
+    private func failureMessage(from payload: CalibrationFailurePayload?) -> String {
+        guard let payload else {
+            return "Not enough HRV data was collected. Make sure your Apple Watch is snug and try again."
+        }
+        switch payload.reason {
+        case .insufficientSamples:
+            return "Insufficient HRV readings were captured. Wear your Apple Watch snugly, keep your wrist still, and try again."
+        case .noResonanceSignal:
+            return "Your readings were captured, but no clear resonance signal was detected. Try again in a quieter resting position."
+        }
     }
 }

@@ -10,6 +10,8 @@ struct CalibrationRunnerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showWatchPrompt = false
 
+    private static let fastCalibrationRateSeconds: TimeInterval = 10
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -28,8 +30,8 @@ struct CalibrationRunnerView: View {
                             awaitingResultView
                         case let .complete(result):
                             completeView(result: result)
-                        case .failed:
-                            failedView
+                        case let .failed(message):
+                            failedView(message: message)
                         }
                     }
                     .padding(AmachSpacing.screenEdge)
@@ -89,11 +91,26 @@ struct CalibrationRunnerView: View {
                 }
             }
             .amachPrimaryButtonStyle()
-            .alert("Open Watch App First", isPresented: $showWatchPrompt) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Open the Amach Breathe app on your Apple Watch, then tap Start Calibration.")
+            if shouldShowFastCalibration {
+                Button("Fast Test Calibration") {
+                    if !calibrationService.startCalibration(
+                        sampleDurationPerRate: Self.fastCalibrationRateSeconds) {
+                        showWatchPrompt = true
+                    }
+                }
+                .font(AmachType.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Color.amachPrimary)
+                Text("TestFlight debug run: about 1 minute total.")
+                    .font(AmachType.tiny)
+                    .foregroundStyle(Color.amachTextTertiary)
+                    .multilineTextAlignment(.center)
             }
+        }
+        .alert("Open Watch App First", isPresented: $showWatchPrompt) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Open the Amach Breathe app on your Apple Watch, then tap Start Calibration.")
         }
     }
 
@@ -280,7 +297,7 @@ struct CalibrationRunnerView: View {
 
     // MARK: - Failed
 
-    private var failedView: some View {
+    private func failedView(message: String) -> some View {
         VStack(spacing: AmachSpacing.lg) {
             Spacer()
             Image(systemName: "exclamationmark.triangle")
@@ -289,7 +306,7 @@ struct CalibrationRunnerView: View {
             Text("Calibration Failed")
                 .font(AmachType.h2)
                 .foregroundStyle(Color.amachTextPrimary)
-            Text("Not enough HRV data was collected. Make sure your Apple Watch is snug and try again.")
+            Text(message)
                 .font(AmachType.caption)
                 .foregroundStyle(Color.amachTextSecondary)
                 .multilineTextAlignment(.center)
@@ -304,5 +321,13 @@ struct CalibrationRunnerView: View {
     private func daysUntilRetest(_ record: CalibrationRecord) -> Int {
         let days = Int(record.retestAfter.timeIntervalSince(Date()) / 86400)
         return max(0, days)
+    }
+
+    private var shouldShowFastCalibration: Bool {
+        #if DEBUG
+        return true
+        #else
+        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        #endif
     }
 }

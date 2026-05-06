@@ -9,7 +9,7 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
 
     public var onSessionReceived: ((BreathingSessionRecord) -> Void)?
     public var onCalibrationReceived: ((ResonanceFrequencyResult) -> Void)?
-    public var onCalibrationFailed: (() -> Void)?
+    public var onCalibrationFailed: ((CalibrationFailurePayload?) -> Void)?
     /// Set by the app root to push current wallet state when Watch requests it.
     public var onWalletStateRequested: (() -> Void)?
 
@@ -35,9 +35,17 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
     /// Sends a start-calibration command to the Watch. Returns false if Watch isn't reachable —
     /// caller should prompt the user to open the Watch app.
     @discardableResult
-    public func sendStartCalibration() -> Bool {
+    public func sendStartCalibration(sampleDurationPerRate: TimeInterval? = nil) -> Bool {
         guard WCSession.default.isReachable else { return false }
-        WCSession.default.sendMessage(makeWatchMessage(type: .startCalibration), replyHandler: nil)
+        if let sampleDurationPerRate {
+            let command = StartCalibrationCommand(sampleDurationPerRate: sampleDurationPerRate)
+            guard let message = try? makeWatchMessage(type: .startCalibration, payload: command) else {
+                return false
+            }
+            WCSession.default.sendMessage(message, replyHandler: nil)
+        } else {
+            WCSession.default.sendMessage(makeWatchMessage(type: .startCalibration), replyHandler: nil)
+        }
         return true
     }
 
@@ -121,7 +129,8 @@ extension WatchConnectivityService: WCSessionDelegate {
             guard let result = try? decodeWatchPayload(ResonanceFrequencyResult.self, from: message) else { return }
             Task { @MainActor [weak self] in self?.onCalibrationReceived?(result) }
         case .calibrationFailed:
-            Task { @MainActor [weak self] in self?.onCalibrationFailed?() }
+            let payload = try? decodeWatchPayload(CalibrationFailurePayload.self, from: message)
+            Task { @MainActor [weak self] in self?.onCalibrationFailed?(payload) }
         case .walletStateRequest:
             Task { @MainActor [weak self] in self?.onWalletStateRequested?() }
         default:

@@ -52,6 +52,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     private var currentRateBPM: Double = 0
     private var collectedSamples: [Double: [Double]] = [:]
     private var rateTimer: Timer?
+    private var wakeHealthTimer: Timer?
 
     /// Set when the rate's sample window expires; deferred transition
     /// fires on the next inhale start so we never cut a breath in half.
@@ -94,6 +95,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
 
     public func start() async {
         guard case .idle = calibrationState else { return }
+        invalidateExtendedRuntimeSession()
         collectedSamples = [:]
         currentRateIndex = 0
         isRunning = true
@@ -108,6 +110,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         audioPacer.prepare()
 
         startExtendedRuntimeSession()
+        logCalibrationRuntimeMode()
 
         // Single persistent subscription across all 6 rates. Holding one sink
         // for the whole calibration prevents the brief `.idle` frame between
@@ -162,14 +165,18 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard let self else { return }
             Self.log.info("WORKOUT_ACTIVE_CHECK calibration active=\(self.workoutManager.isActive, privacy: .public) samples=\(self.workoutManager.sampleCount, privacy: .public)")
+            self.ensureWakeSessionsHealthy()
         }
         Self.log.info("Calibration start (rates: \(CalibrationEngine.candidateBPMs.map { "\($0)" }.joined(separator: ","), privacy: .public))")
+        startWakeHealthTimer()
         await startNextRate()
     }
 
     public func cancel() async {
         rateTimer?.invalidate()
         rateTimer = nil
+        wakeHealthTimer?.invalidate()
+        wakeHealthTimer = nil
         timer.stop()
         cancellables.removeAll()
         pendingRateTransition = false
@@ -301,6 +308,8 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         // before flipping isRunning was the post-calibration freeze.
         rateTimer?.invalidate()
         rateTimer = nil
+        wakeHealthTimer?.invalidate()
+        wakeHealthTimer = nil
         cancellables.removeAll()
         isRunning = false
         pacerState = .idle
@@ -312,14 +321,30 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         invalidateExtendedRuntimeSession()
 
         let totalSamples = workoutManager.sampleCount
-        let perRate = collectedSamples.map { "\($0.key)=\($0.value.count)" }.sorted().joined(separator: ",")
+        let perRate = collectedSamples.mapValues(\.count)
+        let perRateLog = perRate.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: ",")
+        let evaluation = engine.evaluate(samples: collectedSamples)
+        let accepted = evaluation.acceptedRates.sorted()
         guard let result = engine.findResonance(samples: collectedSamples) else {
             calibrationState = .failed
-            Self.log.error("CALIBRATION_FAILED rates=\(self.collectedSamples.count, privacy: .public) hkSamples=\(totalSamples, privacy: .public) perRate=[\(perRate, privacy: .public)]")
-            sendFailureToPhone()
+            let reason: CalibrationFailureReason = accepted.isEmpty ? .insufficientSamples : .noResonanceSignal
+            let skippedLog = evaluation.skippedRates
+                .map { "\($0.key)=\($0.value)" }
+                .sorted()
+                .joined(separator: ",")
+            Self.log.error("CALIBRATION_FAILED reason=\(reason.rawValue, privacy: .public) accepted=\(accepted.count, privacy: .public) hkSamples=\(totalSamples, privacy: .public) perRate=[\(perRateLog, privacy: .public)] skipped=[\(skippedLog, privacy: .public)]")
+            sendFailureToPhone(
+                CalibrationFailurePayload(
+                    reason: reason,
+                    hkSampleCount: totalSamples,
+                    acceptedRateCount: accepted.count,
+                    totalRateCount: CalibrationEngine.candidateBPMs.count,
+                    perRateSampleCounts: perRate
+                )
+            )
             return
         }
-        Self.log.info("CALIBRATION_PIPELINE hkSamples=\(totalSamples, privacy: .public) perRate=[\(perRate, privacy: .public)]")
+        Self.log.info("CALIBRATION_PIPELINE hkSamples=\(totalSamples, privacy: .public) accepted=\(accepted.count, privacy: .public) acceptedRates=\(accepted.map { String($0) }.joined(separator: ","), privacy: .public) perRate=[\(perRateLog, privacy: .public)]")
 
         let record = CalibrationRecord(result: result)
         calibrationState = .complete(result: record)
@@ -336,6 +361,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
     // MARK: - Extended runtime session
 
     private func startExtendedRuntimeSession() {
+        guard extendedRuntimeSession == nil else { return }
         let session = WKExtendedRuntimeSession()
         session.delegate = self
         session.start()
@@ -364,14 +390,50 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
 
     /// Tell the phone calibration finished without producing a usable result so
     /// it can drop the awaiting-result state instead of waiting forever.
-    private func sendFailureToPhone() {
+    private func sendFailureToPhone(_ payload: CalibrationFailurePayload) {
         guard WCSession.isSupported() else { return }
-        let message = makeWatchMessage(type: .calibrationFailed)
+        guard let message = try? makeWatchMessage(type: .calibrationFailed, payload: payload) else { return }
         let session = WCSession.default
         if session.isReachable {
             session.sendMessage(message, replyHandler: nil)
         } else {
             session.transferUserInfo(message)
+        }
+    }
+
+    private func logCalibrationRuntimeMode() {
+        #if DEBUG
+        let env = ProcessInfo.processInfo.environment
+        if env["CALIBRATION_TEST_LOOPS"] != nil {
+            Self.log.info("CALIBRATION_RUNTIME test-loop rateSec=\(self.sampleDurationPerRate, privacy: .public)")
+        } else {
+            Self.log.info("CALIBRATION_RUNTIME debug-default rateSec=\(self.sampleDurationPerRate, privacy: .public)")
+        }
+        #else
+        Self.log.info("CALIBRATION_RUNTIME release-default rateSec=\(self.sampleDurationPerRate, privacy: .public)")
+        #endif
+    }
+
+    private func startWakeHealthTimer() {
+        wakeHealthTimer?.invalidate()
+        wakeHealthTimer = Timer.scheduledTimer(withTimeInterval: 20.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.ensureWakeSessionsHealthy()
+            }
+        }
+    }
+
+    private func ensureWakeSessionsHealthy() {
+        guard isRunning else { return }
+        if extendedRuntimeSession == nil {
+            Self.log.info("WAKE_RECOVERY restarting extended runtime")
+            startExtendedRuntimeSession()
+        }
+        guard !workoutManager.isActive else { return }
+        Self.log.info("WAKE_RECOVERY restarting workout session")
+        Task { [workoutManager] in
+            try? await workoutManager.requestAuthorization()
+            try? await workoutManager.startWorkout()
         }
     }
 }
@@ -401,6 +463,11 @@ extension WatchCalibrationRunner: WKExtendedRuntimeSessionDelegate {
             Self.log.error("EXTENDED_RUNTIME_INVALIDATED calibration reason=\(reason.rawValue, privacy: .public) error=\(error.localizedDescription, privacy: .public)")
         } else {
             Self.log.info("EXTENDED_RUNTIME_INVALIDATED calibration reason=\(reason.rawValue, privacy: .public)")
+        }
+        Task { @MainActor [weak self] in
+            guard let self, self.isRunning else { return }
+            self.extendedRuntimeSession = nil
+            self.startExtendedRuntimeSession()
         }
     }
 }

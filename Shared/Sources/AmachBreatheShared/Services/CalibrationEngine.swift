@@ -10,12 +10,28 @@ public final class CalibrationEngine: Sendable {
 
     public static let candidateBPMs: [Double] = [4.5, 5.0, 5.5, 6.0, 6.5, 7.0]
 
-    /// Minimum seconds of RR data required per candidate rate.
-    public static let minSamplesPerRate = 8
+    /// Minimum RR samples required per candidate rate.
+    public static let minSamplesPerRate = 6
 
     private let coherenceCalc = CoherenceCalculator()
 
     public init() {}
+
+    public struct Evaluation: Sendable {
+        public let scores: [Double: Double]
+        public let acceptedRates: [Double]
+        public let skippedRates: [Double: Int]
+
+        public init(
+            scores: [Double: Double],
+            acceptedRates: [Double],
+            skippedRates: [Double: Int]
+        ) {
+            self.scores = scores
+            self.acceptedRates = acceptedRates
+            self.skippedRates = skippedRates
+        }
+    }
 
     // MARK: - API
 
@@ -26,14 +42,8 @@ public final class CalibrationEngine: Sendable {
     public func findResonance(
         samples: [Double: [Double]]
     ) -> ResonanceFrequencyResult? {
-        var scores: [Double: Double] = [:]
-        for bpm in Self.candidateBPMs {
-            guard let rr = samples[bpm],
-                  rr.count >= Self.minSamplesPerRate else { continue }
-            if let amp = coherenceCalc.rawAmplitude(rrIntervals: rr, targetBPM: bpm) {
-                scores[bpm] = amp
-            }
-        }
+        let evaluation = evaluate(samples: samples)
+        let scores = evaluation.scores
         // Tiebreaker: when two rates share the same amplitude, prefer the lower BPM.
         // Lower BPM is more conservative (slower breath rate → gentler physiological demand).
         guard let best = scores.max(by: { a, b in
@@ -44,6 +54,36 @@ public final class CalibrationEngine: Sendable {
         let maxAmp = best.value
         let normScores = scores.mapValues { maxAmp > 0 ? $0 / maxAmp : 0 }
         return ResonanceFrequencyResult(resonanceBPM: best.key, scores: normScores)
+    }
+
+    /// Returns scored rates plus explicit skip diagnostics for observability.
+    public func evaluate(samples: [Double: [Double]]) -> Evaluation {
+        var scores: [Double: Double] = [:]
+        var acceptedRates: [Double] = []
+        var skippedRates: [Double: Int] = [:]
+
+        for bpm in Self.candidateBPMs {
+            guard let rr = samples[bpm], !rr.isEmpty else {
+                skippedRates[bpm] = 0
+                continue
+            }
+            guard rr.count >= Self.minSamplesPerRate else {
+                skippedRates[bpm] = rr.count
+                continue
+            }
+            guard let amp = coherenceCalc.rawAmplitude(rrIntervals: rr, targetBPM: bpm) else {
+                skippedRates[bpm] = rr.count
+                continue
+            }
+            scores[bpm] = amp
+            acceptedRates.append(bpm)
+        }
+
+        return Evaluation(
+            scores: scores,
+            acceptedRates: acceptedRates,
+            skippedRates: skippedRates
+        )
     }
 
     /// Convenience: evaluate a single RR array against all candidates.

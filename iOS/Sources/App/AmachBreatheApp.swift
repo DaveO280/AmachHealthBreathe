@@ -101,8 +101,8 @@ struct AmachBreatheApp: App {
             calibrationStore.save(result: result)
             calibrationService.completeWithResult(result)
         }
-        watchConnectivity.onCalibrationFailed = {
-            calibrationService.failFromWatch()
+        watchConnectivity.onCalibrationFailed = { payload in
+            calibrationService.failFromWatch(payload)
         }
         watchConnectivity.onWalletStateRequested = {
             watchConnectivity.sendWalletState(

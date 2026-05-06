@@ -10,9 +10,9 @@ public enum WatchMessageKey: String, Sendable {
 public enum WatchMessageType: String, Codable, Sendable {
     case sessionComplete      // Watch → iPhone: BreathingSessionRecord JSON
     case calibrationResult    // Watch → iPhone: ResonanceFrequencyResult JSON
-    case calibrationFailed    // Watch → iPhone: no payload (insufficient HRV)
+    case calibrationFailed    // Watch → iPhone: CalibrationFailurePayload JSON
     case startSession         // iPhone → Watch: StartSessionCommand JSON
-    case startCalibration     // iPhone → Watch: no payload
+    case startCalibration     // iPhone → Watch: optional StartCalibrationCommand JSON
     case cancelSession        // iPhone → Watch: no payload
     case walletState          // iPhone → Watch: WalletStateMessage JSON
     case walletStateRequest   // Watch → iPhone: no payload (Watch requests current state)
@@ -30,6 +30,14 @@ public struct StartSessionCommand: Codable, Sendable {
     }
 }
 
+public struct StartCalibrationCommand: Codable, Sendable {
+    public let sampleDurationPerRate: Double?
+
+    public init(sampleDurationPerRate: Double? = nil) {
+        self.sampleDurationPerRate = sampleDurationPerRate
+    }
+}
+
 public struct ResonanceFrequencyResult: Codable, Sendable {
     public let resonanceBPM: Double
     public let scores: [Double: Double]  // bpm → coherence score
@@ -37,6 +45,33 @@ public struct ResonanceFrequencyResult: Codable, Sendable {
     public init(resonanceBPM: Double, scores: [Double: Double]) {
         self.resonanceBPM = resonanceBPM
         self.scores = scores
+    }
+}
+
+public enum CalibrationFailureReason: String, Codable, Sendable {
+    case insufficientSamples
+    case noResonanceSignal
+}
+
+public struct CalibrationFailurePayload: Codable, Sendable {
+    public let reason: CalibrationFailureReason
+    public let hkSampleCount: Int
+    public let acceptedRateCount: Int
+    public let totalRateCount: Int
+    public let perRateSampleCounts: [Double: Int]
+
+    public init(
+        reason: CalibrationFailureReason,
+        hkSampleCount: Int,
+        acceptedRateCount: Int,
+        totalRateCount: Int,
+        perRateSampleCounts: [Double: Int]
+    ) {
+        self.reason = reason
+        self.hkSampleCount = hkSampleCount
+        self.acceptedRateCount = acceptedRateCount
+        self.totalRateCount = totalRateCount
+        self.perRateSampleCounts = perRateSampleCounts
     }
 }
 
