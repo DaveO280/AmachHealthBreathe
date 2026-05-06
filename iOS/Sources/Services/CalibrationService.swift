@@ -17,7 +17,7 @@ public final class CalibrationService: ObservableObject {
         /// the iPhone may sit here for a couple of seconds.
         case awaitingResult
         case complete(result: ResonanceFrequencyResult)
-        case failed(message: String)
+        case failed(message: String, diagnostics: String?)
     }
 
     @Published public private(set) var calibrationState: CalibrationState = .idle
@@ -61,7 +61,9 @@ public final class CalibrationService: ObservableObject {
     /// data to identify a resonance frequency.
     public func failFromWatch(_ payload: CalibrationFailurePayload? = nil) {
         stopProgressTimer()
-        calibrationState = .failed(message: failureMessage(from: payload))
+        calibrationState = .failed(
+            message: failureMessage(from: payload),
+            diagnostics: failureDiagnostics(from: payload))
     }
 
     // MARK: - Local progress timer
@@ -110,5 +112,25 @@ public final class CalibrationService: ObservableObject {
         case .noResonanceSignal:
             return "Your readings were captured, but no clear resonance signal was detected. Try again in a quieter resting position."
         }
+    }
+
+    private func failureDiagnostics(from payload: CalibrationFailurePayload?) -> String? {
+        guard let payload else { return nil }
+        let perRate = CalibrationEngine.candidateBPMs
+            .map { bpm in
+                "\(String(format: "%.1f", bpm)):\(payload.perRateSampleCounts[bpm] ?? 0)"
+            }
+            .joined(separator: "  ")
+        let heartRate = payload.latestHeartRate > 0
+            ? String(format: "%.0f bpm", payload.latestHeartRate)
+            : "none"
+        return """
+        Reason: \(payload.reason.rawValue)
+        HK active: \(payload.workoutWasActive ? "yes" : "no")
+        HK samples: \(payload.hkSampleCount)
+        Accepted rates: \(payload.acceptedRateCount)/\(payload.totalRateCount)
+        Latest HR: \(heartRate)
+        Per-rate: \(perRate)
+        """
     }
 }

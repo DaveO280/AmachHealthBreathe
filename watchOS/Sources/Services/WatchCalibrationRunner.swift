@@ -18,7 +18,7 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         case idle
         case running(rateIndex: Int, bpm: Double, elapsed: TimeInterval)
         case complete(result: CalibrationRecord)
-        case failed
+        case failed(payload: CalibrationFailurePayload)
     }
 
     @Published public private(set) var calibrationState: State = .idle
@@ -326,22 +326,23 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         let evaluation = engine.evaluate(samples: collectedSamples)
         let accepted = evaluation.acceptedRates.sorted()
         guard let result = engine.findResonance(samples: collectedSamples) else {
-            calibrationState = .failed
             let reason: CalibrationFailureReason = accepted.isEmpty ? .insufficientSamples : .noResonanceSignal
             let skippedLog = evaluation.skippedRates
                 .map { "\($0.key)=\($0.value)" }
                 .sorted()
                 .joined(separator: ",")
             Self.log.error("CALIBRATION_FAILED reason=\(reason.rawValue, privacy: .public) accepted=\(accepted.count, privacy: .public) hkSamples=\(totalSamples, privacy: .public) perRate=[\(perRateLog, privacy: .public)] skipped=[\(skippedLog, privacy: .public)]")
-            sendFailureToPhone(
-                CalibrationFailurePayload(
-                    reason: reason,
-                    hkSampleCount: totalSamples,
-                    acceptedRateCount: accepted.count,
-                    totalRateCount: CalibrationEngine.candidateBPMs.count,
-                    perRateSampleCounts: perRate
-                )
+            let payload = CalibrationFailurePayload(
+                reason: reason,
+                hkSampleCount: totalSamples,
+                acceptedRateCount: accepted.count,
+                totalRateCount: CalibrationEngine.candidateBPMs.count,
+                perRateSampleCounts: perRate,
+                workoutWasActive: workoutManager.isActive,
+                latestHeartRate: workoutManager.latestHeartRate
             )
+            calibrationState = .failed(payload: payload)
+            sendFailureToPhone(payload)
             return
         }
         Self.log.info("CALIBRATION_PIPELINE hkSamples=\(totalSamples, privacy: .public) accepted=\(accepted.count, privacy: .public) acceptedRates=\(accepted.map { String($0) }.joined(separator: ","), privacy: .public) perRate=[\(perRateLog, privacy: .public)]")

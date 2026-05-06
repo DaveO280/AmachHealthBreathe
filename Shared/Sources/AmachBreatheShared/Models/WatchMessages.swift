@@ -59,19 +59,25 @@ public struct CalibrationFailurePayload: Codable, Sendable {
     public let acceptedRateCount: Int
     public let totalRateCount: Int
     public let perRateSampleCounts: [Double: Int]
+    public let workoutWasActive: Bool
+    public let latestHeartRate: Double
 
     public init(
         reason: CalibrationFailureReason,
         hkSampleCount: Int,
         acceptedRateCount: Int,
         totalRateCount: Int,
-        perRateSampleCounts: [Double: Int]
+        perRateSampleCounts: [Double: Int],
+        workoutWasActive: Bool = false,
+        latestHeartRate: Double = 0
     ) {
         self.reason = reason
         self.hkSampleCount = hkSampleCount
         self.acceptedRateCount = acceptedRateCount
         self.totalRateCount = totalRateCount
         self.perRateSampleCounts = perRateSampleCounts
+        self.workoutWasActive = workoutWasActive
+        self.latestHeartRate = latestHeartRate
     }
 }
 

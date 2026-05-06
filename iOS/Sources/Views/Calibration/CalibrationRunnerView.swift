@@ -30,8 +30,8 @@ struct CalibrationRunnerView: View {
                             awaitingResultView
                         case let .complete(result):
                             completeView(result: result)
-                        case let .failed(message):
-                            failedView(message: message)
+                        case let .failed(message, diagnostics):
+                            failedView(message: message, diagnostics: diagnostics)
                         }
                     }
                     .padding(AmachSpacing.screenEdge)
@@ -297,7 +297,7 @@ struct CalibrationRunnerView: View {
 
     // MARK: - Failed
 
-    private func failedView(message: String) -> some View {
+    private func failedView(message: String, diagnostics: String?) -> some View {
         VStack(spacing: AmachSpacing.lg) {
             Spacer()
             Image(systemName: "exclamationmark.triangle")
@@ -310,6 +310,15 @@ struct CalibrationRunnerView: View {
                 .font(AmachType.caption)
                 .foregroundStyle(Color.amachTextSecondary)
                 .multilineTextAlignment(.center)
+            if let diagnostics {
+                Text(diagnostics)
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .foregroundStyle(Color.amachTextTertiary)
+                    .multilineTextAlignment(.leading)
+                    .padding(AmachSpacing.sm)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .amachCard()
+            }
             Spacer()
             Button("Try Again") { calibrationService.startCalibration() }
                 .amachPrimaryButtonStyle()

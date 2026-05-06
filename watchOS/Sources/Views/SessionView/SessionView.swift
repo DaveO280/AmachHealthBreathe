@@ -16,8 +16,8 @@ public struct SessionView: View {
                       case .complete(let record) = calibrationRunner.calibrationState {
                 CalibrationResultView(record: record)
             } else if runner.phase == .idle,
-                      case .failed = calibrationRunner.calibrationState {
-                CalibrationFailedView()
+                      case let .failed(payload) = calibrationRunner.calibrationState {
+                CalibrationFailedView(payload: payload)
             } else {
                 switch runner.phase {
                 case .idle:
@@ -41,6 +41,7 @@ public struct SessionView: View {
 private struct CalibrationFailedView: View {
 
     @EnvironmentObject private var calibrationRunner: WatchCalibrationRunner
+    let payload: CalibrationFailurePayload
 
     var body: some View {
         VStack(spacing: WatchLayout.isCompact ? 6 : 10) {
@@ -55,6 +56,10 @@ private struct CalibrationFailedView: View {
                 .font(.caption2)
                 .foregroundStyle(Color.amachTextSecondary)
                 .multilineTextAlignment(.center)
+            Text(diagnostics)
+                .font(.system(size: 8, weight: .regular, design: .monospaced))
+                .foregroundStyle(Color.amachTextTertiary)
+                .multilineTextAlignment(.leading)
             Button("Try again") {
                 Task {
                     await calibrationRunner.cancel()
@@ -76,6 +81,23 @@ private struct CalibrationFailedView: View {
             .foregroundStyle(Color.amachTextSecondary)
         }
         .padding(.horizontal, WatchLayout.isCompact ? 4 : 8)
+    }
+
+    private var diagnostics: String {
+        let perRate = CalibrationEngine.candidateBPMs
+            .map { bpm in
+                "\(String(format: "%.1f", bpm)):\(payload.perRateSampleCounts[bpm] ?? 0)"
+            }
+            .joined(separator: " ")
+        let heartRate = payload.latestHeartRate > 0
+            ? String(format: "%.0f", payload.latestHeartRate)
+            : "none"
+        return """
+        \(payload.reason.rawValue)
+        HK:\(payload.workoutWasActive ? "on" : "off") samples:\(payload.hkSampleCount) HR:\(heartRate)
+        rates:\(payload.acceptedRateCount)/\(payload.totalRateCount)
+        \(perRate)
+        """
     }
 }
 
