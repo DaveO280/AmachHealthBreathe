@@ -4,16 +4,19 @@ import AmachBreatheShared
 public struct QuickStartView: View {
 
     @EnvironmentObject private var runner: WatchSessionRunner
+    @EnvironmentObject private var calibrationRunner: WatchCalibrationRunner
 
     @State private var selectedBPM: Double = 5.5
     @State private var selectedDuration: Int = 300
     @State private var selectedRatio: BreathRatio = .fourToSix
     @State private var isStarting: Bool = false
+    @State private var isStartingCalibration: Bool = false
 
     private let bpmOptions: [Double] = CalibrationEngine.candidateBPMs
     private let durationOptions: [(label: String, seconds: Int)] = [
         ("5", 300), ("10", 600), ("15", 900)
     ]
+    private static let fastCalibrationRateSeconds: TimeInterval = 10
 
     public var body: some View {
         NavigationStack {
@@ -27,6 +30,9 @@ public struct QuickStartView: View {
                     durationPicker
                     ratioPicker
                     startButton
+                    if shouldShowFastCalibration {
+                        fastCalibrationButton
+                    }
                 }
                 .padding(.horizontal, WatchLayout.isCompact ? 4 : 8)
                 .padding(.bottom, 8)
@@ -125,6 +131,26 @@ public struct QuickStartView: View {
         .disabled(isStarting)
     }
 
+    private var fastCalibrationButton: some View {
+        Button {
+            startFastCalibration()
+        } label: {
+            if isStartingCalibration {
+                ProgressView().tint(Color.amachTextPrimary)
+            } else {
+                Text("Fast Cal")
+                    .font(.caption)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, 7)
+        .background(Color.amachSurface)
+        .foregroundStyle(Color.amachPrimary)
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.sm))
+        .disabled(isStarting || isStartingCalibration)
+    }
+
     // MARK: - Actions
 
     private func startSession() {
@@ -137,5 +163,22 @@ public struct QuickStartView: View {
             )
             await MainActor.run { isStarting = false }
         }
+    }
+
+    private func startFastCalibration() {
+        isStartingCalibration = true
+        Task {
+            calibrationRunner.sampleDurationPerRate = Self.fastCalibrationRateSeconds
+            await calibrationRunner.start()
+            await MainActor.run { isStartingCalibration = false }
+        }
+    }
+
+    private var shouldShowFastCalibration: Bool {
+        #if DEBUG
+        return true
+        #else
+        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        #endif
     }
 }
