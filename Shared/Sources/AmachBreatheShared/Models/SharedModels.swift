@@ -153,6 +153,57 @@ public enum SessionSource: String, Codable, Sendable {
     case phone
 }
 
+// MARK: - Audio Breath Tracking
+
+public enum AudioBreathDataQuality: String, Codable, Sendable {
+    case unavailable
+    case low
+    case fair
+    case good
+}
+
+/// Derived, on-device metrics from optional iPhone microphone tracking.
+/// Raw audio is never persisted; only this aggregate summary is stored.
+public struct AudioBreathMetrics: Codable, Equatable, Sendable {
+    public let enabled: Bool
+    public let permissionGranted: Bool
+    public let targetBreathingBPM: Double
+    public let estimatedBreathingBPM: Double?
+    public let adherenceScore: Double?  // 0...1, nil when timing is not measurable
+    public let confidence: Double       // 0...1 conservative confidence in the estimate
+    public let dataQuality: AudioBreathDataQuality
+    public let analyzedDurationSeconds: Double
+    public let sampleCount: Int
+    public let detectedPeakCount: Int
+    public let signalToNoiseRatio: Double?
+
+    public init(
+        enabled: Bool,
+        permissionGranted: Bool,
+        targetBreathingBPM: Double,
+        estimatedBreathingBPM: Double? = nil,
+        adherenceScore: Double? = nil,
+        confidence: Double = 0,
+        dataQuality: AudioBreathDataQuality = .unavailable,
+        analyzedDurationSeconds: Double = 0,
+        sampleCount: Int = 0,
+        detectedPeakCount: Int = 0,
+        signalToNoiseRatio: Double? = nil
+    ) {
+        self.enabled = enabled
+        self.permissionGranted = permissionGranted
+        self.targetBreathingBPM = targetBreathingBPM
+        self.estimatedBreathingBPM = estimatedBreathingBPM
+        self.adherenceScore = adherenceScore
+        self.confidence = confidence
+        self.dataQuality = dataQuality
+        self.analyzedDurationSeconds = analyzedDurationSeconds
+        self.sampleCount = sampleCount
+        self.detectedPeakCount = detectedPeakCount
+        self.signalToNoiseRatio = signalToNoiseRatio
+    }
+}
+
 // MARK: - Breathing Session Record
 
 /// On-Storj record for a completed breathing session.
@@ -169,6 +220,7 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
     public let coherenceScore: Double? // 0–1 — nil for iPhone-only sessions
     public let reflectionRating: Int? // 1–5, nil if skipped
     public let source: SessionSource  // .watch or .phone
+    public let audioBreathMetrics: AudioBreathMetrics?
 
     public init(
         id: String = UUID().uuidString,
@@ -181,7 +233,8 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
         avgHRV: Double? = nil,
         coherenceScore: Double? = nil,
         reflectionRating: Int? = nil,
-        source: SessionSource = .watch
+        source: SessionSource = .watch,
+        audioBreathMetrics: AudioBreathMetrics? = nil
     ) {
         self.id               = id
         self.timestamp        = timestamp
@@ -194,6 +247,7 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
         self.coherenceScore   = coherenceScore
         self.reflectionRating = reflectionRating
         self.source           = source
+        self.audioBreathMetrics = audioBreathMetrics
     }
 
     // Custom decoder for backward compatibility: legacy Watch records don't have `source`.
@@ -210,6 +264,7 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
         coherenceScore  = try  c.decodeIfPresent(Double.self, forKey: .coherenceScore)
         reflectionRating = try c.decodeIfPresent(Int.self,  forKey: .reflectionRating)
         source = (try c.decodeIfPresent(SessionSource.self, forKey: .source)) ?? .watch
+        audioBreathMetrics = try c.decodeIfPresent(AudioBreathMetrics.self, forKey: .audioBreathMetrics)
     }
 }
 
@@ -233,7 +288,7 @@ public struct BreathingSessionEvent: Codable, Sendable {
         self.id = UUID().uuidString
         self.eventType = "BREATHING_SESSION"
         self.timestamp = record.timestamp
-        self.data = [
+        var data = [
             "sessionId":       record.id,
             "durationSeconds": String(record.durationSeconds),
             "bpm":             String(record.bpm),
@@ -244,7 +299,242 @@ public struct BreathingSessionEvent: Codable, Sendable {
             "baselineHRV":     String(format: "%.1f", record.baselineHRV ?? 0),
             "recoveryHRV":     String(format: "%.1f", record.recoveryHRV ?? 0)
         ]
+        if let audio = record.audioBreathMetrics {
+            data["audioBreathTracking"] = String(audio.enabled)
+            data["audioBreathQuality"] = audio.dataQuality.rawValue
+            data["audioBreathConfidence"] = String(format: "%.2f", audio.confidence)
+            if let estimated = audio.estimatedBreathingBPM {
+                data["audioEstimatedBPM"] = String(format: "%.1f", estimated)
+            }
+            if let adherence = audio.adherenceScore {
+                data["audioAdherenceScore"] = String(format: "%.2f", adherence)
+            }
+        }
+        self.data = data
         self.metadata = Metadata(platform: platform, version: "1", source: "user")
+    }
+}
+
+// MARK: - Coaching Insight
+
+/// Bounded facts sent to the backend for post-session coaching.
+/// This intentionally excludes raw audio and stores only aggregate metrics.
+public struct CoachingSessionFacts: Codable, Equatable, Sendable {
+    public let sessionId: String
+    public let timestampISO8601: String
+    public let durationSeconds: Int
+    public let targetBreathingBPM: Double
+    public let ratio: String
+    public let source: SessionSource
+    public let avgHRV: Double?
+    public let coherenceScore: Double?
+    public let reflectionRating: Int?
+    public let audio: CoachingAudioFacts?
+
+    public init(
+        sessionId: String,
+        timestampISO8601: String,
+        durationSeconds: Int,
+        targetBreathingBPM: Double,
+        ratio: String,
+        source: SessionSource,
+        avgHRV: Double? = nil,
+        coherenceScore: Double? = nil,
+        reflectionRating: Int? = nil,
+        audio: CoachingAudioFacts? = nil
+    ) {
+        self.sessionId = sessionId
+        self.timestampISO8601 = timestampISO8601
+        self.durationSeconds = durationSeconds
+        self.targetBreathingBPM = targetBreathingBPM
+        self.ratio = ratio
+        self.source = source
+        self.avgHRV = avgHRV
+        self.coherenceScore = coherenceScore
+        self.reflectionRating = reflectionRating
+        self.audio = audio
+    }
+
+    public init(record: BreathingSessionRecord) {
+        self.init(
+            sessionId: record.id,
+            timestampISO8601: ISO8601DateFormatter().string(from: record.timestamp),
+            durationSeconds: record.durationSeconds,
+            targetBreathingBPM: record.bpm,
+            ratio: record.ratio,
+            source: record.source,
+            avgHRV: record.avgHRV,
+            coherenceScore: record.coherenceScore,
+            reflectionRating: record.reflectionRating,
+            audio: record.audioBreathMetrics.map(CoachingAudioFacts.init(metrics:))
+        )
+    }
+}
+
+public struct CoachingAudioFacts: Codable, Equatable, Sendable {
+    public let enabled: Bool
+    public let permissionGranted: Bool
+    public let targetBreathingBPM: Double
+    public let estimatedBreathingBPM: Double?
+    public let adherenceScore: Double?
+    public let confidence: Double
+    public let dataQuality: AudioBreathDataQuality
+    public let analyzedDurationSeconds: Double
+    public let detectedPeakCount: Int
+    public let signalToNoiseRatio: Double?
+
+    public init(
+        enabled: Bool,
+        permissionGranted: Bool,
+        targetBreathingBPM: Double,
+        estimatedBreathingBPM: Double? = nil,
+        adherenceScore: Double? = nil,
+        confidence: Double,
+        dataQuality: AudioBreathDataQuality,
+        analyzedDurationSeconds: Double,
+        detectedPeakCount: Int,
+        signalToNoiseRatio: Double? = nil
+    ) {
+        self.enabled = enabled
+        self.permissionGranted = permissionGranted
+        self.targetBreathingBPM = targetBreathingBPM
+        self.estimatedBreathingBPM = estimatedBreathingBPM
+        self.adherenceScore = adherenceScore
+        self.confidence = confidence
+        self.dataQuality = dataQuality
+        self.analyzedDurationSeconds = analyzedDurationSeconds
+        self.detectedPeakCount = detectedPeakCount
+        self.signalToNoiseRatio = signalToNoiseRatio
+    }
+
+    public init(metrics: AudioBreathMetrics) {
+        self.init(
+            enabled: metrics.enabled,
+            permissionGranted: metrics.permissionGranted,
+            targetBreathingBPM: metrics.targetBreathingBPM,
+            estimatedBreathingBPM: metrics.estimatedBreathingBPM,
+            adherenceScore: metrics.adherenceScore,
+            confidence: metrics.confidence,
+            dataQuality: metrics.dataQuality,
+            analyzedDurationSeconds: metrics.analyzedDurationSeconds,
+            detectedPeakCount: metrics.detectedPeakCount,
+            signalToNoiseRatio: metrics.signalToNoiseRatio
+        )
+    }
+}
+
+public struct CoachingInsightRequest: Encodable, Sendable {
+    public let message: String
+    public let context: CoachingInsightContext
+    public let history: [CoachingHistoryMessage]
+    public let options: CoachingOptions
+
+    public init(facts: CoachingSessionFacts) {
+        self.message = Self.prompt(for: facts)
+        self.context = CoachingInsightContext(facts: facts)
+        self.history = []
+        self.options = CoachingOptions(mode: "quick")
+    }
+
+    static func prompt(for facts: CoachingSessionFacts) -> String {
+        """
+        Generate a concise post-session breathing coach insight from the bounded session facts in context. \
+        Do not diagnose, do not infer from raw audio, and do not ask for unavailable data. \
+        Return one short paragraph plus up to two practical next-session suggestions.
+        """
+    }
+}
+
+public struct CoachingInsightContext: Encodable, Sendable {
+    public let contextBlocks: [CoachingContextBlock]
+    public let source: String
+
+    public init(facts: CoachingSessionFacts) {
+        self.source = "AmachBreathe"
+        self.contextBlocks = [
+            CoachingContextBlock(
+                type: "breathing_session_facts",
+                content: Self.render(facts: facts)
+            )
+        ]
+    }
+
+    private static func render(facts: CoachingSessionFacts) -> String {
+        var lines = [
+            "Session ID: \(facts.sessionId)",
+            "Timestamp: \(facts.timestampISO8601)",
+            "Duration seconds: \(facts.durationSeconds)",
+            "Target breathing BPM: \(format(facts.targetBreathingBPM))",
+            "Ratio: \(facts.ratio)",
+            "Source: \(facts.source.rawValue)"
+        ]
+        if let avgHRV = facts.avgHRV {
+            lines.append("Average HRV ms: \(format(avgHRV))")
+        }
+        if let coherenceScore = facts.coherenceScore {
+            lines.append("Coherence score 0-1: \(format(coherenceScore))")
+        }
+        if let reflectionRating = facts.reflectionRating {
+            lines.append("Reflection rating 1-5: \(reflectionRating)")
+        }
+        if let audio = facts.audio {
+            lines.append("Audio tracking enabled: \(audio.enabled)")
+            lines.append("Audio permission granted: \(audio.permissionGranted)")
+            lines.append("Audio data quality: \(audio.dataQuality.rawValue)")
+            lines.append("Audio confidence 0-1: \(format(audio.confidence))")
+            lines.append("Audio analyzed seconds: \(format(audio.analyzedDurationSeconds))")
+            lines.append("Audio detected peak count: \(audio.detectedPeakCount)")
+            if let estimated = audio.estimatedBreathingBPM {
+                lines.append("Audio estimated BPM: \(format(estimated))")
+            }
+            if let adherence = audio.adherenceScore {
+                lines.append("Audio adherence score 0-1: \(format(adherence))")
+            }
+            if let signalToNoise = audio.signalToNoiseRatio {
+                lines.append("Audio signal-to-noise ratio: \(format(signalToNoise))")
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private static func format(_ value: Double) -> String {
+        String(format: "%.3f", value)
+    }
+}
+
+public struct CoachingContextBlock: Encodable, Sendable {
+    public let type: String
+    public let content: String
+}
+
+public struct CoachingHistoryMessage: Encodable, Sendable {
+    public let role: String
+    public let content: String
+}
+
+public struct CoachingOptions: Encodable, Sendable {
+    public let mode: String
+}
+
+public struct CoachingInsight: Codable, Equatable, Sendable {
+    public let content: String
+    public let suggestions: [String]
+    public let model: String?
+
+    public init(content: String, suggestions: [String] = [], model: String? = nil) {
+        self.content = content
+        self.suggestions = suggestions
+        self.model = model
+    }
+}
+
+public struct CoachingInsightResponse: Decodable, Sendable {
+    public let content: String
+    public let suggestions: [String]?
+    public let model: String?
+
+    public var insight: CoachingInsight {
+        CoachingInsight(content: content, suggestions: suggestions ?? [], model: model)
     }
 }
 

@@ -174,6 +174,27 @@ public final class AmachAPIClient: Sendable {
                            responseType: StorjResponse<StorjStoreResult>.self)
     }
 
+    // MARK: - AI Coaching
+
+    /// Sends only bounded, derived session facts to Luma's existing backend route.
+    /// Raw audio never leaves the device; microphone-derived metrics are aggregate values only.
+    public func generateCoachingInsight(
+        for record: BreathingSessionRecord
+    ) async throws -> CoachingInsight {
+        let facts = CoachingSessionFacts(record: record)
+        let request = CoachingInsightRequest(facts: facts)
+        let response = try await post(
+            path: "/api/ai/chat",
+            body: request,
+            responseType: CoachingInsightResponse.self
+        )
+        let insight = response.insight
+        guard !insight.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw APIError.requestFailed("No coaching insight returned.")
+        }
+        return insight
+    }
+
     // MARK: - HTTP Core
 
     func post<B: Encodable, R: Decodable>(
@@ -188,6 +209,7 @@ public final class AmachAPIClient: Sendable {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("AmachBreathe-iOS/1.0", forHTTPHeaderField: "User-Agent")
 
         do {
             req.httpBody = try JSONEncoder().encode(body)

@@ -114,6 +114,12 @@ private struct SessionRowView: View {
                     Text("\(Int(row.avgHRV)) ms HRV")
                         .font(AmachType.tiny)
                         .foregroundStyle(Color.amachTextSecondary)
+                } else if let metrics = row.audioBreathMetrics,
+                          let estimated = metrics.estimatedBreathingBPM,
+                          metrics.permissionGranted {
+                    Text(String(format: "%.1f BPM est.", estimated))
+                        .font(AmachType.tiny)
+                        .foregroundStyle(Color.amachTextSecondary)
                 }
             }
         }

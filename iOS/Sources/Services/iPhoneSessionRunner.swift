@@ -15,6 +15,7 @@ final class iPhoneSessionRunner: ObservableObject {
     @Published private(set) var isRunning: Bool = false
     @Published private(set) var isPaused:  Bool = false
     @Published private(set) var completedRecord: BreathingSessionRecord?
+    @Published private(set) var audioTrackingStatus: iPhoneAudioBreathTracker.Status = .off
 
     /// Called when a session finishes (reflection submitted or skipped).
     var onSessionComplete: ((BreathingSessionRecord) -> Void)?
@@ -23,6 +24,7 @@ final class iPhoneSessionRunner: ObservableObject {
 
     let timer = iPhoneMasterPhaseTimer()
     private var audioPacer: iPhoneAudioPacer?
+    private let audioBreathTracker = iPhoneAudioBreathTracker()
 
     // MARK: - Session config
 
@@ -31,33 +33,49 @@ final class iPhoneSessionRunner: ObservableObject {
     private var mainDurationSeconds: Int = 300
     private var sessionId: String = ""
     private var reflectionRating: Int?
+    private var audioBreathTrackingEnabled = false
 
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Init
 
-    init() { subscribeToTimer() }
+    init() {
+        subscribeToTimer()
+        subscribeToAudioTracking()
+    }
 
     // MARK: - Public API
 
-    func startSession(bpm: Double, durationSeconds: Int, ratio: BreathRatio) {
+    func startSession(
+        bpm: Double,
+        durationSeconds: Int,
+        ratio: BreathRatio,
+        audioBreathTrackingEnabled: Bool = false
+    ) {
         self.bpm = bpm
         self.selectedRatio = ratio
         self.mainDurationSeconds = durationSeconds
         self.sessionId = UUID().uuidString
         self.reflectionRating = nil
+        self.audioBreathTrackingEnabled = audioBreathTrackingEnabled
         completedRecord = nil
 
         audioPacer = iPhoneAudioPacer(timer: timer)
         timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
         isPaused = false
+        if audioBreathTrackingEnabled {
+            Task { [weak self] in
+                await self?.audioBreathTracker.start(targetBPM: bpm)
+            }
+        }
         AmachHaptics.buttonPress()
     }
 
     func pause() {
         guard isRunning, !isPaused else { return }
         timer.pause()
+        audioBreathTracker.setAnalysisActive(false)
         isPaused = true
         AmachHaptics.toggle()
     }
@@ -80,9 +98,11 @@ final class iPhoneSessionRunner: ObservableObject {
     func endSession() {
         audioPacer?.stop()
         audioPacer = nil
+        audioBreathTracker.stop()
         timer.stop()
         isRunning = false
         isPaused = false
+        audioBreathTrackingEnabled = false
         phase = .idle
         pacerState = .idle
     }
@@ -96,6 +116,13 @@ final class iPhoneSessionRunner: ObservableObject {
             .store(in: &cancellables)
     }
 
+    private func subscribeToAudioTracking() {
+        audioBreathTracker.$status
+            .receive(on: RunLoop.main)
+            .sink { [weak self] status in self?.audioTrackingStatus = status }
+            .store(in: &cancellables)
+    }
+
     private func handleTimerState(_ state: PacerState) {
         pacerState = state
         let prevPhase = phase
@@ -104,6 +131,7 @@ final class iPhoneSessionRunner: ObservableObject {
         if case .complete = phase { return }
 
         phase = state.sessionPhase
+        audioBreathTracker.setAnalysisActive(!isPaused && isMainPhase(state.sessionPhase))
 
         // Capture phase transitions
         if prevPhase != state.sessionPhase {
@@ -123,6 +151,9 @@ final class iPhoneSessionRunner: ObservableObject {
 
     private func buildRecord() {
         guard completedRecord == nil else { return }
+        let audioMetrics = audioBreathTrackingEnabled
+            ? audioBreathTracker.finishMetrics()
+            : nil
         let record = BreathingSessionRecord(
             id: sessionId,
             timestamp: Date(),
@@ -130,9 +161,15 @@ final class iPhoneSessionRunner: ObservableObject {
             bpm: bpm,
             ratio: selectedRatio.rawValue,
             reflectionRating: reflectionRating,
-            source: .phone
+            source: .phone,
+            audioBreathMetrics: audioMetrics
         )
         completedRecord = record
         onSessionComplete?(record)
+    }
+
+    private func isMainPhase(_ phase: SessionPhase) -> Bool {
+        if case .main = phase { return true }
+        return false
     }
 }

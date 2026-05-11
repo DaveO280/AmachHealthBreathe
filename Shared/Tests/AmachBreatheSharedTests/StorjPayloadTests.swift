@@ -146,6 +146,61 @@ final class StorjPayloadTests: XCTestCase {
         XCTAssertEqual(decoded.reflectionRating, record.reflectionRating)
     }
 
+    func testSessionRecordRoundTripWithAudioBreathMetrics() throws {
+        let record = BreathingSessionRecord(
+            id: "audio-session",
+            timestamp: Date(timeIntervalSince1970: 1_700_000_001),
+            durationSeconds: 300,
+            bpm: 5.5,
+            ratio: "4:6",
+            reflectionRating: 4,
+            source: .phone,
+            audioBreathMetrics: AudioBreathMetrics(
+                enabled: true,
+                permissionGranted: true,
+                targetBreathingBPM: 5.5,
+                estimatedBreathingBPM: 5.6,
+                adherenceScore: 0.92,
+                confidence: 0.74,
+                dataQuality: .good,
+                analyzedDurationSeconds: 280,
+                sampleCount: 2_800,
+                detectedPeakCount: 26,
+                signalToNoiseRatio: 4.5
+            )
+        )
+
+        let data = try encoder.encode(record)
+        let decoded = try decoder.decode(BreathingSessionRecord.self, from: data)
+
+        XCTAssertEqual(decoded.source, .phone)
+        XCTAssertEqual(decoded.audioBreathMetrics, record.audioBreathMetrics)
+    }
+
+    func testSessionRecordDecodesLegacyPayloadWithoutAudioBreathMetrics() throws {
+        let json = """
+        {
+            "id": "legacy",
+            "timestamp": 1700000000,
+            "durationSeconds": 300,
+            "bpm": 6.0,
+            "ratio": "4:6",
+            "baselineHRV": 52.0,
+            "recoveryHRV": 60.0,
+            "avgHRV": 56.0,
+            "coherenceScore": 0.78,
+            "reflectionRating": 4
+        }
+        """.data(using: .utf8)!
+
+        decoder.dateDecodingStrategy = .secondsSince1970
+        defer { decoder.dateDecodingStrategy = .deferredToDate }
+        let decoded = try decoder.decode(BreathingSessionRecord.self, from: json)
+
+        XCTAssertEqual(decoded.source, .watch)
+        XCTAssertNil(decoded.audioBreathMetrics)
+    }
+
     // MARK: - BreathingSessionEvent shape
 
     func testBreathingSessionEventShape() throws {
@@ -175,6 +230,75 @@ final class StorjPayloadTests: XCTestCase {
     func testBreathingSessionEventDefaultPlatformIsIOS() {
         let event = BreathingSessionEvent(from: makeRecord())
         XCTAssertEqual(event.metadata.platform, "ios")
+    }
+
+    // MARK: - Coaching insight request shape
+
+    func testCoachingSessionFactsContainOnlyDerivedAudioMetrics() throws {
+        let record = BreathingSessionRecord(
+            id: "coaching-audio-session",
+            timestamp: Date(timeIntervalSince1970: 1_700_000_002),
+            durationSeconds: 300,
+            bpm: 5.5,
+            ratio: "4:6",
+            reflectionRating: 5,
+            source: .phone,
+            audioBreathMetrics: AudioBreathMetrics(
+                enabled: true,
+                permissionGranted: true,
+                targetBreathingBPM: 5.5,
+                estimatedBreathingBPM: 5.4,
+                adherenceScore: 0.91,
+                confidence: 0.76,
+                dataQuality: .good,
+                analyzedDurationSeconds: 285,
+                sampleCount: 2_850,
+                detectedPeakCount: 25,
+                signalToNoiseRatio: 4.2
+            )
+        )
+
+        let facts = CoachingSessionFacts(record: record)
+        let data = try encoder.encode(facts)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let audio = json["audio"] as? [String: Any]
+
+        XCTAssertEqual(json["sessionId"] as? String, "coaching-audio-session")
+        XCTAssertEqual(audio?["estimatedBreathingBPM"] as? Double, 5.4, accuracy: 0.001)
+        XCTAssertEqual(audio?["detectedPeakCount"] as? Int, 25)
+        XCTAssertNil(audio?["sampleCount"], "Do not send retained amplitude sample counts to coaching")
+        XCTAssertNil(audio?["samples"], "Raw or derived sample arrays must never be sent")
+        XCTAssertNil(json["rawAudio"], "Raw audio must never be part of coaching facts")
+    }
+
+    func testCoachingInsightRequestMatchesLumaChatShape() throws {
+        let request = CoachingInsightRequest(facts: CoachingSessionFacts(record: makeRecord()))
+        let data = try encoder.encode(request)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+
+        XCTAssertNotNil(json["message"])
+        XCTAssertNotNil(json["context"])
+        XCTAssertNotNil(json["history"])
+        XCTAssertNotNil(json["options"])
+
+        let context = json["context"] as? [String: Any]
+        let blocks = context?["contextBlocks"] as? [[String: Any]]
+        XCTAssertEqual(blocks?.first?["type"] as? String, "breathing_session_facts")
+        XCTAssertTrue((blocks?.first?["content"] as? String)?.contains("Duration seconds: 300") == true)
+    }
+
+    func testCoachingInsightResponseDecodesLumaChatResponse() throws {
+        let json = """
+        {
+            "content": "Your timing looked steady. Try the same pace next session.",
+            "model": "luma-test"
+        }
+        """.data(using: .utf8)!
+
+        let response = try decoder.decode(CoachingInsightResponse.self, from: json)
+        XCTAssertEqual(response.insight.content, "Your timing looked steady. Try the same pace next session.")
+        XCTAssertEqual(response.insight.model, "luma-test")
+        XCTAssertTrue(response.insight.suggestions.isEmpty)
     }
 
     // MARK: - StorjResponse decoding

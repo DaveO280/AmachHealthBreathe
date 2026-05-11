@@ -17,13 +17,15 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
-	<string>65</string>
+	<string>66</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Amach Breathe reads your heart rate to calculate HRV and coherence during breathing sessions.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Amach Breathe saves breathing sessions to Apple Health.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Amach Breathe can optionally use the microphone during iPhone breathing sessions to estimate breath timing. Raw audio is not stored.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>Amach Breathe sends optional daily reminders to start your breathing session.</string>
 	<key>UIApplicationSceneManifest</key>

@@ -56,6 +56,8 @@ private struct ActivePhaseView: View {
 
             phaseTimer
 
+            audioTrackingStatus
+
             Spacer()
 
             controls
@@ -148,6 +150,32 @@ private struct ActivePhaseView: View {
         } else {
             Color.clear.frame(height: 24)
         }
+    }
+
+    @ViewBuilder
+    private var audioTrackingStatus: some View {
+        switch runner.audioTrackingStatus {
+        case .off:
+            EmptyView()
+        case .requestingPermission:
+            trackingPill("Requesting microphone…", color: Color.amachTextSecondary)
+        case .denied:
+            trackingPill("Audio tracking unavailable", color: Color.amachWarning)
+        case .listening:
+            trackingPill("Audio tracking on", color: Color.amachPrimary)
+        case .unavailable:
+            trackingPill("Audio tracking unavailable", color: Color.amachWarning)
+        }
+    }
+
+    private func trackingPill(_ label: String, color: Color) -> some View {
+        Text(label)
+            .font(AmachType.tiny.weight(.semibold))
+            .foregroundStyle(color)
+            .padding(.horizontal, AmachSpacing.sm)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.12))
+            .clipShape(Capsule())
     }
 
     private var controls: some View {
@@ -303,6 +331,9 @@ private struct CompletionView: View {
                     .foregroundStyle(Color.amachTextPrimary)
                 if let record = runner.completedRecord {
                     sessionSummary(record)
+                    if let metrics = record.audioBreathMetrics {
+                        audioSummary(metrics)
+                    }
                 }
             }
 
@@ -339,6 +370,38 @@ private struct CompletionView: View {
         .padding(.horizontal, AmachSpacing.screenEdge)
     }
 
+    private func audioSummary(_ metrics: AudioBreathMetrics) -> some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.xs) {
+            HStack {
+                Text("Audio estimate")
+                    .font(AmachType.h3)
+                    .foregroundStyle(Color.amachTextPrimary)
+                Spacer()
+                Text(metrics.dataQuality.rawValue.capitalized)
+                    .font(AmachType.tiny.weight(.semibold))
+                    .foregroundStyle(audioQualityColor(metrics.dataQuality))
+                    .padding(.horizontal, AmachSpacing.sm)
+                    .padding(.vertical, 2)
+                    .background(audioQualityColor(metrics.dataQuality).opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            if metrics.permissionGranted, let estimated = metrics.estimatedBreathingBPM {
+                Text(String(format: "Estimated %.1f breaths/min · %.0f%% timing match", estimated, (metrics.adherenceScore ?? 0) * 100))
+                    .font(AmachType.caption)
+                    .foregroundStyle(Color.amachTextSecondary)
+            } else {
+                Text("No usable microphone estimate for this session.")
+                    .font(AmachType.caption)
+                    .foregroundStyle(Color.amachTextSecondary)
+            }
+        }
+        .padding(AmachSpacing.md)
+        .background(Color.amachSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+        .padding(.horizontal, AmachSpacing.screenEdge)
+    }
+
     private func summaryTile(value: String, label: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
@@ -349,5 +412,13 @@ private struct CompletionView: View {
                 .foregroundStyle(Color.amachTextSecondary)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func audioQualityColor(_ quality: AudioBreathDataQuality) -> Color {
+        switch quality {
+        case .good: return Color.amachPrimary
+        case .fair: return Color.amachWarning
+        case .low, .unavailable: return Color.amachTextTertiary
+        }
     }
 }

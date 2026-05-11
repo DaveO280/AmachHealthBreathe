@@ -9,6 +9,9 @@ struct SessionDetailView: View {
     @EnvironmentObject private var sessionService: SessionService
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirmation = false
+    @State private var coachingInsight: CoachingInsight?
+    @State private var coachingError: String?
+    @State private var isLoadingCoachingInsight = false
 
     var body: some View {
         ZStack {
@@ -18,6 +21,8 @@ struct SessionDetailView: View {
                     summaryCard
                     if !hrvPoints.isEmpty { hrvChart }
                     coherenceSection
+                    if let metrics = record?.audioBreathMetrics { audioBreathCard(metrics) }
+                    if let record { coachingInsightCard(record) }
                     if let rating = row.reflectionRating { reflectionCard(rating) }
                 }
                 .padding(AmachSpacing.screenEdge)
@@ -214,6 +219,88 @@ struct SessionDetailView: View {
         }
     }
 
+    // MARK: - Coaching insight
+
+    private func coachingInsightCard(_ record: BreathingSessionRecord) -> some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.md) {
+            HStack(spacing: AmachSpacing.sm) {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(Color.amachPrimaryBright)
+                Text("Coach Insight")
+                    .font(AmachType.h3)
+                    .foregroundStyle(Color.amachTextPrimary)
+                Spacer()
+            }
+
+            if let insight = coachingInsight {
+                Text(insight.content)
+                    .font(AmachType.body)
+                    .foregroundStyle(Color.amachTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !insight.suggestions.isEmpty {
+                    VStack(alignment: .leading, spacing: AmachSpacing.xs) {
+                        ForEach(insight.suggestions, id: \.self) { suggestion in
+                            Label(suggestion, systemImage: "checkmark.circle")
+                                .font(AmachType.caption)
+                                .foregroundStyle(Color.amachTextSecondary)
+                        }
+                    }
+                }
+            } else {
+                Text("Generate a short coaching note from your saved session metrics. No raw audio is sent.")
+                    .font(AmachType.caption)
+                    .foregroundStyle(Color.amachTextSecondary)
+            }
+
+            if let coachingError {
+                Text(coachingError)
+                    .font(AmachType.tiny)
+                    .foregroundStyle(Color.amachDestructive)
+            }
+
+            Button {
+                loadCoachingInsight(for: record)
+            } label: {
+                HStack {
+                    if isLoadingCoachingInsight {
+                        ProgressView()
+                            .tint(Color.amachTextPrimary)
+                    }
+                    Text(coachingInsight == nil ? "Generate Insight" : "Refresh Insight")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.amachPrimary)
+            .disabled(isLoadingCoachingInsight)
+        }
+        .padding(AmachSpacing.cardPadding)
+        .background(Color.amachSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+    }
+
+    private func loadCoachingInsight(for record: BreathingSessionRecord) {
+        guard !isLoadingCoachingInsight else { return }
+        isLoadingCoachingInsight = true
+        coachingError = nil
+
+        Task {
+            do {
+                let insight = try await AmachAPIClient.shared.generateCoachingInsight(for: record)
+                await MainActor.run {
+                    coachingInsight = insight
+                    isLoadingCoachingInsight = false
+                }
+            } catch {
+                await MainActor.run {
+                    coachingError = "Coach insight is unavailable right now."
+                    isLoadingCoachingInsight = false
+                }
+            }
+        }
+    }
+
     // MARK: - Reflection
 
     private func reflectionCard(_ rating: Int) -> some View {
@@ -232,5 +319,51 @@ struct SessionDetailView: View {
         .padding(AmachSpacing.cardPadding)
         .background(Color.amachSurface)
         .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+    }
+
+    private func audioBreathCard(_ metrics: AudioBreathMetrics) -> some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.md) {
+            HStack {
+                Text("Audio Breath Tracking")
+                    .font(AmachType.h3)
+                    .foregroundStyle(Color.amachTextPrimary)
+                Spacer()
+                Text(metrics.dataQuality.rawValue.capitalized)
+                    .font(AmachType.tiny.weight(.semibold))
+                    .foregroundStyle(audioQualityColor(metrics.dataQuality))
+                    .padding(.horizontal, AmachSpacing.sm)
+                    .padding(.vertical, 2)
+                    .background(audioQualityColor(metrics.dataQuality).opacity(0.12))
+                    .clipShape(Capsule())
+            }
+
+            if metrics.permissionGranted, let estimated = metrics.estimatedBreathingBPM {
+                HStack(spacing: 0) {
+                    metricTile(value: String(format: "%.1f BPM", estimated), label: "Estimated")
+                    Divider().frame(height: 40)
+                    metricTile(value: String(format: "%.0f%%", (metrics.adherenceScore ?? 0) * 100), label: "Timing Match")
+                    Divider().frame(height: 40)
+                    metricTile(value: String(format: "%.0fs", metrics.analyzedDurationSeconds), label: "Analyzed")
+                }
+                Text("Experimental estimate from on-device microphone amplitude. Raw audio is not stored.")
+                    .font(AmachType.tiny)
+                    .foregroundStyle(Color.amachTextTertiary)
+            } else {
+                Text("Audio tracking was enabled, but no usable microphone estimate was captured.")
+                    .font(AmachType.caption)
+                    .foregroundStyle(Color.amachTextSecondary)
+            }
+        }
+        .padding(AmachSpacing.cardPadding)
+        .background(Color.amachSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+    }
+
+    private func audioQualityColor(_ quality: AudioBreathDataQuality) -> Color {
+        switch quality {
+        case .good: return Color.amachPrimary
+        case .fair: return Color.amachWarning
+        case .low, .unavailable: return Color.amachTextTertiary
+        }
     }
 }

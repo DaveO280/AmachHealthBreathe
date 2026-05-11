@@ -12,6 +12,7 @@ struct SessionSetupView: View {
 
     @State private var selectedDuration: Int = 300     // seconds
     @State private var selectedRatio: BreathRatio = .fourToSix
+    @State private var audioBreathTrackingEnabled = false
     @State private var watchSentConfirmation = false
     @State private var showTutorial = false
 
@@ -30,6 +31,7 @@ struct SessionSetupView: View {
                     bpmCard
                     durationPicker
                     ratioPicker
+                    audioTrackingOption
 
                     ctaSection
 
@@ -197,6 +199,41 @@ struct SessionSetupView: View {
         }
     }
 
+    private var audioTrackingOption: some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.xs) {
+            Toggle(isOn: $audioBreathTrackingEnabled) {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: AmachSpacing.xs) {
+                        Text("Audio breath tracking")
+                            .font(AmachType.h3)
+                            .foregroundStyle(Color.amachTextPrimary)
+                        Text("Beta")
+                            .font(AmachType.tiny.weight(.semibold))
+                            .foregroundStyle(Color.amachPrimary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.amachPrimary.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+                    Text("Optional iPhone-only estimate. Works best in a quiet room with the phone nearby. Raw audio is not stored.")
+                        .font(AmachType.tiny)
+                        .foregroundStyle(Color.amachTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .toggleStyle(.switch)
+
+            if watchConnectivity.isWatchReachable {
+                Text("This applies when you run the session on iPhone instead of Watch.")
+                    .font(AmachType.tiny)
+                    .foregroundStyle(Color.amachTextTertiary)
+            }
+        }
+        .padding(AmachSpacing.md)
+        .background(Color.amachSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+    }
+
     // MARK: - CTA section
 
     private var ctaSection: some View {
@@ -238,7 +275,11 @@ struct SessionSetupView: View {
 
                 // Secondary: run on iPhone
                 Button {
-                    runner.startSession(bpm: bpm, durationSeconds: selectedDuration, ratio: selectedRatio)
+                    runner.startSession(
+                        bpm: bpm,
+                        durationSeconds: selectedDuration,
+                        ratio: selectedRatio,
+                        audioBreathTrackingEnabled: audioBreathTrackingEnabled)
                 } label: {
                     Text("Run on iPhone instead")
                         .font(AmachType.caption)
@@ -248,7 +289,11 @@ struct SessionSetupView: View {
             } else {
                 // Primary: run on iPhone
                 Button {
-                    runner.startSession(bpm: bpm, durationSeconds: selectedDuration, ratio: selectedRatio)
+                    runner.startSession(
+                        bpm: bpm,
+                        durationSeconds: selectedDuration,
+                        ratio: selectedRatio,
+                        audioBreathTrackingEnabled: audioBreathTrackingEnabled)
                 } label: {
                     Text("Start on iPhone")
                         .font(AmachType.caption.weight(.semibold))

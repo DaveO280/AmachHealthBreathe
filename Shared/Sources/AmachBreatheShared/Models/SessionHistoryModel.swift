@@ -14,6 +14,7 @@ public struct SessionHistoryModel: Sendable {
         public let coherenceScore: Double  // 0–1; 0 for phone sessions
         public let reflectionRating: Int?  // 1–5
         public let source: SessionSource
+        public let audioBreathMetrics: AudioBreathMetrics?
 
         public var isPhoneSession: Bool { source == .phone }
 
@@ -50,7 +51,8 @@ public struct SessionHistoryModel: Sendable {
             avgHRV: record.avgHRV ?? 0,
             coherenceScore: record.coherenceScore ?? 0,
             reflectionRating: record.reflectionRating,
-            source: record.source
+            source: record.source,
+            audioBreathMetrics: record.audioBreathMetrics
         )
     }
 }

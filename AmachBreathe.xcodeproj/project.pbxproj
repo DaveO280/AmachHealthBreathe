@@ -45,6 +45,7 @@
 		9BBF4B2F0D40E5FD6A766408 /* CancelSubscriptionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2046516E1BE0560918CD049 /* CancelSubscriptionSheet.swift */; };
 		A8E96A1F82921C4CDB5103AA /* CalibrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5F443328E39EC5515A7C72 /* CalibrationService.swift */; };
 		ACF65313336D3EBD8FFA6D1F /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E60979A3399B86409CCD6E2 /* HealthKitService.swift */; };
+		AE36CBC219D93BEE53C64393 /* iPhoneAudioBreathTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3113B8D817D468973BD811D2 /* iPhoneAudioBreathTracker.swift */; };
 		B3A6C8C9496A006A7BD1D311 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDD3CB2D5AB2E56346F25CCF /* NotificationService.swift */; };
 		B5242B1FAF2B9471D38F1195 /* OnboardingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5360833FE27979DA018BC929 /* OnboardingService.swift */; };
 		B7EDA7934D9F5EEC406FEDE9 /* iPhoneAudioPacer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16A89FB81E578F153AF28F25 /* iPhoneAudioPacer.swift */; };
@@ -58,6 +59,7 @@
 		CBA98E3A9653DFD2F49D77A7 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = 2A4BA8C7FAA7AFF50FFA0707 /* AmachBreatheShared */; };
 		CBEA1C54145BF724E50D7353 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 62DFADCA87F38656027CB82E /* Assets.xcassets */; };
 		CE9B02CB4CC38536302D3D97 /* SoftSupportPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD98D74B655E1D40CD31BD0 /* SoftSupportPromptView.swift */; };
+		CFB52C4D589DAB5B962D23E2 /* SessionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632EAAEF2EDDAD650B664F25 /* SessionServiceTests.swift */; };
 		D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263B6EE690602C261C511609 /* CalibrationStore.swift */; };
 		D4863F57713FB5A59BB28D33 /* AmachBreatheWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF23B5FEADFC0762F10EE429 /* AmachBreatheWatchApp.swift */; };
 		E72484FBE37CAAE6DC175659 /* WatchConnectivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B124493F97494B75F4B683E /* WatchConnectivity.framework */; };
@@ -111,6 +113,7 @@
 		1EBE62B915290896069736D0 /* QuickStartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStartView.swift; sourceTree = "<group>"; };
 		263B6EE690602C261C511609 /* CalibrationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationStore.swift; sourceTree = "<group>"; };
 		29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheTests.swift; sourceTree = "<group>"; };
+		3113B8D817D468973BD811D2 /* iPhoneAudioBreathTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneAudioBreathTracker.swift; sourceTree = "<group>"; };
 		3378D047788A9D962CB5121A /* ConnectWalletSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectWalletSheet.swift; sourceTree = "<group>"; };
 		392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWalletStore.swift; sourceTree = "<group>"; };
 		3FC5800DD5B16BFAE4612A9A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -125,6 +128,7 @@
 		5D5DE1EBD9756544665251D1 /* CalibrationResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationResultView.swift; sourceTree = "<group>"; };
 		5E60979A3399B86409CCD6E2 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
 		62DFADCA87F38656027CB82E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		632EAAEF2EDDAD650B664F25 /* SessionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionServiceTests.swift; sourceTree = "<group>"; };
 		6868E973C8D5B7EBEC49ED7D /* AppSettingsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsService.swift; sourceTree = "<group>"; };
 		6930951633B4554736898114 /* BreathingCoachView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreathingCoachView.swift; sourceTree = "<group>"; };
 		6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AmachBreatheTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -305,6 +309,7 @@
 				29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */,
 				AE7F5FE3D3B19D0CF710B16B /* iPhoneSessionRunnerTests.swift */,
 				8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */,
+				632EAAEF2EDDAD650B664F25 /* SessionServiceTests.swift */,
 				8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */,
 			);
 			path = Unit;
@@ -317,6 +322,7 @@
 				AD5F443328E39EC5515A7C72 /* CalibrationService.swift */,
 				263B6EE690602C261C511609 /* CalibrationStore.swift */,
 				5E60979A3399B86409CCD6E2 /* HealthKitService.swift */,
+				3113B8D817D468973BD811D2 /* iPhoneAudioBreathTracker.swift */,
 				16A89FB81E578F153AF28F25 /* iPhoneAudioPacer.swift */,
 				CE84AA551BEBEEF710872306 /* iPhoneMasterPhaseTimer.swift */,
 				9D01A1C4DF9CDCCE9D7C6A8F /* iPhoneSessionRunner.swift */,
@@ -333,6 +339,7 @@
 			isa = PBXGroup;
 			children = (
 				7963214589E3F477180419DF /* App */,
+				A55986494109714D7DD0E8F3 /* Models */,
 				08117B906245DC9D7A71FDF6 /* Services */,
 				FBF08FA423F50FEB7C674AF3 /* Views */,
 			);
@@ -401,6 +408,13 @@
 				856FCA6E5389EF2006D8FC9F /* CalibrationRunnerView.swift */,
 			);
 			path = Calibration;
+			sourceTree = "<group>";
+		};
+		A55986494109714D7DD0E8F3 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		A7A31F86AB9132B90E083C69 /* Frameworks */ = {
@@ -653,6 +667,7 @@
 			files = (
 				F91941A76702CE3ECA1901A5 /* AmachBreatheTests.swift in Sources */,
 				F05F3A7561021647AB83F036 /* OnboardingFlowTests.swift in Sources */,
+				CFB52C4D589DAB5B962D23E2 /* SessionServiceTests.swift in Sources */,
 				4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */,
 				E9B0BF4EB580D39EB314B303 /* iPhoneSessionRunnerTests.swift in Sources */,
 			);
@@ -688,6 +703,7 @@
 				0299171278E8E7156C977E95 /* TrendView.swift in Sources */,
 				0BDB271FED778525A4853675 /* WalletStatusBanner.swift in Sources */,
 				FA537A83E4B24C53CA1A13D5 /* WatchConnectivityService.swift in Sources */,
+				AE36CBC219D93BEE53C64393 /* iPhoneAudioBreathTracker.swift in Sources */,
 				B7EDA7934D9F5EEC406FEDE9 /* iPhoneAudioPacer.swift in Sources */,
 				83E1BFDC2187FE7DD0A8A729 /* iPhoneMasterPhaseTimer.swift in Sources */,
 				C3E0BE071F23F14F269F5631 /* iPhoneSessionRunner.swift in Sources */,
