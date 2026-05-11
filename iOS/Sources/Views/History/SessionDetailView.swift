@@ -7,6 +7,8 @@ struct SessionDetailView: View {
     let row: SessionHistoryModel.Row
 
     @EnvironmentObject private var sessionService: SessionService
+    @Environment(\.dismiss) private var dismiss
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         ZStack {
@@ -24,6 +26,27 @@ struct SessionDetailView: View {
         }
         .navigationTitle(row.dateLabel)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .accessibilityLabel("Delete session")
+            }
+        }
+        .confirmationDialog("Delete session?",
+                            isPresented: $showDeleteConfirmation,
+                            titleVisibility: .visible) {
+            Button("Delete Session", role: .destructive) {
+                sessionService.deleteSession(id: row.id)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This removes the saved session from this device.")
+        }
     }
 
     // MARK: - Data

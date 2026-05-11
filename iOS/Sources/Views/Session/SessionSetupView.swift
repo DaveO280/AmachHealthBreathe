@@ -13,6 +13,7 @@ struct SessionSetupView: View {
     @State private var selectedDuration: Int = 300     // seconds
     @State private var selectedRatio: BreathRatio = .fourToSix
     @State private var watchSentConfirmation = false
+    @State private var showTutorial = false
 
     private var bpm: Double { calibrationStore.resonanceBPM }
     private var isCalibrated: Bool { calibrationStore.record != nil }
@@ -25,6 +26,7 @@ struct SessionSetupView: View {
                     header
                         .padding(.top, AmachSpacing.xl)
 
+                    tutorialCard
                     bpmCard
                     durationPicker
                     ratioPicker
@@ -41,6 +43,11 @@ struct SessionSetupView: View {
         }
         .onAppear {
             selectedRatio = settingsService.settings.defaultRatio
+        }
+        .sheet(isPresented: $showTutorial) {
+            BreatheTutorialSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -59,6 +66,35 @@ struct SessionSetupView: View {
                 .foregroundStyle(Color.amachTextSecondary)
         }
         .multilineTextAlignment(.center)
+    }
+
+    private var tutorialCard: some View {
+        Button {
+            showTutorial = true
+        } label: {
+            HStack(spacing: AmachSpacing.md) {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Color.amachPrimary)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Quick tutorial")
+                        .font(AmachType.h3)
+                        .foregroundStyle(Color.amachTextPrimary)
+                    Text("Learn the circle, coherence, and why this pace works.")
+                        .font(AmachType.caption)
+                        .foregroundStyle(Color.amachTextSecondary)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.amachTextTertiary)
+            }
+            .padding(AmachSpacing.md)
+            .background(Color.amachSurface)
+            .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - BPM card
@@ -230,5 +266,73 @@ struct SessionSetupView: View {
                     .multilineTextAlignment(.center)
             }
         }
+    }
+}
+
+private struct BreatheTutorialSheet: View {
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.amachBg.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: AmachSpacing.md) {
+                        tutorialItem(
+                            icon: "waveform.path",
+                            title: "Resonant breathing",
+                            body: "Slow breathing around 4.5 to 7 breaths per minute can synchronize heart rhythm and breath. Amach uses your calibrated rate when available, or a sensible default until you calibrate."
+                        )
+                        tutorialItem(
+                            icon: "circle.dashed",
+                            title: "Follow the circle",
+                            body: "Inhale as the circle expands and exhale as it contracts. The goal is a smooth, comfortable rhythm that gives your heart rate time to rise and fall with each breath."
+                        )
+                        tutorialItem(
+                            icon: "lungs",
+                            title: "What it supports",
+                            body: "This pattern encourages vagal activity and heart rate variability, helping your body shift toward a calmer, more regulated state."
+                        )
+                        tutorialItem(
+                            icon: "chart.line.uptrend.xyaxis",
+                            title: "Coherence score",
+                            body: "On Apple Watch sessions, Amach samples heart rhythm during the main breathing phase and scores how strongly the HRV pattern matches your target breathing rate. Higher percentages mean stronger heart-breath synchrony."
+                        )
+                    }
+                    .padding(AmachSpacing.screenEdge)
+                    .padding(.bottom, AmachSpacing.xl)
+                }
+            }
+            .navigationTitle("How It Works")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private func tutorialItem(icon: String, title: String, body: String) -> some View {
+        HStack(alignment: .top, spacing: AmachSpacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.amachPrimary)
+                .frame(width: 28, height: 28)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(AmachType.h3)
+                    .foregroundStyle(Color.amachTextPrimary)
+                Text(body)
+                    .font(AmachType.body)
+                    .foregroundStyle(Color.amachTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(AmachSpacing.cardPadding)
+        .background(Color.amachSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
     }
 }

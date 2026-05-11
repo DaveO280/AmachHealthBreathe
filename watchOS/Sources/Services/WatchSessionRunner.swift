@@ -92,6 +92,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         self.mainDurationSeconds = durationSeconds
         self.sessionId = UUID().uuidString
         self.reflectionRating = nil
+        self.completedRecord = nil
         self.baselineHRV = 0
         self.recoveryHRV = 0
         updateComplicationState(inSession: true)
@@ -131,11 +132,14 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         timer.stop()
         hapticPacer.stop()
         audioPacer.stop()
-        await workoutManager.stopWorkout()
-        invalidateExtendedRuntimeSession()
+        phase = .idle
+        pacerState = .idle
         isRunning = false
         isPaused = false
         updateComplicationState(inSession: false)
+        invalidateExtendedRuntimeSession()
+
+        await workoutManager.stopWorkout()
     }
 
     public func pause() {

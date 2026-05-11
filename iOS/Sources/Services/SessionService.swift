@@ -11,10 +11,16 @@ public final class SessionService: ObservableObject {
     @Published public private(set) var isRestoring = false
     @Published public private(set) var syncError: String?
 
-    private let storageKey = "com.amach.breathe.sessions"
+    private let storageKey: String
+    private let userDefaults: UserDefaults
     private let apiClient = AmachAPIClient()
 
-    public init() {
+    public init(
+        userDefaults: UserDefaults = .standard,
+        storageKey: String = "com.amach.breathe.sessions"
+    ) {
+        self.userDefaults = userDefaults
+        self.storageKey = storageKey
         loadFromDisk()
     }
 
@@ -24,6 +30,12 @@ public final class SessionService: ObservableObject {
         guard !sessions.contains(where: { $0.id == record.id }) else { return }
         let sr = SessionRecord(from: record)
         sessions.insert(sr, at: 0)
+        persistToDisk()
+    }
+
+    public func deleteSession(id: String) {
+        guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
+        sessions.remove(at: index)
         persistToDisk()
     }
 
@@ -99,13 +111,13 @@ public final class SessionService: ObservableObject {
     // MARK: - Persistence
 
     private func loadFromDisk() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey),
+        guard let data = userDefaults.data(forKey: storageKey),
               let decoded = try? JSONDecoder().decode([SessionRecord].self, from: data) else { return }
         sessions = decoded
     }
 
     private func persistToDisk() {
         guard let data = try? JSONEncoder().encode(sessions) else { return }
-        UserDefaults.standard.set(data, forKey: storageKey)
+        userDefaults.set(data, forKey: storageKey)
     }
 }

@@ -4,6 +4,7 @@ import AmachBreatheShared
 struct HistoryView: View {
 
     @EnvironmentObject private var sessionService: SessionService
+    @State private var rowPendingDeletion: SessionHistoryModel.Row?
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,11 @@ struct HistoryView: View {
                                         SessionRowView(row: row)
                                     }
                                     .buttonStyle(.plain)
+                                    .contextMenu {
+                                        Button("Delete Session", role: .destructive) {
+                                            rowPendingDeletion = row
+                                        }
+                                    }
                                 }
                             }
                             .padding(AmachSpacing.screenEdge)
@@ -40,6 +46,23 @@ struct HistoryView: View {
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: SessionHistoryModel.Row.self) { row in
                 SessionDetailView(row: row)
+            }
+            .confirmationDialog(
+                "Delete session?",
+                isPresented: Binding(
+                    get: { rowPendingDeletion != nil },
+                    set: { if !$0 { rowPendingDeletion = nil } }
+                ),
+                titleVisibility: .visible,
+                presenting: rowPendingDeletion
+            ) { row in
+                Button("Delete Session", role: .destructive) {
+                    sessionService.deleteSession(id: row.id)
+                    rowPendingDeletion = nil
+                }
+                Button("Cancel", role: .cancel) { rowPendingDeletion = nil }
+            } message: { _ in
+                Text("This removes the saved session from this device.")
             }
         }
     }
