@@ -67,6 +67,13 @@ public final class WalletService: ObservableObject {
 
     public func sendEmailCode(to email: String) async throws {
         error = nil
+        let normalizedEmail: String
+        do {
+            normalizedEmail = try Self.normalizedEmailForCode(email)
+        } catch {
+            self.error = error.localizedDescription
+            throw error
+        }
         #if canImport(PrivySDK)
         guard let privy else {
             let walletError = WalletError.notConfigured
@@ -76,22 +83,30 @@ public final class WalletService: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await privy.email.sendCode(to: email)
-            pendingEmail = email
+            try await privy.email.sendCode(to: normalizedEmail)
+            pendingEmail = normalizedEmail
         } catch {
-            self.error = error.localizedDescription
+            self.error = Self.visibleMessage(
+                for: error,
+                fallback: "We couldn't send a code. Make sure the email matches your Amach Health account, then try again."
+            )
             throw error
         }
         #else
-        pendingEmail = email
+        pendingEmail = normalizedEmail
         #endif
     }
 
     public func loginWithEmailCode(_ code: String) async throws {
         error = nil
         #if canImport(PrivySDK)
-        guard let privy, let email = pendingEmail else {
+        guard let privy else {
             let walletError = WalletError.notConfigured
+            self.error = walletError.localizedDescription
+            throw walletError
+        }
+        guard let email = pendingEmail else {
+            let walletError = WalletError.noPendingEmailCode
             self.error = walletError.localizedDescription
             throw walletError
         }
@@ -102,13 +117,39 @@ public final class WalletService: ObservableObject {
             try await finishConnecting(user: user)
             pendingEmail = nil
         } catch {
-            self.error = error.localizedDescription
+            self.error = Self.visibleMessage(
+                for: error,
+                fallback: "We couldn't verify that code. Check the code and try again, or request a new one."
+            )
             throw WalletError.connectionFailed(error)
         }
         #else
         try await connectDevMock()
         pendingEmail = nil
         #endif
+    }
+
+    public func clearPendingEmailCode() {
+        pendingEmail = nil
+        error = nil
+    }
+
+    public static func normalizedEmailForCode(_ email: String) throws -> String {
+        let normalized = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard normalized.contains("@"),
+              normalized.contains("."),
+              normalized.count > 4 else {
+            throw WalletError.invalidEmail
+        }
+        return normalized
+    }
+
+    private static func visibleMessage(for error: Error, fallback: String) -> String {
+        let message = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        if message.isEmpty || message == "The operation couldn’t be completed." {
+            return fallback
+        }
+        return message
     }
 
     #if canImport(PrivySDK)
@@ -284,6 +325,8 @@ public enum WalletError: LocalizedError, Sendable {
     case notConnected
     case notConfigured
     case notImplemented
+    case invalidEmail
+    case noPendingEmailCode
     case noEncryptionKey
     case invalidHex
     case connectionFailed(Error)
@@ -296,6 +339,8 @@ public enum WalletError: LocalizedError, Sendable {
         case .notConnected:           return "Wallet is not connected"
         case .notConfigured:          return "Privy SDK not configured"
         case .notImplemented:         return "Privy SDK not installed"
+        case .invalidEmail:           return "Enter a valid email address to receive a code."
+        case .noPendingEmailCode:     return "Request a new email code before verifying."
         case .noEncryptionKey:        return "No encryption key available"
         case .invalidHex:             return "Invalid hex string"
         case .connectionFailed(let e): return "Connection failed: \(e.localizedDescription)"

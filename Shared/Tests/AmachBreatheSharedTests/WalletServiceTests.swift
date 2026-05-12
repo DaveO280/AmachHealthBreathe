@@ -87,5 +87,32 @@ final class WalletServicePBKDF2Tests: XCTestCase {
         let ws = WalletService.shared
         XCTAssertFalse(ws.isLoading)
     }
+
+    @MainActor
+    func testNormalizedEmailForCodeTrimsAndLowercases() throws {
+        let email = try WalletService.normalizedEmailForCode("  USER@Example.COM \n")
+        XCTAssertEqual(email, "user@example.com")
+    }
+
+    @MainActor
+    func testNormalizedEmailForCodeRejectsInvalidEmail() {
+        XCTAssertThrowsError(try WalletService.normalizedEmailForCode("not-an-email")) { error in
+            guard case WalletError.invalidEmail = error else {
+                return XCTFail("Expected invalidEmail, got \(error)")
+            }
+        }
+    }
+
+    @MainActor
+    func testClearPendingEmailCodeClearsPendingStateAndError() {
+        let ws = WalletService.shared
+        ws.pendingEmail = "user@example.com"
+        ws.error = "Previous error"
+
+        ws.clearPendingEmailCode()
+
+        XCTAssertNil(ws.pendingEmail)
+        XCTAssertNil(ws.error)
+    }
 }
 #endif

@@ -39,6 +39,19 @@ struct ConnectWalletSheet: View {
         .onChange(of: wallet.isConnected) { _, connected in
             if connected { dismiss() }
         }
+        .onAppear {
+            restorePendingCodeState()
+        }
+        .onChange(of: wallet.pendingEmail) { _, pending in
+            if let pending {
+                emailInput = pending
+                codeInput = ""
+                withAnimation { step = .code }
+            } else if step == .code && !wallet.isConnected {
+                codeInput = ""
+                withAnimation { step = .email }
+            }
+        }
     }
 
     // MARK: - Header
@@ -58,8 +71,8 @@ struct ConnectWalletSheet: View {
                 .font(AmachType.h2)
                 .foregroundStyle(Color.amachTextPrimary)
             Text(step == .email
-                 ? "Enter the email you use on amachhealth.com"
-                 : "Enter the 6-digit code sent to\n\(emailInput)")
+                 ? "Use your Amach Health email. We'll send a one-time code."
+                 : "Enter the 6-digit code sent to\n\(displayEmail)")
                 .font(AmachType.caption)
                 .foregroundStyle(Color.amachTextSecondary)
                 .multilineTextAlignment(.center)
@@ -98,7 +111,7 @@ struct ConnectWalletSheet: View {
                 .onAppear { emailFocused = true }
             connectButton(
                 title: "Send Code",
-                isEnabled: isValidEmail(emailInput)
+                isEnabled: true
             ) {
                 Task {
                     do {
@@ -106,7 +119,7 @@ struct ConnectWalletSheet: View {
                             to: emailInput.trimmingCharacters(in: .whitespaces))
                         withAnimation { step = .code }
                     } catch {
-                        // WalletService publishes the message shown below the form.
+                        showFallbackError(error)
                     }
                 }
             }
@@ -127,23 +140,40 @@ struct ConnectWalletSheet: View {
                     if v.count > 6 { codeInput = String(v.prefix(6)) }
                 }
                 .onAppear { codeFocused = true }
+            Text("Code pending for \(displayEmail). You can close this sheet and continue here while the code is pending.")
+                .font(AmachType.tiny)
+                .foregroundStyle(Color.amachTextSecondary)
+                .multilineTextAlignment(.center)
             connectButton(title: "Verify Code", isEnabled: codeInput.count == 6) {
                 Task {
                     do {
                         try await wallet.loginWithEmailCode(codeInput)
                     } catch {
-                        // WalletService publishes the message shown below the form.
+                        showFallbackError(error)
                     }
                 }
             }
             Button {
-                withAnimation {
-                    codeInput = ""
-                    wallet.error = nil
-                    step = .email
+                Task {
+                    do {
+                        codeInput = ""
+                        try await wallet.sendEmailCode(to: displayEmail)
+                    } catch {
+                        showFallbackError(error)
+                    }
                 }
             } label: {
-                Label("Use a different email", systemImage: "chevron.left")
+                Text("Resend code")
+                    .font(AmachType.caption.weight(.semibold))
+                    .foregroundStyle(Color.amachPrimary)
+            }
+            .disabled(wallet.isLoading)
+            Button {
+                withAnimation {
+                    resetPendingCode()
+                }
+            } label: {
+                Label("Change or cancel email", systemImage: "chevron.left")
                     .font(AmachType.caption)
                     .foregroundStyle(Color.amachTextSecondary)
             }
@@ -186,9 +216,27 @@ struct ConnectWalletSheet: View {
         .disabled(!isEnabled || wallet.isLoading)
     }
 
-    private func isValidEmail(_ email: String) -> Bool {
-        let s = email.trimmingCharacters(in: .whitespaces)
-        return s.contains("@") && s.contains(".") && s.count > 4
+    private var displayEmail: String {
+        wallet.pendingEmail ?? emailInput.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func restorePendingCodeState() {
+        guard let pending = wallet.pendingEmail else { return }
+        emailInput = pending
+        step = .code
+    }
+
+    private func resetPendingCode() {
+        codeInput = ""
+        wallet.clearPendingEmailCode()
+        step = .email
+        emailFocused = true
+    }
+
+    private func showFallbackError(_ error: Error) {
+        if wallet.error == nil {
+            wallet.error = error.localizedDescription
+        }
     }
 }
 
