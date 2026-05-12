@@ -96,6 +96,22 @@ final class WalletServiceStateTests: XCTestCase {
         XCTAssertEqual(wallet.error, WalletError.invalidEmail.localizedDescription)
         XCTAssertFalse(wallet.isLoading)
     }
+
+    func testPrivyConfigurationUsesBreatheClientId() {
+        XCTAssertEqual(WalletService.privyAppId, "cmiev4g03026zl80cpoyjccwu")
+        XCTAssertEqual(WalletService.privyClientId, "client-WY6TLxngkdjGfUtmZkKe5evREPGvJ7Z7jeSN5udFabgfw")
+        XCTAssertNotEqual(WalletService.privyClientId, "client-WY6TLxngkdjGfUtmZkKe5evREPGvJ7Z7jeQXBd5BcxJE5")
+    }
+
+    func testAppBundleRegistersPrivyIdentifiers() {
+        XCTAssertEqual(Bundle.main.bundleIdentifier, "com.amach.AmachBreathe")
+
+        let urlTypes = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]]
+        let schemes = urlTypes?
+            .flatMap { $0["CFBundleURLSchemes"] as? [String] ?? [] }
+
+        XCTAssertEqual(schemes, ["com.amach.AmachBreathe"])
+    }
 }
 
 @MainActor

@@ -49,8 +49,8 @@ public final class WalletService: ObservableObject {
     @Published public var hasAuthenticatedBefore: Bool
 
     // Reuse existing Amach Health Privy app (spec: "reuse existing Amach Health Privy app")
-    private let privyAppId    = "cmiev4g03026zl80cpoyjccwu"
-    private let privyClientId = "client-WY6TLxngkdjGfUtmZkKe5evREPGvJ7Z7jeQXBd5BcxJE5"
+    static let privyAppId = "cmiev4g03026zl80cpoyjccwu"
+    static let privyClientId = "client-WY6TLxngkdjGfUtmZkKe5evREPGvJ7Z7jeSN5udFabgfw"
 
     #if canImport(PrivySDK)
     private var privy: (any Privy)?
@@ -74,7 +74,7 @@ public final class WalletService: ObservableObject {
 
     public func initializePrivy() {
         #if canImport(PrivySDK)
-        let config = PrivyConfig(appId: privyAppId, appClientId: privyClientId)
+        let config = PrivyConfig(appId: Self.privyAppId, appClientId: Self.privyClientId)
         let privy = PrivySdk.initialize(config: config)
         self.privy = privy
         self.emailCodeSender = PrivyWalletEmailCodeSender(privy: privy)

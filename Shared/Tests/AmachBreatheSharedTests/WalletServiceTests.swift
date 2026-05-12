@@ -20,6 +20,7 @@ private enum MockEmailCodeError: LocalizedError {
     }
 }
 
+@MainActor
 final class WalletServicePBKDF2Tests: XCTestCase {
 
     // MARK: - PBKDF2 Derivation
@@ -95,6 +96,13 @@ final class WalletServicePBKDF2Tests: XCTestCase {
     @MainActor
     func testWalletServiceSharedExists() {
         XCTAssertNotNil(WalletService.shared)
+    }
+
+    @MainActor
+    func testPrivyConfigurationUsesBreatheClientId() {
+        XCTAssertEqual(WalletService.privyAppId, "cmiev4g03026zl80cpoyjccwu")
+        XCTAssertEqual(WalletService.privyClientId, "client-WY6TLxngkdjGfUtmZkKe5evREPGvJ7Z7jeSN5udFabgfw")
+        XCTAssertNotEqual(WalletService.privyClientId, "client-WY6TLxngkdjGfUtmZkKe5evREPGvJ7Z7jeQXBd5BcxJE5")
     }
 
     @MainActor
