@@ -12,9 +12,15 @@ let package = Package(
     products: [
         .library(name: "AmachBreatheShared", targets: ["AmachBreatheShared"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/privy-io/privy-ios", from: "2.9.0"),
+    ],
     targets: [
         .target(
             name: "AmachBreatheShared",
+            dependencies: [
+                .product(name: "Privy", package: "privy-ios", condition: .when(platforms: [.iOS])),
+            ],
             path: "Sources/AmachBreatheShared"
         ),
         .testTarget(

@@ -19,6 +19,20 @@ import Combine
 import PrivySDK
 #endif
 
+protocol WalletEmailCodeSending {
+    func sendCode(to email: String) async throws
+}
+
+#if canImport(PrivySDK)
+private struct PrivyWalletEmailCodeSender: WalletEmailCodeSending {
+    let privy: any Privy
+
+    func sendCode(to email: String) async throws {
+        try await privy.email.sendCode(to: email)
+    }
+}
+#endif
+
 // MARK: - WalletService
 
 @MainActor
@@ -41,13 +55,19 @@ public final class WalletService: ObservableObject {
     #if canImport(PrivySDK)
     private var privy: (any Privy)?
     #endif
+    private var emailCodeSender: (any WalletEmailCodeSending)?
 
     // MARK: Key Derivation Constants (MUST match walletEncryption.ts — never change)
     static let encryptionKeyMessagePrefix =
         "Amach Health - Derive Encryption Key\n\nThis signature is used to encrypt your health data.\n\nNonce: "
 
-    private init() {
-        self.hasAuthenticatedBefore = UserDefaults.standard.bool(forKey: "amach_breathe_has_authenticated")
+    init(
+        emailCodeSender: (any WalletEmailCodeSending)? = nil,
+        hasAuthenticatedBefore: Bool? = nil
+    ) {
+        self.emailCodeSender = emailCodeSender
+        self.hasAuthenticatedBefore = hasAuthenticatedBefore
+            ?? UserDefaults.standard.bool(forKey: "amach_breathe_has_authenticated")
     }
 
     // MARK: - Privy Setup
@@ -55,7 +75,9 @@ public final class WalletService: ObservableObject {
     public func initializePrivy() {
         #if canImport(PrivySDK)
         let config = PrivyConfig(appId: privyAppId, appClientId: privyClientId)
-        self.privy = PrivySdk.initialize(config: config)
+        let privy = PrivySdk.initialize(config: config)
+        self.privy = privy
+        self.emailCodeSender = PrivyWalletEmailCodeSender(privy: privy)
         Task { await restoreSessionIfAvailable() }
         #else
         print("⚠️ PrivySDK not installed — running in dev-mock mode.")
@@ -75,7 +97,7 @@ public final class WalletService: ObservableObject {
             throw error
         }
         #if canImport(PrivySDK)
-        guard let privy else {
+        guard let emailCodeSender else {
             let walletError = WalletError.notConfigured
             self.error = walletError.localizedDescription
             throw walletError
@@ -83,7 +105,7 @@ public final class WalletService: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await privy.email.sendCode(to: normalizedEmail)
+            try await emailCodeSender.sendCode(to: normalizedEmail)
             pendingEmail = normalizedEmail
         } catch {
             self.error = Self.visibleMessage(
