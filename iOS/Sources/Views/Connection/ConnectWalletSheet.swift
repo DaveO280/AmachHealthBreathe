@@ -101,9 +101,13 @@ struct ConnectWalletSheet: View {
                 isEnabled: isValidEmail(emailInput)
             ) {
                 Task {
-                    try? await wallet.sendEmailCode(
-                        to: emailInput.trimmingCharacters(in: .whitespaces))
-                    withAnimation { step = .code }
+                    do {
+                        try await wallet.sendEmailCode(
+                            to: emailInput.trimmingCharacters(in: .whitespaces))
+                        withAnimation { step = .code }
+                    } catch {
+                        // WalletService publishes the message shown below the form.
+                    }
                 }
             }
         }
@@ -124,10 +128,20 @@ struct ConnectWalletSheet: View {
                 }
                 .onAppear { codeFocused = true }
             connectButton(title: "Verify Code", isEnabled: codeInput.count == 6) {
-                Task { try? await wallet.loginWithEmailCode(codeInput) }
+                Task {
+                    do {
+                        try await wallet.loginWithEmailCode(codeInput)
+                    } catch {
+                        // WalletService publishes the message shown below the form.
+                    }
+                }
             }
             Button {
-                withAnimation { codeInput = ""; step = .email }
+                withAnimation {
+                    codeInput = ""
+                    wallet.error = nil
+                    step = .email
+                }
             } label: {
                 Label("Use a different email", systemImage: "chevron.left")
                     .font(AmachType.caption)

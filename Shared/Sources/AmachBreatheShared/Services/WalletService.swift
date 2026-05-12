@@ -68,7 +68,11 @@ public final class WalletService: ObservableObject {
     public func sendEmailCode(to email: String) async throws {
         error = nil
         #if canImport(PrivySDK)
-        guard let privy else { throw WalletError.notConfigured }
+        guard let privy else {
+            let walletError = WalletError.notConfigured
+            self.error = walletError.localizedDescription
+            throw walletError
+        }
         isLoading = true
         defer { isLoading = false }
         do {
@@ -86,7 +90,11 @@ public final class WalletService: ObservableObject {
     public func loginWithEmailCode(_ code: String) async throws {
         error = nil
         #if canImport(PrivySDK)
-        guard let privy, let email = pendingEmail else { throw WalletError.notConfigured }
+        guard let privy, let email = pendingEmail else {
+            let walletError = WalletError.notConfigured
+            self.error = walletError.localizedDescription
+            throw walletError
+        }
         isLoading = true
         defer { isLoading = false }
         do {
