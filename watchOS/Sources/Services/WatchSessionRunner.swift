@@ -154,9 +154,25 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         isPaused = false
     }
 
+    /// Called from the reflection view when the user submits a star rating.
     public func submitReflection(rating: Int) {
         reflectionRating = rating
         buildRecord()
+        phase = .complete
+    }
+
+    /// Called when the user taps Done on the completion screen.
+    public func endSession() async {
+        hapticPacer.stop()
+        audioPacer.stop()
+        timer.stop()
+        isRunning = false
+        isPaused = false
+        phase = .idle
+        pacerState = .idle
+        updateComplicationState(inSession: false)
+        invalidateExtendedRuntimeSession()
+        await workoutManager.stopWorkout()
     }
 
     // MARK: - Phase observation
@@ -171,9 +187,13 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     }
 
     private func handleTimerState(_ state: PacerState) {
-        let prevPhase = phase
-        phase = state.sessionPhase
         pacerState = state
+        let prevPhase = phase
+
+        // Don't let the timer override .complete — submitReflection owns that transition.
+        if case .complete = phase { return }
+
+        phase = state.sessionPhase
 
         if prevPhase != state.sessionPhase {
             switch state.sessionPhase {
@@ -185,6 +205,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
                 recoveryHRV = hrvProcessor.rmssd ?? 0
             case .complete:
                 if reflectionRating == nil { buildRecord() }
+                phase = .complete
             default: break
             }
         }
@@ -209,6 +230,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     // MARK: - Build result
 
     private func buildRecord() {
+        guard completedRecord == nil else { return }
         let avgCoherence = coherenceSamples.isEmpty
             ? 0.0
             : coherenceSamples.reduce(0, +) / Double(coherenceSamples.count)

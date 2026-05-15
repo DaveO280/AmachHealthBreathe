@@ -192,8 +192,10 @@ private struct ActiveSessionView: View {
                 isRecovery: isRecovery,
                 coherence: isRecovery ? nil : runner.currentCoherence
             )
+            .layoutPriority(1)
 
-            // Metrics row
+            Spacer(minLength: WatchLayout.isCompact ? 2 : 6)
+
             HStack(spacing: WatchLayout.isCompact ? 8 : 10) {
                 metricView(label: "HRV",
                            value: String(format: "%.0f", runner.currentHRV),
@@ -206,21 +208,34 @@ private struct ActiveSessionView: View {
                 }
             }
 
-            // Remaining time + pause/resume + end
-            HStack(spacing: WatchLayout.isCompact ? 4 : 8) {
-                if let remaining = runner.pacerState.sessionPhaseRemaining {
-                    Text(timeString(remaining))
-                        .font(.caption2)
-                        .foregroundStyle(Color.amachTextSecondary)
-                        .monospacedDigit()
-                }
-                Spacer()
-                pauseResumeButton
-                endButton
-            }
+            phaseTimerRow
+
+            sessionControlsRow
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, WatchLayout.isCompact ? 4 : 8)
         .padding(.top, 4)
+        .safeAreaPadding(.bottom, WatchLayout.sessionBottomInset)
+    }
+
+    @ViewBuilder
+    private var phaseTimerRow: some View {
+        if let remaining = runner.pacerState.sessionPhaseRemaining {
+            Text(timeString(remaining))
+                .font(.caption2)
+                .foregroundStyle(Color.amachTextSecondary)
+                .monospacedDigit()
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private var sessionControlsRow: some View {
+        HStack(spacing: WatchLayout.isCompact ? 4 : 8) {
+            Spacer(minLength: 0)
+            pauseResumeButton
+            endButton
+        }
     }
 
     private var phaseHeader: some View {
@@ -367,7 +382,7 @@ private struct CompletionView: View {
             }
 
             Button("Done") {
-                Task { await runner.stopSession() }
+                Task { await runner.endSession() }
             }
             .buttonStyle(.plain)
             .font(.caption)

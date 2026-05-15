@@ -18,7 +18,7 @@ struct BreathingCoachView: View {
     let coherence: Double?
 
     private var ringDiameter: CGFloat {
-        WatchLayout.isCompact ? 88 : 110
+        WatchLayout.ringDiameter
     }
 
     private var phaseLabelSize: CGFloat {

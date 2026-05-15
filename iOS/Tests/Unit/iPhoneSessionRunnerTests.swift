@@ -27,4 +27,17 @@ final class iPhoneSessionRunnerTests: XCTestCase {
         runner.endSession()
         XCTAssertFalse(runner.isRunning)
     }
+
+    func testSubmitReflectionAdvancesToCompletePhase() {
+        let runner = iPhoneSessionRunner()
+        runner.startSession(bpm: 5.5, durationSeconds: 60, ratio: .fourToSix)
+        runner.submitReflection(rating: 4)
+        if case .complete = runner.phase {
+            // expected
+        } else {
+            XCTFail("Expected .complete after submitReflection, got \(runner.phase)")
+        }
+        XCTAssertEqual(runner.completedRecord?.reflectionRating, 4)
+        runner.endSession()
+    }
 }
