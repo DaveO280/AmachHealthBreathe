@@ -32,6 +32,11 @@ public final class AppSettingsService: ObservableObject {
         persist()
     }
 
+    public func updateWatchCompanionAudioTracking(_ enabled: Bool) {
+        settings.watchCompanionAudioTrackingEnabled = enabled
+        persist()
+    }
+
     public func updateReminders(_ secondsFromMidnight: [Int]) {
         settings.reminderSecondsFromMidnight = secondsFromMidnight
         persist()

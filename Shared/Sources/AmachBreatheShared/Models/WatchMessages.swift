@@ -9,6 +9,8 @@ public enum WatchMessageKey: String, Sendable {
 
 public enum WatchMessageType: String, Codable, Sendable {
     case sessionComplete      // Watch → iPhone: BreathingSessionRecord JSON
+    case sessionStarted       // Watch → iPhone: SessionStartedMessage JSON
+    case sessionPhaseHint     // Watch → iPhone: SessionPhaseHintMessage JSON
     case calibrationResult    // Watch → iPhone: ResonanceFrequencyResult JSON
     case calibrationFailed    // Watch → iPhone: CalibrationFailurePayload JSON
     case startSession         // iPhone → Watch: StartSessionCommand JSON
@@ -22,11 +24,62 @@ public struct StartSessionCommand: Codable, Sendable {
     public let bpm: Double
     public let durationSeconds: Int  // 300, 600, or 900
     public let ratio: String?        // BreathRatio.rawValue; nil = use watch default
+    /// When set, the watch uses this id so the phone can correlate companion audio.
+    public let sessionId: String?
+    /// iPhone should start mic tracking when the watch session runs.
+    public let companionAudioEnabled: Bool?
 
-    public init(bpm: Double, durationSeconds: Int, ratio: String? = nil) {
+    public init(
+        bpm: Double,
+        durationSeconds: Int,
+        ratio: String? = nil,
+        sessionId: String? = nil,
+        companionAudioEnabled: Bool? = nil
+    ) {
         self.bpm = bpm
         self.durationSeconds = durationSeconds
         self.ratio = ratio
+        self.sessionId = sessionId
+        self.companionAudioEnabled = companionAudioEnabled
+    }
+}
+
+/// Watch → iPhone when a session begins (phone-initiated or watch quick-start).
+public struct SessionStartedMessage: Codable, Sendable {
+    public let sessionId: String
+    public let bpm: Double
+    public let durationSeconds: Int
+    public let ratio: String
+    public let startedAt: Date
+
+    public init(
+        sessionId: String,
+        bpm: Double,
+        durationSeconds: Int,
+        ratio: String,
+        startedAt: Date = Date()
+    ) {
+        self.sessionId = sessionId
+        self.bpm = bpm
+        self.durationSeconds = durationSeconds
+        self.ratio = ratio
+        self.startedAt = startedAt
+    }
+}
+
+public enum CompanionPhaseHint: String, Codable, Sendable {
+    case mainStarted
+    case sessionEnded
+}
+
+/// Minimal phase sync so the phone analyzes audio during the main breathing phase.
+public struct SessionPhaseHintMessage: Codable, Sendable {
+    public let sessionId: String
+    public let phase: CompanionPhaseHint
+
+    public init(sessionId: String, phase: CompanionPhaseHint) {
+        self.sessionId = sessionId
+        self.phase = phase
     }
 }
 

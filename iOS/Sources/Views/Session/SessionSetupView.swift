@@ -9,6 +9,7 @@ struct SessionSetupView: View {
     @EnvironmentObject private var watchConnectivity: WatchConnectivityService
     @EnvironmentObject private var runner: iPhoneSessionRunner
     @EnvironmentObject private var settingsService: AppSettingsService
+    @EnvironmentObject private var watchCompanionAudio: WatchCompanionAudioService
 
     @State private var selectedDuration: Int = 300     // seconds
     @State private var selectedRatio: BreathRatio = .fourToSix
@@ -31,7 +32,8 @@ struct SessionSetupView: View {
                     bpmCard
                     durationPicker
                     ratioPicker
-                    audioTrackingOption
+                    watchCompanionAudioOption
+                    iPhoneAudioTrackingOption
 
                     ctaSection
 
@@ -45,6 +47,17 @@ struct SessionSetupView: View {
         }
         .onAppear {
             selectedRatio = settingsService.settings.defaultRatio
+        }
+        .alert(
+            "Microphone access needed",
+            isPresented: Binding(
+                get: { watchCompanionAudio.showPermissionDeniedAlert },
+                set: { if !$0 { watchCompanionAudio.dismissPermissionAlert() } }
+            )
+        ) {
+            Button("OK", role: .cancel) { watchCompanionAudio.dismissPermissionAlert() }
+        } message: {
+            Text("Allow microphone access in Settings to track breath audio during Watch sessions. Your watch session will continue without audio metrics.")
         }
         .sheet(isPresented: $showTutorial) {
             BreatheTutorialSheet()
@@ -199,12 +212,15 @@ struct SessionSetupView: View {
         }
     }
 
-    private var audioTrackingOption: some View {
+    private var watchCompanionAudioOption: some View {
         VStack(alignment: .leading, spacing: AmachSpacing.xs) {
-            Toggle(isOn: $audioBreathTrackingEnabled) {
+            Toggle(isOn: Binding(
+                get: { settingsService.settings.watchCompanionAudioTrackingEnabled },
+                set: { settingsService.updateWatchCompanionAudioTracking($0) }
+            )) {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: AmachSpacing.xs) {
-                        Text("Audio breath tracking")
+                        Text("Use iPhone mic during Watch sessions")
                             .font(AmachType.h3)
                             .foregroundStyle(Color.amachTextPrimary)
                         Text("Beta")
@@ -215,19 +231,33 @@ struct SessionSetupView: View {
                             .background(Color.amachPrimary.opacity(0.12))
                             .clipShape(Capsule())
                     }
-                    Text("Optional iPhone-only estimate. Works best in a quiet room with the phone nearby. Raw audio is not stored.")
+                    Text("Keep the phone nearby, unlocked, and in a quiet room. Raw audio is not stored. Works with sessions started on the watch or from this screen.")
                         .font(AmachType.tiny)
                         .foregroundStyle(Color.amachTextSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .toggleStyle(.switch)
+        }
+        .padding(AmachSpacing.md)
+        .background(Color.amachSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
+    }
 
-            if watchConnectivity.isWatchReachable {
-                Text("This applies when you run the session on iPhone instead of Watch.")
-                    .font(AmachType.tiny)
-                    .foregroundStyle(Color.amachTextTertiary)
+    private var iPhoneAudioTrackingOption: some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.xs) {
+            Toggle(isOn: $audioBreathTrackingEnabled) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Audio breath tracking (iPhone session)")
+                        .font(AmachType.h3)
+                        .foregroundStyle(Color.amachTextPrimary)
+                    Text("Optional estimate when you run the session on iPhone instead of Watch.")
+                        .font(AmachType.tiny)
+                        .foregroundStyle(Color.amachTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
+            .toggleStyle(.switch)
         }
         .padding(AmachSpacing.md)
         .background(Color.amachSurface)
@@ -242,7 +272,7 @@ struct SessionSetupView: View {
                 HStack(spacing: AmachSpacing.sm) {
                     Image(systemName: "applewatch")
                         .foregroundStyle(Color.amachPrimary)
-                    Text("Session started on Apple Watch")
+                    Text(watchCompanionConfirmationText)
                         .font(AmachType.caption)
                         .foregroundStyle(Color.amachTextPrimary)
                 }
@@ -252,17 +282,8 @@ struct SessionSetupView: View {
                 .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
             } else if watchConnectivity.isWatchReachable {
-                // Primary: send to Watch
                 Button {
-                    watchConnectivity.sendStartSession(
-                        bpm: bpm,
-                        durationSeconds: selectedDuration,
-                        ratio: selectedRatio)
-                    AmachHaptics.success()
-                    withAnimation(AmachAnimation.normal) { watchSentConfirmation = true }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        withAnimation(AmachAnimation.normal) { watchSentConfirmation = false }
-                    }
+                    startWatchSession()
                 } label: {
                     Label("Start on Watch", systemImage: "applewatch")
                         .font(AmachType.caption.weight(.semibold))
@@ -273,7 +294,6 @@ struct SessionSetupView: View {
                         .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
                 }
 
-                // Secondary: run on iPhone
                 Button {
                     runner.startSession(
                         bpm: bpm,
@@ -287,7 +307,6 @@ struct SessionSetupView: View {
                         .frame(height: 44)
                 }
             } else {
-                // Primary: run on iPhone
                 Button {
                     runner.startSession(
                         bpm: bpm,
@@ -304,12 +323,38 @@ struct SessionSetupView: View {
                         .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
                 }
 
-                // Footnote: Watch not connected
                 Text("Running on iPhone — HRV tracking requires Apple Watch")
                     .font(AmachType.tiny)
                     .foregroundStyle(Color.amachTextTertiary)
                     .multilineTextAlignment(.center)
             }
+        }
+    }
+
+    private var watchCompanionConfirmationText: String {
+        if settingsService.settings.watchCompanionAudioTrackingEnabled {
+            return "Session started on Apple Watch — keep iPhone nearby for breath audio"
+        }
+        return "Session started on Apple Watch"
+    }
+
+    private func startWatchSession() {
+        let companion = settingsService.settings.watchCompanionAudioTrackingEnabled
+        let sessionId = watchConnectivity.sendStartSession(
+            bpm: bpm,
+            durationSeconds: selectedDuration,
+            ratio: selectedRatio,
+            companionAudioEnabled: companion
+        )
+        watchCompanionAudio.armForPhoneInitiatedWatchStart(
+            sessionId: sessionId,
+            bpm: bpm,
+            companionEnabled: companion
+        )
+        AmachHaptics.success()
+        withAnimation(AmachAnimation.normal) { watchSentConfirmation = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            withAnimation(AmachAnimation.normal) { watchSentConfirmation = false }
         }
     }
 }

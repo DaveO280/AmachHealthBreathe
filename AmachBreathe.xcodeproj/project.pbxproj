@@ -71,6 +71,8 @@
 		F49E8617A85D7DD0A797624C /* SubscriptionManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E399640E99E1AE04CAB1D6F /* SubscriptionManagementView.swift */; };
 		F91941A76702CE3ECA1901A5 /* AmachBreatheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */; };
 		FA537A83E4B24C53CA1A13D5 /* WatchConnectivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F5A36BFE915419789FED99A /* WatchConnectivityService.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* WatchCompanionAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5D /* WatchCompanionAudioService.swift */; };
+		C3D4E5F60718293A4B5E01 /* WatchCompanionAudioServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F60718293A4B5F01 /* WatchCompanionAudioServiceTests.swift */; };
 		FA578290BBABF63FDF6D9219 /* CalibrationRunnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 856FCA6E5389EF2006D8FC9F /* CalibrationRunnerView.swift */; };
 		FBE87AD063CB88858CD75049 /* MasterPhaseTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B395C9AE603753725D2390 /* MasterPhaseTimer.swift */; };
 /* End PBXBuildFile section */
@@ -152,6 +154,8 @@
 		9B124493F97494B75F4B683E /* WatchConnectivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WatchConnectivity.framework; path = System/Library/Frameworks/WatchConnectivity.framework; sourceTree = SDKROOT; };
 		9D01A1C4DF9CDCCE9D7C6A8F /* iPhoneSessionRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneSessionRunner.swift; sourceTree = "<group>"; };
 		9F5A36BFE915419789FED99A /* WatchConnectivityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityService.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5D /* WatchCompanionAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchCompanionAudioService.swift; sourceTree = "<group>"; };
+		D4E5F60718293A4B5F01 /* WatchCompanionAudioServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchCompanionAudioServiceTests.swift; sourceTree = "<group>"; };
 		9FD98D74B655E1D40CD31BD0 /* SoftSupportPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftSupportPromptView.swift; sourceTree = "<group>"; };
 		A2046516E1BE0560918CD049 /* CancelSubscriptionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancelSubscriptionSheet.swift; sourceTree = "<group>"; };
 		A61F607DE6D903C2422B6C73 /* iPhoneSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneSessionView.swift; sourceTree = "<group>"; };
@@ -310,6 +314,7 @@
 			children = (
 				29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */,
 				AE7F5FE3D3B19D0CF710B16B /* iPhoneSessionRunnerTests.swift */,
+				D4E5F60718293A4B5F01 /* WatchCompanionAudioServiceTests.swift */,
 				8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */,
 				632EAAEF2EDDAD650B664F25 /* SessionServiceTests.swift */,
 				8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */,
@@ -334,6 +339,7 @@
 				AD9953583514A39FE07FD064 /* SessionService.swift */,
 				752F2168AC07F32821D54F3B /* SubscriptionService.swift */,
 				9F5A36BFE915419789FED99A /* WatchConnectivityService.swift */,
+				B2C3D4E5F60718293A4B5D /* WatchCompanionAudioService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -674,6 +680,7 @@
 				4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */,
 				4D5F6A7B8C9D0E1F20314253 /* WalletServiceStateTests.swift in Sources */,
 				E9B0BF4EB580D39EB314B303 /* iPhoneSessionRunnerTests.swift in Sources */,
+				C3D4E5F60718293A4B5E01 /* WatchCompanionAudioServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -707,6 +714,7 @@
 				0299171278E8E7156C977E95 /* TrendView.swift in Sources */,
 				0BDB271FED778525A4853675 /* WalletStatusBanner.swift in Sources */,
 				FA537A83E4B24C53CA1A13D5 /* WatchConnectivityService.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* WatchCompanionAudioService.swift in Sources */,
 				AE36CBC219D93BEE53C64393 /* iPhoneAudioBreathTracker.swift in Sources */,
 				B7EDA7934D9F5EEC406FEDE9 /* iPhoneAudioPacer.swift in Sources */,
 				83E1BFDC2187FE7DD0A8A729 /* iPhoneMasterPhaseTimer.swift in Sources */,

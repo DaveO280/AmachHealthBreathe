@@ -15,6 +15,7 @@ struct AmachBreatheApp: App {
     @StateObject private var subscriptionService: SubscriptionService
     @StateObject private var onboardingService = OnboardingService()
     @StateObject private var iPhoneRunner = iPhoneSessionRunner()
+    @StateObject private var watchCompanionAudio = WatchCompanionAudioService()
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -47,7 +48,11 @@ struct AmachBreatheApp: App {
                 .environmentObject(subscriptionService)
                 .environmentObject(onboardingService)
                 .environmentObject(iPhoneRunner)
+                .environmentObject(watchCompanionAudio)
                 .task { await wireAll() }
+                .onChange(of: settingsService.settings.watchCompanionAudioTrackingEnabled) { _, enabled in
+                    watchCompanionAudio.setCompanionEnabledInSettings(enabled)
+                }
                 .onReceive(walletService.$isConnected) { connected in
                     handleWalletConnectionChange(connected: connected)
                 }
@@ -90,12 +95,22 @@ struct AmachBreatheApp: App {
             }
         }
 
-        watchConnectivity.onSessionReceived = { record in
-            sessionService.save(record)
-            // Auto-sync newly received session if wallet is available
+        watchCompanionAudio.setCompanionEnabledInSettings(
+            settingsService.settings.watchCompanionAudioTrackingEnabled)
+
+        watchConnectivity.onSessionReceived = { [watchCompanionAudio] record in
+            let metrics = watchCompanionAudio.takeMetricsForMerge(sessionId: record.id)
+            let merged = record.mergingCompanionAudioMetrics(metrics)
+            sessionService.save(merged)
             if let key = walletService.encryptionKey {
                 Task { await sessionService.syncPending(encryptionKey: key) }
             }
+        }
+        watchConnectivity.onSessionStarted = { [watchCompanionAudio] started in
+            watchCompanionAudio.handleSessionStarted(started)
+        }
+        watchConnectivity.onSessionPhaseHint = { [watchCompanionAudio] hint in
+            watchCompanionAudio.handlePhaseHint(hint)
         }
         watchConnectivity.onCalibrationReceived = { result in
             calibrationStore.save(result: result)

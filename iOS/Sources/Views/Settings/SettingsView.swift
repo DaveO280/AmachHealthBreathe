@@ -235,6 +235,21 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                     .frame(width: 120)
                 }
+                Divider().padding(.leading, AmachSpacing.md)
+                Toggle(isOn: Binding(
+                    get: { settingsService.settings.watchCompanionAudioTrackingEnabled },
+                    set: { settingsService.updateWatchCompanionAudioTracking($0) }
+                )) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("iPhone mic during Watch sessions")
+                            .font(AmachType.body)
+                            .foregroundStyle(Color.amachTextPrimary)
+                        Text("Phone nearby and unlocked in a quiet room.")
+                            .font(AmachType.caption)
+                            .foregroundStyle(Color.amachTextSecondary)
+                    }
+                }
+                .padding(AmachSpacing.md)
             }
             .amachCard()
         }

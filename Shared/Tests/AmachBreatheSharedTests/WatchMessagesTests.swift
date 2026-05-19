@@ -35,6 +35,42 @@ final class WatchMessagesTests: XCTestCase {
         XCTAssertEqual(decoded.durationSeconds, 600)
     }
 
+    func testStartCommand_companionFieldsRoundTrip() throws {
+        let cmd = StartSessionCommand(
+            bpm: 5.5,
+            durationSeconds: 300,
+            ratio: "4:6",
+            sessionId: "abc",
+            companionAudioEnabled: true
+        )
+        let message = try makeWatchMessage(type: .startSession, payload: cmd)
+        let decoded = try decodeWatchPayload(StartSessionCommand.self, from: message)
+        XCTAssertEqual(decoded.sessionId, "abc")
+        XCTAssertEqual(decoded.companionAudioEnabled, true)
+    }
+
+    func testSessionStartedMessage_roundTrip() throws {
+        let started = SessionStartedMessage(
+            sessionId: "s1",
+            bpm: 5.5,
+            durationSeconds: 300,
+            ratio: "4:6",
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        let message = try makeWatchMessage(type: .sessionStarted, payload: started)
+        XCTAssertEqual(watchMessageType(from: message), .sessionStarted)
+        let decoded = try decodeWatchPayload(SessionStartedMessage.self, from: message)
+        XCTAssertEqual(decoded.sessionId, "s1")
+        XCTAssertEqual(decoded.bpm, 5.5)
+    }
+
+    func testSessionPhaseHint_roundTrip() throws {
+        let hint = SessionPhaseHintMessage(sessionId: "s1", phase: .mainStarted)
+        let message = try makeWatchMessage(type: .sessionPhaseHint, payload: hint)
+        let decoded = try decodeWatchPayload(SessionPhaseHintMessage.self, from: message)
+        XCTAssertEqual(decoded.phase, .mainStarted)
+    }
+
     func testWatchMessageType_extracted() throws {
         let cmd = StartSessionCommand(bpm: 5.0, durationSeconds: 300)
         let message = try makeWatchMessage(type: .startSession, payload: cmd)

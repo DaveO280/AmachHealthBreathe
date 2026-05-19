@@ -63,5 +63,6 @@ struct ContentView: View {
         .environmentObject(AppSettingsService())
         .environmentObject(SubscriptionService())
         .environmentObject(iPhoneSessionRunner())
+        .environmentObject(WatchCompanionAudioService())
         .environmentObject({ let s = OnboardingService(); s.markComplete(); return s }())
 }

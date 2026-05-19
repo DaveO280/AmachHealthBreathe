@@ -8,6 +8,8 @@ import AmachBreatheShared
 public final class WatchConnectivityService: NSObject, ObservableObject {
 
     public var onSessionReceived: ((BreathingSessionRecord) -> Void)?
+    public var onSessionStarted: ((SessionStartedMessage) -> Void)?
+    public var onSessionPhaseHint: ((SessionPhaseHintMessage) -> Void)?
     public var onCalibrationReceived: ((ResonanceFrequencyResult) -> Void)?
     public var onCalibrationFailed: ((CalibrationFailurePayload?) -> Void)?
     /// Set by the app root to push current wallet state when Watch requests it.
@@ -25,11 +27,26 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
 
     // MARK: - iPhone → Watch commands
 
-    public func sendStartSession(bpm: Double, durationSeconds: Int, ratio: BreathRatio = .fourToSix) {
-        guard WCSession.default.isReachable else { return }
-        let cmd = StartSessionCommand(bpm: bpm, durationSeconds: durationSeconds, ratio: ratio.rawValue)
-        guard let message = try? makeWatchMessage(type: .startSession, payload: cmd) else { return }
+    @discardableResult
+    public func sendStartSession(
+        bpm: Double,
+        durationSeconds: Int,
+        ratio: BreathRatio = .fourToSix,
+        sessionId: String? = nil,
+        companionAudioEnabled: Bool = false
+    ) -> String {
+        let id = sessionId ?? UUID().uuidString
+        guard WCSession.default.isReachable else { return id }
+        let cmd = StartSessionCommand(
+            bpm: bpm,
+            durationSeconds: durationSeconds,
+            ratio: ratio.rawValue,
+            sessionId: id,
+            companionAudioEnabled: companionAudioEnabled ? true : nil
+        )
+        guard let message = try? makeWatchMessage(type: .startSession, payload: cmd) else { return id }
         WCSession.default.sendMessage(message, replyHandler: nil)
+        return id
     }
 
     /// Sends a start-calibration command to the Watch. Returns false if Watch isn't reachable —
@@ -125,6 +142,12 @@ extension WatchConnectivityService: WCSessionDelegate {
         case .sessionComplete:
             guard let record = try? decodeWatchPayload(BreathingSessionRecord.self, from: message) else { return }
             Task { @MainActor [weak self] in self?.onSessionReceived?(record) }
+        case .sessionStarted:
+            guard let started = try? decodeWatchPayload(SessionStartedMessage.self, from: message) else { return }
+            Task { @MainActor [weak self] in self?.onSessionStarted?(started) }
+        case .sessionPhaseHint:
+            guard let hint = try? decodeWatchPayload(SessionPhaseHintMessage.self, from: message) else { return }
+            Task { @MainActor [weak self] in self?.onSessionPhaseHint?(hint) }
         case .calibrationResult:
             guard let result = try? decodeWatchPayload(ResonanceFrequencyResult.self, from: message) else { return }
             Task { @MainActor [weak self] in self?.onCalibrationReceived?(result) }

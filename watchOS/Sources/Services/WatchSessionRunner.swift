@@ -85,12 +85,13 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     public func startSession(
         bpm: Double,
         durationSeconds: Int,
-        ratio: BreathRatio = .fourToSix
+        ratio: BreathRatio = .fourToSix,
+        sessionId: String? = nil
     ) async throws {
         self.bpm = bpm
         self.selectedRatio = ratio
         self.mainDurationSeconds = durationSeconds
-        self.sessionId = UUID().uuidString
+        self.sessionId = sessionId ?? UUID().uuidString
         self.reflectionRating = nil
         self.completedRecord = nil
         self.baselineHRV = 0
@@ -117,6 +118,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         timer.start(bpm: bpm, mainDurationSeconds: durationSeconds, ratio: ratio)
         isRunning = true
         isPaused = false
+        sendSessionStartedToPhone()
 
         // Diagnostic: confirm the workout session actually started on device.
         // If `isActive` stays false past startup, the display will sleep
@@ -129,6 +131,7 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     }
 
     public func stopSession() async {
+        if !sessionId.isEmpty { sendPhaseHintToPhone(.sessionEnded) }
         timer.stop()
         hapticPacer.stop()
         audioPacer.stop()
@@ -199,10 +202,13 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
             switch state.sessionPhase {
             case .warmup:
                 baselineHRV = hrvProcessor.rmssd ?? 0
+            case .main:
+                sendPhaseHintToPhone(.mainStarted)
             case .recovery:
                 break
             case .reflection:
                 recoveryHRV = hrvProcessor.rmssd ?? 0
+                sendPhaseHintToPhone(.sessionEnded)
             case .complete:
                 if reflectionRating == nil { buildRecord() }
                 phase = .complete
@@ -284,9 +290,40 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
     }
 
     private func sendRecordToPhone(_ record: BreathingSessionRecord) async {
-        guard let session = wcSession, session.isReachable else { return }
+        guard WCSession.isSupported() else { return }
         guard let message = try? makeWatchMessage(
             type: .sessionComplete, payload: record) else { return }
+        let session = wcSession ?? WCSession.default
+        if session.isReachable {
+            session.sendMessage(message, replyHandler: nil)
+        } else {
+            session.transferUserInfo(message)
+        }
+    }
+
+    private func sendSessionStartedToPhone() {
+        guard WCSession.isSupported() else { return }
+        let payload = SessionStartedMessage(
+            sessionId: sessionId,
+            bpm: bpm,
+            durationSeconds: mainDurationSeconds,
+            ratio: selectedRatio.rawValue
+        )
+        guard let message = try? makeWatchMessage(type: .sessionStarted, payload: payload) else { return }
+        let session = wcSession ?? WCSession.default
+        if session.isReachable {
+            session.sendMessage(message, replyHandler: nil)
+        } else {
+            session.transferUserInfo(message)
+        }
+    }
+
+    private func sendPhaseHintToPhone(_ phase: CompanionPhaseHint) {
+        guard WCSession.isSupported(), !sessionId.isEmpty else { return }
+        let payload = SessionPhaseHintMessage(sessionId: sessionId, phase: phase)
+        guard let message = try? makeWatchMessage(type: .sessionPhaseHint, payload: payload) else { return }
+        let session = wcSession ?? WCSession.default
+        guard session.isReachable else { return }
         session.sendMessage(message, replyHandler: nil)
     }
 }
@@ -312,7 +349,10 @@ extension WatchSessionRunner: WCSessionDelegate {
             Task { @MainActor [weak self] in
                 let ratio = cmd.ratio.flatMap(BreathRatio.init(rawValue:)) ?? .fourToSix
                 try? await self?.startSession(
-                    bpm: cmd.bpm, durationSeconds: cmd.durationSeconds, ratio: ratio)
+                    bpm: cmd.bpm,
+                    durationSeconds: cmd.durationSeconds,
+                    ratio: ratio,
+                    sessionId: cmd.sessionId)
             }
         case .startCalibration:
             let cmd = try? decodeWatchPayload(
