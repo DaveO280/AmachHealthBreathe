@@ -318,26 +318,30 @@ private struct CompletionView: View {
     @EnvironmentObject private var runner: iPhoneSessionRunner
 
     var body: some View {
-        VStack(spacing: AmachSpacing.lg) {
-            Spacer()
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: AmachSpacing.lg) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: AmachType.iconHero))
+                        .foregroundStyle(Color.amachPrimary)
+                        .padding(.top, AmachSpacing.xl)
 
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: AmachType.iconHero))
-                .foregroundStyle(Color.amachPrimary)
-
-            VStack(spacing: AmachSpacing.xs) {
-                Text("Done")
-                    .font(AmachType.h1)
-                    .foregroundStyle(Color.amachTextPrimary)
-                if let record = runner.completedRecord {
-                    sessionSummary(record)
-                    if let metrics = record.audioBreathMetrics {
-                        audioSummary(metrics)
+                    VStack(spacing: AmachSpacing.xs) {
+                        Text("Done")
+                            .font(AmachType.h1)
+                            .foregroundStyle(Color.amachTextPrimary)
+                        if let record = runner.completedRecord {
+                            sessionSummary(record)
+                            if let metrics = record.audioBreathMetrics {
+                                audioSummary(metrics)
+                            }
+                            CoachConversationView(record: record, style: .embedded, showsHeader: true)
+                                .padding(.horizontal, AmachSpacing.screenEdge)
+                        }
                     }
                 }
+                .padding(.bottom, AmachSpacing.lg)
             }
-
-            Spacer()
 
             Button {
                 runner.endSession()
@@ -351,7 +355,7 @@ private struct CompletionView: View {
                     .clipShape(RoundedRectangle(cornerRadius: AmachRadius.md))
             }
             .padding(.horizontal, AmachSpacing.screenEdge)
-            .padding(.bottom, AmachSpacing.xxl)
+            .padding(.vertical, AmachSpacing.xxl)
         }
     }
 

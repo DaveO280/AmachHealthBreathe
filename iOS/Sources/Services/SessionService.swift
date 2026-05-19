@@ -39,6 +39,20 @@ public final class SessionService: ObservableObject {
         persistToDisk()
     }
 
+    public func coachingState(forSessionId id: String) -> SessionCoachingState {
+        sessions.first { $0.id == id }?.coaching ?? SessionCoachingState()
+    }
+
+    /// Persists coach thread after each successful API turn.
+    public func updateCoaching(
+        forSessionId id: String,
+        coaching: SessionCoachingState
+    ) {
+        guard let index = sessions.firstIndex(where: { $0.id == id }) else { return }
+        sessions[index].coaching = coaching
+        persistToDisk()
+    }
+
     /// Upload pending sessions + post dashboard timeline events. Call after wallet connects.
     public func syncPending(encryptionKey: WalletEncryptionKey) async {
         guard !isSyncing else { return }

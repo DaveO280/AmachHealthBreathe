@@ -48,6 +48,25 @@ final class SessionServiceTests: XCTestCase {
         XCTAssertEqual(service.sessions.map(\.id), ["existing"])
     }
 
+    func testCoachingThreadPersistsAcrossReload() {
+        let storageKey = "sessions.coaching"
+        let service = SessionService(userDefaults: defaults, storageKey: storageKey)
+        let record = makeRecord(id: "coach-session")
+        service.save(record)
+
+        let coaching = SessionCoachingState(
+            messages: [
+                .user("Summarize my session"),
+                .assistant("You held a steady rhythm.")
+            ],
+            lastInsight: CoachingInsight(content: "You held a steady rhythm.")
+        )
+        service.updateCoaching(forSessionId: "coach-session", coaching: coaching)
+
+        let reloaded = SessionService(userDefaults: defaults, storageKey: storageKey)
+        XCTAssertEqual(reloaded.coachingState(forSessionId: "coach-session"), coaching)
+    }
+
     private func makeRecord(id: String) -> BreathingSessionRecord {
         BreathingSessionRecord(
             id: id,

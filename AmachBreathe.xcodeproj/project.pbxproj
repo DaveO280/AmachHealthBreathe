@@ -21,6 +21,7 @@
 		24B0BDF701DB6AE9C4C24D73 /* AppSettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6868E973C8D5B7EBEC49ED7D /* AppSettingsService.swift */; };
 		276D28351A4F7153DC55C484 /* AmachBreatheApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EEDA969D8D4B35E5E0CF19 /* AmachBreatheApp.swift */; };
 		28C49CDBF45A37DF7EDEF130 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B24AFAA8857113DBEDDF3786 /* HealthKit.framework */; };
+		3A4B5C6D7E8F9012345678A /* CoachConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5C6D7E8F90123456789AB /* CoachConversationView.swift */; };
 		28DC2A35708C5F0294173EB4 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F6072B414FB21FE9AF277F /* SessionDetailView.swift */; };
 		2A6892F971D28BDC04341850 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7A09F0E641E3D6BCF914B8AD /* PrivacyInfo.xcprivacy */; };
 		2F999373FA6A157E5198C3BD /* CalibrationTestLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A07E15DC7E05BC3E61A2B83 /* CalibrationTestLoop.swift */; };
@@ -138,6 +139,7 @@
 		6930951633B4554736898114 /* BreathingCoachView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreathingCoachView.swift; sourceTree = "<group>"; };
 		6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AmachBreatheTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6D8A03DA4404BCCBD3414D68 /* TrendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendView.swift; sourceTree = "<group>"; };
+		4B5C6D7E8F90123456789AB /* CoachConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachConversationView.swift; sourceTree = "<group>"; };
 		71F6072B414FB21FE9AF277F /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
 		752F2168AC07F32821D54F3B /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
 		799695DA9EA4E1614A0FA00B /* SyncOrSubscribeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncOrSubscribeSheet.swift; sourceTree = "<group>"; };
@@ -232,6 +234,7 @@
 		0989AD175B6A6A356738E671 /* History */ = {
 			isa = PBXGroup;
 			children = (
+				4B5C6D7E8F90123456789AB /* CoachConversationView.swift */,
 				E52AAD1FBD98F5C606430B96 /* HistoryView.swift */,
 				71F6072B414FB21FE9AF277F /* SessionDetailView.swift */,
 				6D8A03DA4404BCCBD3414D68 /* TrendView.swift */,
@@ -702,6 +705,7 @@
 				B3A6C8C9496A006A7BD1D311 /* NotificationService.swift in Sources */,
 				B5242B1FAF2B9471D38F1195 /* OnboardingService.swift in Sources */,
 				5C73510208F54B6714D216CE /* OnboardingView.swift in Sources */,
+				3A4B5C6D7E8F9012345678A /* CoachConversationView.swift in Sources */,
 				28DC2A35708C5F0294173EB4 /* SessionDetailView.swift in Sources */,
 				005AAB239F4A8B8A749C3A48 /* SessionRecord.swift in Sources */,
 				98CCF9CD962B6366EE81CE5F /* SessionService.swift in Sources */,

@@ -178,11 +178,18 @@ public final class AmachAPIClient: Sendable {
 
     /// Sends only bounded, derived session facts to Luma's existing backend route.
     /// Raw audio never leaves the device; microphone-derived metrics are aggregate values only.
-    public func generateCoachingInsight(
-        for record: BreathingSessionRecord
+    public func sendCoachingMessage(
+        facts: CoachingSessionFacts,
+        history: [CoachingHistoryMessage],
+        message: String,
+        options: CoachingOptions = CoachingOptions(mode: "quick")
     ) async throws -> CoachingInsight {
-        let facts = CoachingSessionFacts(record: record)
-        let request = CoachingInsightRequest(facts: facts)
+        let request = CoachingInsightRequest(
+            facts: facts,
+            history: history,
+            message: message,
+            options: options
+        )
         let response = try await post(
             path: "/api/ai/chat",
             body: request,
@@ -193,6 +200,18 @@ public final class AmachAPIClient: Sendable {
             throw APIError.requestFailed("No coaching insight returned.")
         }
         return insight
+    }
+
+    /// First-turn session summary (empty history).
+    public func generateCoachingInsight(
+        for record: BreathingSessionRecord
+    ) async throws -> CoachingInsight {
+        let facts = CoachingSessionFacts(record: record)
+        return try await sendCoachingMessage(
+            facts: facts,
+            history: [],
+            message: CoachingInsightRequest.initialPrompt(for: facts)
+        )
     }
 
     // MARK: - HTTP Core

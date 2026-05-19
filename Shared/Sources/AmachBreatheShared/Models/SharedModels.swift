@@ -429,19 +429,85 @@ public struct CoachingInsightRequest: Encodable, Sendable {
     public let history: [CoachingHistoryMessage]
     public let options: CoachingOptions
 
+    /// First-turn coaching request (empty history).
     public init(facts: CoachingSessionFacts) {
-        self.message = Self.prompt(for: facts)
-        self.context = CoachingInsightContext(facts: facts)
-        self.history = []
-        self.options = CoachingOptions(mode: "quick")
+        self.init(
+            facts: facts,
+            history: [],
+            message: Self.initialPrompt(for: facts),
+            options: CoachingOptions(mode: "quick")
+        )
     }
 
-    static func prompt(for facts: CoachingSessionFacts) -> String {
-        """
-        Generate a concise post-session breathing coach insight from the bounded session facts in context. \
-        Do not diagnose, do not infer from raw audio, and do not ask for unavailable data. \
-        Return one short paragraph plus up to two practical next-session suggestions.
-        """
+    /// Multi-turn coaching request; `context` always includes bounded session facts.
+    public init(
+        facts: CoachingSessionFacts,
+        history: [CoachingHistoryMessage],
+        message: String,
+        options: CoachingOptions = CoachingOptions(mode: "quick")
+    ) {
+        self.message = message
+        self.context = CoachingInsightContext(facts: facts)
+        self.history = history
+        self.options = options
+    }
+
+    /// User-visible label stored in local thread history for the first turn.
+    public static let initialUserDisplayMessage = "Summarize my session"
+
+    static func initialPrompt(for facts: CoachingSessionFacts) -> String {
+        var instructions = [
+            "You are a supportive breathing coach reviewing one completed session.",
+            "Summarize what went well, what stood out in the metrics, and up to two practical ideas for the next session.",
+            "Use only the bounded session facts in context. Do not diagnose medical conditions.",
+            "Do not claim to hear or analyze raw audio; microphone data is aggregate metrics only.",
+            "If metrics are missing or weak, say so briefly and keep advice conservative."
+        ]
+
+        if facts.reflectionRating != nil {
+            instructions.append("Reference the reflection rating (1–5) when interpreting how the session felt.")
+        }
+        if facts.coherenceScore != nil {
+            instructions.append("Comment on coherence score (0–1) and what it suggests about breath–heart synchronization.")
+        }
+        if facts.avgHRV != nil {
+            instructions.append("Reference average HRV (ms) when discussing autonomic balance during the session.")
+        }
+        instructions.append(
+            "Target breathing pace was \(String(format: "%.1f", facts.targetBreathingBPM)) BPM at ratio \(facts.ratio)."
+        )
+
+        if let audio = facts.audio, audio.isReliableForCoaching {
+            instructions.append(
+                "Audio breath tracking quality is \(audio.dataQuality.rawValue): use estimated BPM, adherence (timing match), and confidence when interpreting breathing timing."
+            )
+            if audio.confidence < 0.5 {
+                instructions.append("Audio confidence is low—note uncertainty before making strong timing claims.")
+            }
+        } else if facts.audio != nil {
+            instructions.append(
+                "Audio metrics are present but low quality or incomplete—mention limited microphone confidence if discussing breath timing."
+            )
+        }
+
+        instructions.append("Return one short paragraph plus up to two bullet-style next-session suggestions.")
+        return instructions.joined(separator: " ")
+    }
+
+    static func followUpSystemHint(for facts: CoachingSessionFacts) -> String {
+        var hint = "Answer the user's follow-up question using the same bounded session facts in context. Stay concise and practical."
+        if let audio = facts.audio, audio.isReliableForCoaching {
+            hint += " Prefer audio estimated BPM and adherence when the question is about breathing timing."
+        }
+        hint += " Do not diagnose. Note low confidence when data is weak."
+        return hint
+    }
+}
+
+extension CoachingAudioFacts {
+    /// Fair or good quality with permission — safe to reference timing metrics in coaching.
+    public var isReliableForCoaching: Bool {
+        enabled && permissionGranted && (dataQuality == .good || dataQuality == .fair)
     }
 }
 
@@ -507,13 +573,47 @@ public struct CoachingContextBlock: Encodable, Sendable {
     public let content: String
 }
 
-public struct CoachingHistoryMessage: Encodable, Sendable {
+public struct CoachingHistoryMessage: Codable, Equatable, Sendable {
     public let role: String
     public let content: String
+
+    public init(role: String, content: String) {
+        self.role = role
+        self.content = content
+    }
+
+    public static func user(_ content: String) -> CoachingHistoryMessage {
+        CoachingHistoryMessage(role: "user", content: content)
+    }
+
+    public static func assistant(_ content: String) -> CoachingHistoryMessage {
+        CoachingHistoryMessage(role: "assistant", content: content)
+    }
+
+    public var isUser: Bool { role == "user" }
+    public var isAssistant: Bool { role == "assistant" }
+}
+
+/// Persisted per-session coach thread (local device only; not uploaded to Storj).
+public struct SessionCoachingState: Codable, Equatable, Sendable {
+    public var messages: [CoachingHistoryMessage]
+    public var lastInsight: CoachingInsight?
+
+    public init(
+        messages: [CoachingHistoryMessage] = [],
+        lastInsight: CoachingInsight? = nil
+    ) {
+        self.messages = messages
+        self.lastInsight = lastInsight
+    }
 }
 
 public struct CoachingOptions: Encodable, Sendable {
     public let mode: String
+
+    public init(mode: String) {
+        self.mode = mode
+    }
 }
 
 public struct CoachingInsight: Codable, Equatable, Sendable {

@@ -9,9 +9,6 @@ struct SessionDetailView: View {
     @EnvironmentObject private var sessionService: SessionService
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteConfirmation = false
-    @State private var coachingInsight: CoachingInsight?
-    @State private var coachingError: String?
-    @State private var isLoadingCoachingInsight = false
 
     var body: some View {
         ZStack {
@@ -22,7 +19,9 @@ struct SessionDetailView: View {
                     if !hrvPoints.isEmpty { hrvChart }
                     coherenceSection
                     if let metrics = record?.audioBreathMetrics { audioBreathCard(metrics) }
-                    if let record { coachingInsightCard(record) }
+                    if let record {
+                        CoachConversationView(record: record, style: .card)
+                    }
                     if let rating = row.reflectionRating { reflectionCard(rating) }
                 }
                 .padding(AmachSpacing.screenEdge)
@@ -216,88 +215,6 @@ struct SessionDetailView: View {
         case 70...100: return "Heart rhythm synchronized with breath"
         case 40..<70:  return "Partial synchronization achieved"
         default:       return "Keep practicing to build coherence"
-        }
-    }
-
-    // MARK: - Coaching insight
-
-    private func coachingInsightCard(_ record: BreathingSessionRecord) -> some View {
-        VStack(alignment: .leading, spacing: AmachSpacing.md) {
-            HStack(spacing: AmachSpacing.sm) {
-                Image(systemName: "sparkles")
-                    .foregroundStyle(Color.amachPrimaryBright)
-                Text("Coach Insight")
-                    .font(AmachType.h3)
-                    .foregroundStyle(Color.amachTextPrimary)
-                Spacer()
-            }
-
-            if let insight = coachingInsight {
-                Text(insight.content)
-                    .font(AmachType.body)
-                    .foregroundStyle(Color.amachTextPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if !insight.suggestions.isEmpty {
-                    VStack(alignment: .leading, spacing: AmachSpacing.xs) {
-                        ForEach(insight.suggestions, id: \.self) { suggestion in
-                            Label(suggestion, systemImage: "checkmark.circle")
-                                .font(AmachType.caption)
-                                .foregroundStyle(Color.amachTextSecondary)
-                        }
-                    }
-                }
-            } else {
-                Text("Generate a short coaching note from your saved session metrics. No raw audio is sent.")
-                    .font(AmachType.caption)
-                    .foregroundStyle(Color.amachTextSecondary)
-            }
-
-            if let coachingError {
-                Text(coachingError)
-                    .font(AmachType.tiny)
-                    .foregroundStyle(Color.amachDestructive)
-            }
-
-            Button {
-                loadCoachingInsight(for: record)
-            } label: {
-                HStack {
-                    if isLoadingCoachingInsight {
-                        ProgressView()
-                            .tint(Color.amachTextPrimary)
-                    }
-                    Text(coachingInsight == nil ? "Generate Insight" : "Refresh Insight")
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.amachPrimary)
-            .disabled(isLoadingCoachingInsight)
-        }
-        .padding(AmachSpacing.cardPadding)
-        .background(Color.amachSurface)
-        .clipShape(RoundedRectangle(cornerRadius: AmachRadius.card))
-    }
-
-    private func loadCoachingInsight(for record: BreathingSessionRecord) {
-        guard !isLoadingCoachingInsight else { return }
-        isLoadingCoachingInsight = true
-        coachingError = nil
-
-        Task {
-            do {
-                let insight = try await AmachAPIClient.shared.generateCoachingInsight(for: record)
-                await MainActor.run {
-                    coachingInsight = insight
-                    isLoadingCoachingInsight = false
-                }
-            } catch {
-                await MainActor.run {
-                    coachingError = "Coach insight is unavailable right now."
-                    isLoadingCoachingInsight = false
-                }
-            }
         }
     }
 
