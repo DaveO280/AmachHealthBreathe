@@ -455,7 +455,7 @@ public struct CoachingInsightRequest: Encodable, Sendable {
     /// User-visible label stored in local thread history for the first turn.
     public static let initialUserDisplayMessage = "Summarize my session"
 
-    static func initialPrompt(for facts: CoachingSessionFacts) -> String {
+    public static func initialPrompt(for facts: CoachingSessionFacts) -> String {
         var instructions = [
             "You are a supportive breathing coach reviewing one completed session.",
             "Summarize what went well, what stood out in the metrics, and up to two practical ideas for the next session.",
@@ -494,7 +494,7 @@ public struct CoachingInsightRequest: Encodable, Sendable {
         return instructions.joined(separator: " ")
     }
 
-    static func followUpSystemHint(for facts: CoachingSessionFacts) -> String {
+    public static func followUpSystemHint(for facts: CoachingSessionFacts) -> String {
         var hint = "Answer the user's follow-up question using the same bounded session facts in context. Stay concise and practical."
         if let audio = facts.audio, audio.isReliableForCoaching {
             hint += " Prefer audio estimated BPM and adherence when the question is about breathing timing."

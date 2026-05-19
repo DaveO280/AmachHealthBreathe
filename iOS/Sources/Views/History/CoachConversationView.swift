@@ -45,7 +45,9 @@ struct CoachConversationView: View {
             }
         }
         .onAppear { reloadFromPersistence() }
-        .onChange(of: sessionService.sessions) { _, _ in reloadFromPersistence() }
+        .onChange(of: sessionService.coachingState(forSessionId: record.id).messages) { _, _ in
+            reloadFromPersistence()
+        }
     }
 
     // MARK: - Layout
@@ -311,7 +313,7 @@ struct CoachConversationView: View {
             do {
                 let insight = try await AmachAPIClient.shared.sendCoachingMessage(
                     facts: facts,
-                    history: historyForAPI,
+                    history: Array(historyForAPI),
                     message: apiMessage
                 )
                 await MainActor.run {
