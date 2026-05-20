@@ -34,4 +34,15 @@ final class WatchCompanionAudioServiceTests: XCTestCase {
         // No crash; active session unchanged
         XCTAssertNil(service.takeMetricsForMerge(sessionId: "other"))
     }
+
+    func testHandleSessionCancelled_clearsArmedSession() {
+        let service = WatchCompanionAudioService()
+        service.armForPhoneInitiatedWatchStart(
+            sessionId: "armed",
+            bpm: 5.5,
+            companionEnabled: true
+        )
+        service.handleSessionCancelled()
+        XCTAssertNil(service.takeMetricsForMerge(sessionId: "armed"))
+    }
 }

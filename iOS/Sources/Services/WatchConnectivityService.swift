@@ -137,19 +137,25 @@ extension WatchConnectivityService: WCSessionDelegate {
     }
 
     nonisolated private func handleIncoming(_ message: [String: Any]) {
-        guard let type = watchMessageType(from: message) else { return }
+        guard let type = watchMessageType(from: message) else {
+            logIgnoredWatchMessage(reason: "missing or unknown type", message: message)
+            return
+        }
         switch type {
         case .sessionComplete:
-            guard let record = try? decodeWatchPayload(BreathingSessionRecord.self, from: message) else { return }
+            guard let record = decodeSessionComplete(from: message) else { return }
             Task { @MainActor [weak self] in self?.onSessionReceived?(record) }
         case .sessionStarted:
-            guard let started = try? decodeWatchPayload(SessionStartedMessage.self, from: message) else { return }
+            guard let started = decodeSessionStarted(from: message) else { return }
             Task { @MainActor [weak self] in self?.onSessionStarted?(started) }
         case .sessionPhaseHint:
-            guard let hint = try? decodeWatchPayload(SessionPhaseHintMessage.self, from: message) else { return }
+            guard let hint = decodeSessionPhaseHint(from: message) else { return }
             Task { @MainActor [weak self] in self?.onSessionPhaseHint?(hint) }
         case .calibrationResult:
-            guard let result = try? decodeWatchPayload(ResonanceFrequencyResult.self, from: message) else { return }
+            guard let result = try? decodeWatchPayload(ResonanceFrequencyResult.self, from: message) else {
+                logIgnoredWatchMessage(reason: "calibrationResult decode failed", message: message)
+                return
+            }
             Task { @MainActor [weak self] in self?.onCalibrationReceived?(result) }
         case .calibrationFailed:
             let payload = try? decodeWatchPayload(CalibrationFailurePayload.self, from: message)
@@ -159,5 +165,61 @@ extension WatchConnectivityService: WCSessionDelegate {
         default:
             break
         }
+    }
+}
+
+// MARK: - Defensive decoding (never trap on malformed Watch payloads)
+
+extension WatchConnectivityService {
+    nonisolated fileprivate func decodeSessionComplete(
+        from message: [String: Any]
+    ) -> BreathingSessionRecord? {
+        guard let record = try? decodeWatchPayload(BreathingSessionRecord.self, from: message) else {
+            logIgnoredWatchMessage(reason: "sessionComplete decode failed", message: message)
+            return nil
+        }
+        guard !record.id.isEmpty else {
+            logIgnoredWatchMessage(reason: "sessionComplete missing id", message: message)
+            return nil
+        }
+        return record
+    }
+
+    nonisolated fileprivate func decodeSessionStarted(
+        from message: [String: Any]
+    ) -> SessionStartedMessage? {
+        guard let started = try? decodeWatchPayload(SessionStartedMessage.self, from: message) else {
+            logIgnoredWatchMessage(reason: "sessionStarted decode failed", message: message)
+            return nil
+        }
+        guard !started.sessionId.isEmpty, started.bpm > 0, started.durationSeconds > 0 else {
+            logIgnoredWatchMessage(reason: "sessionStarted invalid fields", message: message)
+            return nil
+        }
+        return started
+    }
+
+    nonisolated fileprivate func decodeSessionPhaseHint(
+        from message: [String: Any]
+    ) -> SessionPhaseHintMessage? {
+        guard let hint = try? decodeWatchPayload(SessionPhaseHintMessage.self, from: message) else {
+            logIgnoredWatchMessage(reason: "sessionPhaseHint decode failed", message: message)
+            return nil
+        }
+        guard !hint.sessionId.isEmpty else {
+            logIgnoredWatchMessage(reason: "sessionPhaseHint missing sessionId", message: message)
+            return nil
+        }
+        return hint
+    }
+
+    nonisolated fileprivate func logIgnoredWatchMessage(
+        reason: String,
+        message: [String: Any]
+    ) {
+        #if DEBUG
+        let type = message[WatchMessageKey.type.rawValue] as? String ?? "?"
+        print("[WatchConnectivity] ignored \(type): \(reason)")
+        #endif
     }
 }

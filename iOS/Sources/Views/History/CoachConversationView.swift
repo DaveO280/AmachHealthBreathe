@@ -27,6 +27,10 @@ struct CoachConversationView: View {
 
     private var hasThread: Bool { !messages.isEmpty }
 
+    private var coachingMessageCount: Int {
+        sessionService.coachingState(forSessionId: record.id).messages.count
+    }
+
     private var coachSubtitle: String? {
         guard let metrics = record.audioBreathMetrics else { return nil }
         if metrics.permissionGranted, metrics.estimatedBreathingBPM != nil {
@@ -45,7 +49,7 @@ struct CoachConversationView: View {
             }
         }
         .onAppear { reloadFromPersistence() }
-        .onChange(of: sessionService.coachingState(forSessionId: record.id).messages) { _, _ in
+        .onChange(of: coachingMessageCount) { _, _ in
             reloadFromPersistence()
         }
     }

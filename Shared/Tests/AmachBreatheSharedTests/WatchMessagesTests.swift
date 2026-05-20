@@ -82,6 +82,31 @@ final class WatchMessagesTests: XCTestCase {
         XCTAssertThrowsError(try decodeWatchPayload(BreathingSessionRecord.self, from: message))
     }
 
+    func testWatchMessageType_unknownTypeReturnsNil() {
+        let message: [String: Any] = [WatchMessageKey.type.rawValue: "not-a-real-type"]
+        XCTAssertNil(watchMessageType(from: message))
+    }
+
+    func testSessionStartedMessage_rejectsEmptySessionId() throws {
+        let started = SessionStartedMessage(
+            sessionId: "",
+            bpm: 5.5,
+            durationSeconds: 300,
+            ratio: "4:6"
+        )
+        let message = try makeWatchMessage(type: .sessionStarted, payload: started)
+        let decoded = try decodeWatchPayload(SessionStartedMessage.self, from: message)
+        XCTAssertTrue(decoded.sessionId.isEmpty)
+    }
+
+    func testSessionPhaseHint_invalidPhaseStringFailsDecode() {
+        let message: [String: Any] = [
+            WatchMessageKey.type.rawValue: WatchMessageType.sessionPhaseHint.rawValue,
+            WatchMessageKey.payload.rawValue: #"{"sessionId":"s1","phase":"bogus"}"#
+        ]
+        XCTAssertThrowsError(try decodeWatchPayload(SessionPhaseHintMessage.self, from: message))
+    }
+
     func testResonanceFrequencyResult_codable() throws {
         let result = ResonanceFrequencyResult(
             resonanceBPM: 5.5,

@@ -22,17 +22,31 @@ final class iPhoneAudioBreathTracker: ObservableObject {
     private var permissionGranted = false
     private var targetBPM: Double = 0
 
+    /// Mirrors `isAnalysisActive` / `sessionStart` for the realtime audio tap (audio thread).
+    private let tapStateLock = NSLock()
+    private nonisolated(unsafe) var tapAnalysisActive = false
+    private nonisolated(unsafe) var tapSessionStart: Date?
+    private nonisolated(unsafe) var tapAnalyzer: AudioBreathEnvelopeAnalyzer?
+
     func start(targetBPM: Double) async {
         stop()
         shouldRun = true
         self.targetBPM = targetBPM
-        self.analyzer = AudioBreathEnvelopeAnalyzer(targetBPM: targetBPM)
+        let newAnalyzer = AudioBreathEnvelopeAnalyzer(targetBPM: targetBPM)
+        self.analyzer = newAnalyzer
+        tapStateLock.lock()
+        tapAnalyzer = newAnalyzer
+        tapStateLock.unlock()
         status = .requestingPermission
 
         let granted = await requestMicrophonePermission()
         guard shouldRun else { return }
         permissionGranted = granted
         guard granted else {
+            cleanupEngine()
+            analyzer = nil
+            clearTapState()
+            shouldRun = false
             status = .denied
             return
         }
@@ -41,15 +55,20 @@ final class iPhoneAudioBreathTracker: ObservableObject {
             try configureAudioSession()
             try startEngine()
             sessionStart = Date()
+            syncTapState()
             status = .listening
         } catch {
             status = .unavailable
             cleanupEngine()
+            analyzer = nil
+            clearTapState()
+            shouldRun = false
         }
     }
 
     func setAnalysisActive(_ active: Bool) {
         isAnalysisActive = active
+        syncTapState()
     }
 
     func finishMetrics() -> AudioBreathMetrics? {
@@ -70,6 +89,7 @@ final class iPhoneAudioBreathTracker: ObservableObject {
         permissionGranted = false
         targetBPM = 0
         status = .off
+        clearTapState()
     }
 
     // MARK: - Permission
@@ -121,6 +141,13 @@ final class iPhoneAudioBreathTracker: ObservableObject {
         let frameLength = Int(buffer.frameLength)
         guard frameLength > 0 else { return }
 
+        tapStateLock.lock()
+        let active = tapAnalysisActive
+        let start = tapSessionStart
+        let analyzer = tapAnalyzer
+        tapStateLock.unlock()
+        guard active, let start, let analyzer else { return }
+
         let channelCount = max(1, Int(buffer.format.channelCount))
         var sumSquares: Double = 0
         var sampleCount = 0
@@ -137,13 +164,24 @@ final class iPhoneAudioBreathTracker: ObservableObject {
         guard sampleCount > 0 else { return }
         let rms = sqrt(sumSquares / Double(sampleCount))
         let amplitude = min(1, rms * 8)
+        let elapsed = Date().timeIntervalSince(start)
+        analyzer.addAmplitude(amplitude, elapsed: elapsed)
+    }
 
-        Task { @MainActor [weak self] in
-            guard let self,
-                  self.isAnalysisActive,
-                  let sessionStart = self.sessionStart else { return }
-            self.analyzer?.addAmplitude(amplitude, elapsed: Date().timeIntervalSince(sessionStart))
-        }
+    private func syncTapState() {
+        tapStateLock.lock()
+        tapAnalysisActive = isAnalysisActive
+        tapSessionStart = sessionStart
+        tapAnalyzer = analyzer
+        tapStateLock.unlock()
+    }
+
+    private func clearTapState() {
+        tapStateLock.lock()
+        tapAnalysisActive = false
+        tapSessionStart = nil
+        tapAnalyzer = nil
+        tapStateLock.unlock()
     }
 
     private func cleanupEngine() {

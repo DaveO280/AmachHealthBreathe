@@ -99,14 +99,20 @@ final class WatchCompanionAudioService: ObservableObject {
         activeSessionId = sessionId
         tracker.setAnalysisActive(false)
         await tracker.start(targetBPM: targetBPM)
+        // Session may have ended or been superseded while awaiting mic permission.
+        guard stillOwnsSession(sessionId) else {
+            tracker.stop()
+            return
+        }
         if tracker.status == .denied {
             showPermissionDeniedAlert = true
             activeSessionId = nil
             return
         }
-        if activeSessionId != sessionId {
-            tracker.stop()
-        }
+    }
+
+    private func stillOwnsSession(_ sessionId: String) -> Bool {
+        activeSessionId == sessionId || armedSessionId == sessionId
     }
 
     private func cancelTracking() {

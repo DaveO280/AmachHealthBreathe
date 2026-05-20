@@ -112,6 +112,9 @@ struct AmachBreatheApp: App {
         watchConnectivity.onSessionPhaseHint = { [watchCompanionAudio] hint in
             watchCompanionAudio.handlePhaseHint(hint)
         }
+        calibrationService.onWatchSessionCancelled = { [watchCompanionAudio] in
+            watchCompanionAudio.handleSessionCancelled()
+        }
         watchConnectivity.onCalibrationReceived = { result in
             calibrationStore.save(result: result)
             calibrationService.completeWithResult(result)

@@ -27,6 +27,8 @@ public final class CalibrationService: ObservableObject {
 
     private var watchService: WatchConnectivityService?
     private var progressTimer: Timer?
+    /// Fired when `cancel()` sends `.cancelSession` to the watch (stops companion mic if active).
+    public var onWatchSessionCancelled: (() -> Void)?
 
     public init(watchService: WatchConnectivityService? = nil,
                 store: CalibrationStore? = nil) {
@@ -49,6 +51,7 @@ public final class CalibrationService: ObservableObject {
         stopProgressTimer()
         calibrationState = .idle
         watchService?.sendCancelSession()
+        onWatchSessionCancelled?()
     }
 
     public func finishViewingResult() {
