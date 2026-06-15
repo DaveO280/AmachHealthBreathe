@@ -18,6 +18,7 @@ public enum WatchMessageType: String, Codable, Sendable {
     case cancelSession        // iPhone → Watch: no payload
     case walletState          // iPhone → Watch: WalletStateMessage JSON
     case walletStateRequest   // Watch → iPhone: no payload (Watch requests current state)
+    case diagnosticEvent      // Watch → iPhone: DiagnosticEvent JSON
 }
 
 public struct StartSessionCommand: Codable, Sendable {

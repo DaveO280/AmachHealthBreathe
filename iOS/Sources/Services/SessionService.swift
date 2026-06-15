@@ -31,6 +31,18 @@ public final class SessionService: ObservableObject {
         let sr = SessionRecord(from: record)
         sessions.insert(sr, at: 0)
         persistToDisk()
+        DiagnosticLog.shared.record(
+            source: "iOS",
+            category: "session",
+            message: "Saved breathing session",
+            metadata: [
+                "sessionId": record.id,
+                "source": record.source.rawValue,
+                "duration": String(record.durationSeconds),
+                "avgHRV": record.avgHRV.map { String(format: "%.1f", $0) } ?? "nil",
+                "coherence": record.coherenceScore.map { String(format: "%.3f", $0) } ?? "nil",
+                "audioQuality": record.audioBreathMetrics?.dataQuality.rawValue ?? "nil"
+            ])
     }
 
     public func deleteSession(id: String) {
@@ -81,6 +93,12 @@ public final class SessionService: ObservableObject {
             } catch {
                 sessions[i].uploadStatus = .failed
                 hadError = true
+                DiagnosticLog.shared.record(
+                    source: "iOS",
+                    category: "sync",
+                    level: .error,
+                    message: "Session sync failed",
+                    metadata: ["sessionId": record.id, "error": error.localizedDescription])
             }
         }
         if hadError { syncError = "Some sessions failed to sync. Tap to retry." }

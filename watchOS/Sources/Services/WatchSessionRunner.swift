@@ -99,6 +99,14 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         updateComplicationState(inSession: true)
         self.coherenceSamples = []
         hrvProcessor.reset()
+        recordDiagnostic(
+            category: "session",
+            message: "Watch session starting",
+            metadata: [
+                "sessionId": self.sessionId,
+                "bpm": String(format: "%.1f", bpm),
+                "duration": String(durationSeconds)
+            ])
 
         // Re-arm AVAudioSession (see WatchCalibrationRunner.start for the
         // same rationale — pacer init at app launch can leave the audio
@@ -127,6 +135,11 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard let self else { return }
             Self.log.info("WORKOUT_ACTIVE_CHECK session active=\(self.workoutManager.isActive, privacy: .public)")
+            self.recordDiagnostic(
+                category: "healthKit",
+                level: self.workoutManager.isActive ? .info : .warning,
+                message: "Workout active check",
+                metadata: ["active": String(self.workoutManager.isActive)])
         }
     }
 
@@ -254,6 +267,15 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
             reflectionRating: reflectionRating
         )
         completedRecord = record
+        recordDiagnostic(
+            category: "session",
+            message: "Watch session built record",
+            metadata: [
+                "sessionId": sessionId,
+                "avgHRV": record.avgHRV.map { String(format: "%.1f", $0) } ?? "nil",
+                "coherence": record.coherenceScore.map { String(format: "%.3f", $0) } ?? "nil",
+                "coherenceSamples": String(coherenceSamples.count)
+            ])
         Task { await sendRecordToPhone(record) }
     }
 
@@ -296,8 +318,17 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         let session = wcSession ?? WCSession.default
         if session.isReachable {
             session.sendMessage(message, replyHandler: nil)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                message: "Sent session complete to phone",
+                metadata: ["sessionId": record.id, "delivery": "sendMessage"])
         } else {
             session.transferUserInfo(message)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                level: .warning,
+                message: "Queued session complete for phone",
+                metadata: ["sessionId": record.id, "delivery": "transferUserInfo"])
         }
     }
 
@@ -313,8 +344,17 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         let session = wcSession ?? WCSession.default
         if session.isReachable {
             session.sendMessage(message, replyHandler: nil)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                message: "Sent session started to phone",
+                metadata: ["sessionId": sessionId, "delivery": "sendMessage"])
         } else {
             session.transferUserInfo(message)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                level: .warning,
+                message: "Queued session started for phone",
+                metadata: ["sessionId": sessionId, "delivery": "transferUserInfo"])
         }
     }
 
@@ -325,6 +365,30 @@ public final class WatchSessionRunner: NSObject, ObservableObject {
         let session = wcSession ?? WCSession.default
         guard session.isReachable else { return }
         session.sendMessage(message, replyHandler: nil)
+    }
+
+    private func recordDiagnostic(
+        category: String,
+        level: DiagnosticLevel = .info,
+        message: String,
+        metadata: [String: String] = [:]
+    ) {
+        let event = DiagnosticEvent(
+            source: "watchOS",
+            category: category,
+            level: level,
+            message: message,
+            metadata: metadata
+        )
+        DiagnosticLog.shared.append(event)
+        guard WCSession.isSupported() else { return }
+        let session = wcSession ?? WCSession.default
+        guard let payload = try? makeWatchMessage(type: .diagnosticEvent, payload: event) else { return }
+        if session.isReachable {
+            session.sendMessage(payload, replyHandler: nil)
+        } else {
+            session.transferUserInfo(payload)
+        }
     }
 }
 
@@ -361,6 +425,10 @@ extension WatchSessionRunner: WCSessionDelegate {
                 let duration = cmd?.sampleDurationPerRate
                     ?? WatchCalibrationRunner.defaultRateDuration
                 self?.calibrationRunner?.sampleDurationPerRate = duration
+                self?.recordDiagnostic(
+                    category: "calibration",
+                    message: "Received start calibration",
+                    metadata: ["rateSeconds": String(format: "%.0f", duration)])
                 await self?.calibrationRunner?.start()
             }
         case .cancelSession:

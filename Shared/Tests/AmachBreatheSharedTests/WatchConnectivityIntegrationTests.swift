@@ -34,6 +34,13 @@ final class WatchConnectivityIntegrationTests: XCTestCase {
                 try makeWatchMessage(type: .walletState,
                     payload: WalletStateMessage(isConnected: true, walletAddress: "0xabc"))
             }),
+            (.diagnosticEvent, {
+                try makeWatchMessage(type: .diagnosticEvent,
+                    payload: DiagnosticEvent(
+                        source: "watchOS",
+                        category: "test",
+                        message: "Diagnostic round trip"))
+            }),
             (.cancelSession, { [WatchMessageKey.type.rawValue: WatchMessageType.cancelSession.rawValue] }),
             (.walletStateRequest, { makeWatchMessage(type: .walletStateRequest) }),
         ]

@@ -21,15 +21,16 @@
 		24B0BDF701DB6AE9C4C24D73 /* AppSettingsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6868E973C8D5B7EBEC49ED7D /* AppSettingsService.swift */; };
 		276D28351A4F7153DC55C484 /* AmachBreatheApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EEDA969D8D4B35E5E0CF19 /* AmachBreatheApp.swift */; };
 		28C49CDBF45A37DF7EDEF130 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B24AFAA8857113DBEDDF3786 /* HealthKit.framework */; };
-		3A4B5C6D7E8F9012345678A /* CoachConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B5C6D7E8F90123456789AB /* CoachConversationView.swift */; };
 		28DC2A35708C5F0294173EB4 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F6072B414FB21FE9AF277F /* SessionDetailView.swift */; };
 		2A6892F971D28BDC04341850 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7A09F0E641E3D6BCF914B8AD /* PrivacyInfo.xcprivacy */; };
 		2F999373FA6A157E5198C3BD /* CalibrationTestLoop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A07E15DC7E05BC3E61A2B83 /* CalibrationTestLoop.swift */; };
 		322EC51554886CAF352C8928 /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF98D57B21EDC714D27771A0 /* SessionView.swift */; };
 		34C1B92D4017AC5A63E66477 /* AmachBreatheWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 172C4A356E8CFD3E9CCC085E /* AmachBreatheWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		44CD03469D157BE1C3E43E7A /* WatchSessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B686AA7CAF54CDA7A8C31F5 /* WatchSessionRunner.swift */; };
+		48335458D74F86FD7708E3A9 /* IssueReportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC65CD4F38E76CB8DAD8EC3C /* IssueReportService.swift */; };
 		4AB5710E54C5C1020F0B830D /* WatchQueueDeliveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CCD29E83EC7EA2499777DDB /* WatchQueueDeliveryTests.swift */; };
 		58A75FF9451077BF75DC2B4F /* WatchWalletStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 392D0DBE3DB5A339CE08B337 /* WatchWalletStore.swift */; };
+		59E01C95DB17715913A14286 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32A22596E430F72E241E18F /* ShareSheet.swift */; };
 		59E306DBE63E4F56D0FC53D0 /* AmachBreatheShared in Frameworks */ = {isa = PBXBuildFile; productRef = AD5D80E56CC0C91F666C2ED6 /* AmachBreatheShared */; };
 		5B9C01A7687634389DF4DCF6 /* CompactWatchEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B12EAE041394A779382B627E /* CompactWatchEnvironment.swift */; };
 		5C73510208F54B6714D216CE /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7F79C7B1B3FD3E998C6D7AE /* OnboardingView.swift */; };
@@ -70,6 +71,7 @@
 		EBF53FD16A3B741F8173F35E /* QuickStartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBE62B915290896069736D0 /* QuickStartView.swift */; };
 		ED6F82016C1EFFC418C68D91 /* WatchCalibrationRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5715B445ECAAE832393EC61C /* WatchCalibrationRunner.swift */; };
 		F05F3A7561021647AB83F036 /* OnboardingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D1F433AA386563AF69A00D9 /* OnboardingFlowTests.swift */; };
+		F1EB40CC0013816B1634F844 /* CoachConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1C22C46BF2E87B067F0416 /* CoachConversationView.swift */; };
 		F49E8617A85D7DD0A797624C /* SubscriptionManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E399640E99E1AE04CAB1D6F /* SubscriptionManagementView.swift */; };
 		F769CDF82DF65637D5B8DF0D /* WatchCompanionAudioServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2124B86590B6610A8F43BA8D /* WatchCompanionAudioServiceTests.swift */; };
 		F91941A76702CE3ECA1901A5 /* AmachBreatheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FF35CDB67B488EC36389C3 /* AmachBreatheTests.swift */; };
@@ -139,7 +141,6 @@
 		6930951633B4554736898114 /* BreathingCoachView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreathingCoachView.swift; sourceTree = "<group>"; };
 		6BC10E4810C8CD0DD042255D /* AmachBreatheTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AmachBreatheTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6D8A03DA4404BCCBD3414D68 /* TrendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendView.swift; sourceTree = "<group>"; };
-		4B5C6D7E8F90123456789AB /* CoachConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachConversationView.swift; sourceTree = "<group>"; };
 		71F6072B414FB21FE9AF277F /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
 		752F2168AC07F32821D54F3B /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
 		799695DA9EA4E1614A0FA00B /* SyncOrSubscribeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncOrSubscribeSheet.swift; sourceTree = "<group>"; };
@@ -165,6 +166,7 @@
 		AE7F5FE3D3B19D0CF710B16B /* iPhoneSessionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPhoneSessionRunnerTests.swift; sourceTree = "<group>"; };
 		B12EAE041394A779382B627E /* CompactWatchEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactWatchEnvironment.swift; sourceTree = "<group>"; };
 		B24AFAA8857113DBEDDF3786 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
+		B32A22596E430F72E241E18F /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		BC305D1F8FAFB4859529AB4B /* WalletServiceStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletServiceStateTests.swift; sourceTree = "<group>"; };
 		BFCDEB98EDBB3DCFD0AA253C /* AudioPacer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPacer.swift; sourceTree = "<group>"; };
 		C19FAC1F75D0942CA96513C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -174,7 +176,9 @@
 		E45697449E49A8290893DB85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E52AAD1FBD98F5C606430B96 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		E7B395C9AE603753725D2390 /* MasterPhaseTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasterPhaseTimer.swift; sourceTree = "<group>"; };
+		EC65CD4F38E76CB8DAD8EC3C /* IssueReportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IssueReportService.swift; sourceTree = "<group>"; };
 		EDD3CB2D5AB2E56346F25CCF /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		EE1C22C46BF2E87B067F0416 /* CoachConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachConversationView.swift; sourceTree = "<group>"; };
 		EF23B5FEADFC0762F10EE429 /* AmachBreatheWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmachBreatheWatchApp.swift; sourceTree = "<group>"; };
 		EF98D57B21EDC714D27771A0 /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
 		F09B6A583040A7768C2E0B0C /* Shared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shared; path = Shared; sourceTree = SOURCE_ROOT; };
@@ -234,7 +238,7 @@
 		0989AD175B6A6A356738E671 /* History */ = {
 			isa = PBXGroup;
 			children = (
-				4B5C6D7E8F90123456789AB /* CoachConversationView.swift */,
+				EE1C22C46BF2E87B067F0416 /* CoachConversationView.swift */,
 				E52AAD1FBD98F5C606430B96 /* HistoryView.swift */,
 				71F6072B414FB21FE9AF277F /* SessionDetailView.swift */,
 				6D8A03DA4404BCCBD3414D68 /* TrendView.swift */,
@@ -262,6 +266,7 @@
 				D09E780FF093B91619250829 /* Onboarding */,
 				36D684DA7E6C8E0DA026B9D2 /* Session */,
 				2F0A769992BE80C397DEDBA9 /* Settings */,
+				CC8F13B8101E357293CF425E /* Shared */,
 				4A74AA9B200A55F559802C12 /* Subscription */,
 			);
 			path = Views;
@@ -337,6 +342,7 @@
 				16A89FB81E578F153AF28F25 /* iPhoneAudioPacer.swift */,
 				CE84AA551BEBEEF710872306 /* iPhoneMasterPhaseTimer.swift */,
 				9D01A1C4DF9CDCCE9D7C6A8F /* iPhoneSessionRunner.swift */,
+				EC65CD4F38E76CB8DAD8EC3C /* IssueReportService.swift */,
 				EDD3CB2D5AB2E56346F25CCF /* NotificationService.swift */,
 				5360833FE27979DA018BC929 /* OnboardingService.swift */,
 				AD9953583514A39FE07FD064 /* SessionService.swift */,
@@ -457,6 +463,14 @@
 				EF98D57B21EDC714D27771A0 /* SessionView.swift */,
 			);
 			path = SessionView;
+			sourceTree = "<group>";
+		};
+		CC8F13B8101E357293CF425E /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				B32A22596E430F72E241E18F /* ShareSheet.swift */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		CEB010712A71AF98397F8CC4 /* Products */ = {
@@ -697,20 +711,22 @@
 				A8E96A1F82921C4CDB5103AA /* CalibrationService.swift in Sources */,
 				D14FC7B9113C7C67B9F7D23B /* CalibrationStore.swift in Sources */,
 				9BBF4B2F0D40E5FD6A766408 /* CancelSubscriptionSheet.swift in Sources */,
+				F1EB40CC0013816B1634F844 /* CoachConversationView.swift in Sources */,
 				179A5C292FE49CB43F2E3F0C /* ConnectWalletSheet.swift in Sources */,
 				0E43BF66DC59A336E2E698D8 /* ContentView.swift in Sources */,
 				BAE283A904EDC5D5D0B200E3 /* ConversionView.swift in Sources */,
 				ACF65313336D3EBD8FFA6D1F /* HealthKitService.swift in Sources */,
 				B9A0D406AF8AF7207EFC70EB /* HistoryView.swift in Sources */,
+				48335458D74F86FD7708E3A9 /* IssueReportService.swift in Sources */,
 				B3A6C8C9496A006A7BD1D311 /* NotificationService.swift in Sources */,
 				B5242B1FAF2B9471D38F1195 /* OnboardingService.swift in Sources */,
 				5C73510208F54B6714D216CE /* OnboardingView.swift in Sources */,
-				3A4B5C6D7E8F9012345678A /* CoachConversationView.swift in Sources */,
 				28DC2A35708C5F0294173EB4 /* SessionDetailView.swift in Sources */,
 				005AAB239F4A8B8A749C3A48 /* SessionRecord.swift in Sources */,
 				98CCF9CD962B6366EE81CE5F /* SessionService.swift in Sources */,
 				C0052E081D4D345F501E5B30 /* SessionSetupView.swift in Sources */,
 				176F04183593FC92BFB2966A /* SettingsView.swift in Sources */,
+				59E01C95DB17715913A14286 /* ShareSheet.swift in Sources */,
 				CE9B02CB4CC38536302D3D97 /* SoftSupportPromptView.swift in Sources */,
 				F49E8617A85D7DD0A797624C /* SubscriptionManagementView.swift in Sources */,
 				6582F2F683FCFDDB4AE438E8 /* SubscriptionService.swift in Sources */,

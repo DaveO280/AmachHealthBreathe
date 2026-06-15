@@ -34,9 +34,9 @@ final class iPhoneAudioBreathTracker: ObservableObject {
         self.targetBPM = targetBPM
         let newAnalyzer = AudioBreathEnvelopeAnalyzer(targetBPM: targetBPM)
         self.analyzer = newAnalyzer
-        tapStateLock.lock()
-        tapAnalyzer = newAnalyzer
-        tapStateLock.unlock()
+        tapStateLock.withLock {
+            tapAnalyzer = newAnalyzer
+        }
         status = .requestingPermission
 
         let granted = await requestMicrophonePermission()

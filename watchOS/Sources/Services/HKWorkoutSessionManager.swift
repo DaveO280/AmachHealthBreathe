@@ -30,6 +30,7 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
     @Published public private(set) var isActive: Bool = false
     @Published public private(set) var latestHeartRate: Double = 0   // BPM
     @Published public private(set) var sampleCount: Int = 0          // diagnostic
+    private var loggedSampleMilestones: Set<Int> = []
 
     // MARK: - Private
 
@@ -46,7 +47,14 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
     public override init() { super.init() }
 
     public func requestAuthorization() async throws {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard HKHealthStore.isHealthDataAvailable() else {
+            DiagnosticLog.shared.record(
+                source: "watchOS",
+                category: "healthKit",
+                level: .warning,
+                message: "Health data unavailable")
+            return
+        }
         let typesToShare: Set<HKSampleType> = [
             HKQuantityType(.heartRate),
             HKObjectType.workoutType()
@@ -57,10 +65,21 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
             HKObjectType.workoutType()
         ]
         try await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
+        DiagnosticLog.shared.record(
+            source: "watchOS",
+            category: "healthKit",
+            message: "HealthKit authorization requested")
     }
 
     public func startWorkout() async throws {
-        guard HKHealthStore.isHealthDataAvailable() else { return }
+        guard HKHealthStore.isHealthDataAvailable() else {
+            DiagnosticLog.shared.record(
+                source: "watchOS",
+                category: "healthKit",
+                level: .warning,
+                message: "Workout not started; health data unavailable")
+            return
+        }
 
         let config = HKWorkoutConfiguration()
         config.activityType = .mindAndBody
@@ -71,6 +90,12 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
             session = try HKWorkoutSession(healthStore: healthStore, configuration: config)
         } catch {
             Self.log.error("HK_WORKOUT_INIT_FAILED \(error.localizedDescription, privacy: .public)")
+            DiagnosticLog.shared.record(
+                source: "watchOS",
+                category: "healthKit",
+                level: .error,
+                message: "Workout init failed",
+                metadata: ["error": error.localizedDescription])
             throw error
         }
         let builder = session.associatedWorkoutBuilder()
@@ -87,6 +112,7 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
         workoutSession = session
         liveBuilder = builder
         sampleCount = 0
+        loggedSampleMilestones = []
 
         let startDate = Date()
         session.startActivity(with: startDate)
@@ -94,6 +120,12 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
             try await builder.beginCollection(at: startDate)
         } catch {
             Self.log.error("HK_BEGIN_COLLECTION_FAILED \(error.localizedDescription, privacy: .public)")
+            DiagnosticLog.shared.record(
+                source: "watchOS",
+                category: "healthKit",
+                level: .error,
+                message: "Workout begin collection failed",
+                metadata: ["error": error.localizedDescription])
             throw error
         }
 
@@ -102,6 +134,10 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
 
         isActive = true
         Self.log.info("HK_WORKOUT_STARTED at \(startDate, privacy: .public)")
+        DiagnosticLog.shared.record(
+            source: "watchOS",
+            category: "healthKit",
+            message: "Workout started")
     }
 
     public func stopWorkout() async {
@@ -122,6 +158,11 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
         liveBuilder = nil
         isActive = false
         Self.log.info("HK_WORKOUT_STOPPED samples=\(self.sampleCount, privacy: .public)")
+        DiagnosticLog.shared.record(
+            source: "watchOS",
+            category: "healthKit",
+            message: "Workout stopped",
+            metadata: ["samples": String(sampleCount)])
     }
 
     // MARK: - Anchored heart-rate stream
@@ -145,6 +186,10 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
         healthStore.execute(query)
         hrAnchorQuery = query
         Self.log.info("HK_ANCHOR_QUERY_STARTED")
+        DiagnosticLog.shared.record(
+            source: "watchOS",
+            category: "healthKit",
+            message: "Heart-rate anchor query started")
     }
 
     nonisolated private func deliver(samples: [HKSample]?) {
@@ -160,9 +205,25 @@ public final class HKWorkoutSessionManager: NSObject, ObservableObject {
             for (bpm, rrMs) in rrPairs {
                 self.latestHeartRate = bpm
                 self.sampleCount += 1
+                self.recordSampleMilestoneIfNeeded()
                 self.onRRInterval?(rrMs)
             }
         }
+    }
+
+    private func recordSampleMilestoneIfNeeded() {
+        let milestones: Set<Int> = [1, 5, 10, 25, 50, 100]
+        guard milestones.contains(sampleCount),
+              !loggedSampleMilestones.contains(sampleCount) else { return }
+        loggedSampleMilestones.insert(sampleCount)
+        DiagnosticLog.shared.record(
+            source: "watchOS",
+            category: "healthKit",
+            message: "Heart-rate samples received",
+            metadata: [
+                "samples": String(sampleCount),
+                "latestHR": String(format: "%.0f", latestHeartRate)
+            ])
     }
 }
 
@@ -176,6 +237,11 @@ extension HKWorkoutSessionManager: HKWorkoutSessionDelegate {
         date: Date
     ) {
         Self.log.info("HK_SESSION_STATE \(fromState.rawValue, privacy: .public)→\(toState.rawValue, privacy: .public)")
+        DiagnosticLog.shared.record(
+            source: "watchOS",
+            category: "healthKit",
+            message: "Workout session state changed",
+            metadata: ["from": String(fromState.rawValue), "to": String(toState.rawValue)])
     }
 
     nonisolated public func workoutSession(
@@ -183,6 +249,12 @@ extension HKWorkoutSessionManager: HKWorkoutSessionDelegate {
         didFailWithError error: Error
     ) {
         Self.log.error("HK_SESSION_FAILED \(error.localizedDescription, privacy: .public)")
+        DiagnosticLog.shared.record(
+            source: "watchOS",
+            category: "healthKit",
+            level: .error,
+            message: "Workout session failed",
+            metadata: ["error": error.localizedDescription])
     }
 }
 
@@ -210,6 +282,7 @@ extension HKWorkoutSessionManager: HKLiveWorkoutBuilderDelegate {
             guard let self else { return }
             self.latestHeartRate = bpm
             self.sampleCount += 1
+            self.recordSampleMilestoneIfNeeded()
             self.onRRInterval?(rrMs)
         }
     }

@@ -100,6 +100,10 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         currentRateIndex = 0
         isRunning = true
         lastRingScale = nil
+        recordDiagnostic(
+            category: "calibration",
+            message: "Calibration starting",
+            metadata: ["rateSeconds": String(format: "%.0f", sampleDurationPerRate)])
 
         // Screen stays on via active HKWorkoutSession (.running state)
 
@@ -145,8 +149,17 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             try await workoutManager.requestAuthorization()
             try await workoutManager.startWorkout()
             Self.log.info("HK_READY active=\(self.workoutManager.isActive, privacy: .public)")
+            recordDiagnostic(
+                category: "healthKit",
+                message: "Calibration HealthKit ready",
+                metadata: ["active": String(workoutManager.isActive)])
         } catch {
             Self.log.error("HK_STARTUP_FAILED \(error.localizedDescription, privacy: .public) — continuing without HK")
+            recordDiagnostic(
+                category: "healthKit",
+                level: .error,
+                message: "Calibration HealthKit startup failed",
+                metadata: ["error": error.localizedDescription])
         }
         // cancel() may have run on MainActor while we were awaiting HK
         // startup (user tapped the close button). Bail before we re-arm
@@ -165,6 +178,15 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard let self else { return }
             Self.log.info("WORKOUT_ACTIVE_CHECK calibration active=\(self.workoutManager.isActive, privacy: .public) samples=\(self.workoutManager.sampleCount, privacy: .public)")
+            self.recordDiagnostic(
+                category: "healthKit",
+                level: self.workoutManager.isActive ? .info : .warning,
+                message: "Calibration workout active check",
+                metadata: [
+                    "active": String(self.workoutManager.isActive),
+                    "samples": String(self.workoutManager.sampleCount),
+                    "latestHR": String(format: "%.0f", self.workoutManager.latestHeartRate)
+                ])
             self.ensureWakeSessionsHealthy()
         }
         Self.log.info("Calibration start (rates: \(CalibrationEngine.candidateBPMs.map { "\($0)" }.joined(separator: ","), privacy: .public))")
@@ -296,6 +318,16 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
             collectedSamples[bpm] = window
         }
         Self.log.info("RATE_DONE idx=\(self.currentRateIndex, privacy: .public) bpm=\(bpm, privacy: .public) samples=\(window.count, privacy: .public)")
+        recordDiagnostic(
+            category: "calibration",
+            level: window.isEmpty ? .warning : .info,
+            message: "Calibration rate completed",
+            metadata: [
+                "index": String(currentRateIndex),
+                "bpm": String(format: "%.1f", bpm),
+                "rrSamples": String(window.count),
+                "hkSamples": String(workoutManager.sampleCount)
+            ])
 
         currentRateIndex += 1
         await startNextRate()
@@ -332,6 +364,18 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
                 .sorted()
                 .joined(separator: ",")
             Self.log.error("CALIBRATION_FAILED reason=\(reason.rawValue, privacy: .public) accepted=\(accepted.count, privacy: .public) hkSamples=\(totalSamples, privacy: .public) perRate=[\(perRateLog, privacy: .public)] skipped=[\(skippedLog, privacy: .public)]")
+            recordDiagnostic(
+                category: "calibration",
+                level: .error,
+                message: "Calibration failed",
+                metadata: [
+                    "reason": reason.rawValue,
+                    "acceptedRates": String(accepted.count),
+                    "hkSamples": String(totalSamples),
+                    "perRate": perRateLog,
+                    "skipped": skippedLog,
+                    "workoutActive": String(workoutManager.isActive)
+                ])
             let payload = CalibrationFailurePayload(
                 reason: reason,
                 hkSampleCount: totalSamples,
@@ -350,6 +394,15 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         let record = CalibrationRecord(result: result)
         calibrationState = .complete(result: record)
         Self.log.info("CALIBRATION_COMPLETE bpm=\(result.resonanceBPM, privacy: .public)")
+        recordDiagnostic(
+            category: "calibration",
+            message: "Calibration complete",
+            metadata: [
+                "resonanceBPM": String(format: "%.1f", result.resonanceBPM),
+                "acceptedRates": String(accepted.count),
+                "hkSamples": String(totalSamples),
+                "perRate": perRateLog
+            ])
         sendResultToPhone(result)
     }
 
@@ -383,9 +436,18 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         let session = WCSession.default
         if session.isReachable {
             session.sendMessage(message, replyHandler: nil)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                message: "Sent calibration result to phone",
+                metadata: ["delivery": "sendMessage", "bpm": String(format: "%.1f", result.resonanceBPM)])
         } else {
             // iPhone not in foreground — deliver when it next becomes active
             session.transferUserInfo(message)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                level: .warning,
+                message: "Queued calibration result for phone",
+                metadata: ["delivery": "transferUserInfo", "bpm": String(format: "%.1f", result.resonanceBPM)])
         }
     }
 
@@ -397,8 +459,41 @@ public final class WatchCalibrationRunner: NSObject, ObservableObject {
         let session = WCSession.default
         if session.isReachable {
             session.sendMessage(message, replyHandler: nil)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                message: "Sent calibration failure to phone",
+                metadata: ["delivery": "sendMessage", "reason": payload.reason.rawValue])
         } else {
             session.transferUserInfo(message)
+            recordDiagnostic(
+                category: "watchConnectivity",
+                level: .warning,
+                message: "Queued calibration failure for phone",
+                metadata: ["delivery": "transferUserInfo", "reason": payload.reason.rawValue])
+        }
+    }
+
+    private func recordDiagnostic(
+        category: String,
+        level: DiagnosticLevel = .info,
+        message: String,
+        metadata: [String: String] = [:]
+    ) {
+        let event = DiagnosticEvent(
+            source: "watchOS",
+            category: category,
+            level: level,
+            message: message,
+            metadata: metadata
+        )
+        DiagnosticLog.shared.append(event)
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        guard let payload = try? makeWatchMessage(type: .diagnosticEvent, payload: event) else { return }
+        if session.isReachable {
+            session.sendMessage(payload, replyHandler: nil)
+        } else {
+            session.transferUserInfo(payload)
         }
     }
 

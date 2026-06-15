@@ -36,7 +36,15 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
         companionAudioEnabled: Bool = false
     ) -> String {
         let id = sessionId ?? UUID().uuidString
-        guard WCSession.default.isReachable else { return id }
+        guard WCSession.default.isReachable else {
+            DiagnosticLog.shared.record(
+                source: "iOS",
+                category: "watchConnectivity",
+                level: .warning,
+                message: "Start session not sent; watch unreachable",
+                metadata: ["sessionId": id])
+            return id
+        }
         let cmd = StartSessionCommand(
             bpm: bpm,
             durationSeconds: durationSeconds,
@@ -46,6 +54,16 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
         )
         guard let message = try? makeWatchMessage(type: .startSession, payload: cmd) else { return id }
         WCSession.default.sendMessage(message, replyHandler: nil)
+        DiagnosticLog.shared.record(
+            source: "iOS",
+            category: "watchConnectivity",
+            message: "Sent start session to watch",
+            metadata: [
+                "sessionId": id,
+                "bpm": String(format: "%.1f", bpm),
+                "duration": String(durationSeconds),
+                "companionAudio": String(companionAudioEnabled)
+            ])
         return id
     }
 
@@ -53,7 +71,14 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
     /// caller should prompt the user to open the Watch app.
     @discardableResult
     public func sendStartCalibration(sampleDurationPerRate: TimeInterval? = nil) -> Bool {
-        guard WCSession.default.isReachable else { return false }
+        guard WCSession.default.isReachable else {
+            DiagnosticLog.shared.record(
+                source: "iOS",
+                category: "watchConnectivity",
+                level: .warning,
+                message: "Start calibration not sent; watch unreachable")
+            return false
+        }
         if let sampleDurationPerRate {
             let command = StartCalibrationCommand(sampleDurationPerRate: sampleDurationPerRate)
             guard let message = try? makeWatchMessage(type: .startCalibration, payload: command) else {
@@ -63,6 +88,11 @@ public final class WatchConnectivityService: NSObject, ObservableObject {
         } else {
             WCSession.default.sendMessage(makeWatchMessage(type: .startCalibration), replyHandler: nil)
         }
+        DiagnosticLog.shared.record(
+            source: "iOS",
+            category: "watchConnectivity",
+            message: "Sent start calibration to watch",
+            metadata: ["rateSeconds": sampleDurationPerRate.map { String(format: "%.0f", $0) } ?? "default"])
         return true
     }
 
@@ -114,6 +144,11 @@ extension WatchConnectivityService: WCSessionDelegate {
         isWatchReachable = WCSession.default.activationState == .activated
             && WCSession.default.isWatchAppInstalled
             && WCSession.default.isReachable
+        DiagnosticLog.shared.record(
+            source: "iOS",
+            category: "watchConnectivity",
+            message: "Watch reachability changed",
+            metadata: ["reachable": String(isWatchReachable)])
     }
 
     nonisolated public func sessionDidBecomeInactive(_ session: WCSession) { }
@@ -144,6 +179,16 @@ extension WatchConnectivityService: WCSessionDelegate {
         switch type {
         case .sessionComplete:
             guard let record = decodeSessionComplete(from: message) else { return }
+            DiagnosticLog.shared.record(
+                source: "iOS",
+                category: "watchConnectivity",
+                message: "Received watch session complete",
+                metadata: [
+                    "sessionId": record.id,
+                    "source": record.source.rawValue,
+                    "avgHRV": record.avgHRV.map { String(format: "%.1f", $0) } ?? "nil",
+                    "coherence": record.coherenceScore.map { String(format: "%.3f", $0) } ?? "nil"
+                ])
             Task { @MainActor [weak self] in self?.onSessionReceived?(record) }
         case .sessionStarted:
             guard let started = decodeSessionStarted(from: message) else { return }
@@ -160,6 +205,10 @@ extension WatchConnectivityService: WCSessionDelegate {
         case .calibrationFailed:
             let payload = try? decodeWatchPayload(CalibrationFailurePayload.self, from: message)
             Task { @MainActor [weak self] in self?.onCalibrationFailed?(payload) }
+        case .diagnosticEvent:
+            if let event = try? decodeWatchPayload(DiagnosticEvent.self, from: message) {
+                DiagnosticLog.shared.append(event)
+            }
         case .walletStateRequest:
             Task { @MainActor [weak self] in self?.onWalletStateRequested?() }
         default:

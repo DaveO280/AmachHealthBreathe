@@ -5,10 +5,15 @@ struct SettingsView: View {
 
     @EnvironmentObject private var settingsService: AppSettingsService
     @EnvironmentObject private var subscriptionService: SubscriptionService
+    @EnvironmentObject private var sessionService: SessionService
+    @EnvironmentObject private var watchConnectivity: WatchConnectivityService
 
     @State private var showManageSubscription = false
     @State private var showAddReminder = false
     @State private var pendingReminderTime = Date()
+    @State private var showIssueReportSheet = false
+    @State private var issueReportURL: URL?
+    @State private var issueReportError: String?
 
     var body: some View {
         NavigationStack {
@@ -25,6 +30,7 @@ struct SettingsView: View {
                             reminderSection
                             audioSection
                             pacerSection
+                            supportSection
                         }
                         .padding(AmachSpacing.screenEdge)
                         .padding(.bottom, AmachSpacing.xxl)
@@ -35,6 +41,19 @@ struct SettingsView: View {
             .sheet(isPresented: $showManageSubscription) {
                 SubscriptionManagementView()
                     .environmentObject(subscriptionService)
+            }
+            .sheet(isPresented: $showIssueReportSheet) {
+                if let issueReportURL {
+                    ShareSheet(items: [issueReportURL])
+                }
+            }
+            .alert("Could Not Create Report", isPresented: Binding(
+                get: { issueReportError != nil },
+                set: { if !$0 { issueReportError = nil } }
+            )) {
+                Button("OK", role: .cancel) { issueReportError = nil }
+            } message: {
+                Text(issueReportError ?? "Please try again.")
             }
         }
     }
@@ -311,6 +330,36 @@ struct SettingsView: View {
         }
     }
 
+    private var supportSection: some View {
+        VStack(alignment: .leading, spacing: AmachSpacing.sm) {
+            sectionHeader("Support")
+            Button {
+                createIssueReport()
+            } label: {
+                HStack(spacing: AmachSpacing.md) {
+                    Image(systemName: "doc.badge.gearshape")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(Color.amachPrimary)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Report Issue")
+                            .font(AmachType.body)
+                            .foregroundStyle(Color.amachTextPrimary)
+                        Text("Share app, watch, session, and diagnostic context.")
+                            .font(AmachType.caption)
+                            .foregroundStyle(Color.amachTextSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.amachTextTertiary)
+                }
+                .padding(AmachSpacing.md)
+            }
+            .amachCard()
+        }
+    }
+
     // MARK: - Helpers
 
     private func sectionHeader(_ title: String) -> some View {
@@ -332,6 +381,22 @@ struct SettingsView: View {
             content()
         }
         .padding(AmachSpacing.md)
+    }
+
+    private func createIssueReport() {
+        do {
+            let url = try IssueReportService().createReport(
+                settings: settingsService.settings,
+                sessions: sessionService.sessions,
+                sessionService: sessionService,
+                subscriptionService: subscriptionService,
+                watchService: watchConnectivity
+            )
+            issueReportURL = url
+            showIssueReportSheet = true
+        } catch {
+            issueReportError = error.localizedDescription
+        }
     }
 }
 
@@ -356,4 +421,6 @@ private extension AppSettings.PacerStyle {
     SettingsView()
         .environmentObject(AppSettingsService())
         .environmentObject(SubscriptionService())
+        .environmentObject(SessionService())
+        .environmentObject(WatchConnectivityService())
 }
