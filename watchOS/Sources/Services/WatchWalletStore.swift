@@ -38,4 +38,3 @@ public final class WatchWalletStore: NSObject, ObservableObject {
         UserDefaults.standard.set(walletAddress ?? "", forKey: addressKey)
     }
 }
-

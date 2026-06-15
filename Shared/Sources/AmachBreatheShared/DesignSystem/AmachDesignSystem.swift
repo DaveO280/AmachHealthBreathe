@@ -145,16 +145,15 @@ public extension Color {
         Scanner(string: h).scanHexInt64(&n)
         let a, r, g, b: UInt64
         switch h.count {
-        case 3:  (a,r,g,b) = (255,(n>>8)*17,(n>>4 & 0xF)*17,(n & 0xF)*17)
-        case 6:  (a,r,g,b) = (255,n>>16,n>>8 & 0xFF,n & 0xFF)
-        case 8:  (a,r,g,b) = (n>>24,n>>16 & 0xFF,n>>8 & 0xFF,n & 0xFF)
-        default: (a,r,g,b) = (255,0,0,0)
+        case 3:  (a, r, g, b) = (255, (n>>8)*17, (n>>4 & 0xF)*17, (n & 0xF)*17)
+        case 6:  (a, r, g, b) = (255, n>>16, n>>8 & 0xFF, n & 0xFF)
+        case 8:  (a, r, g, b) = (n>>24, n>>16 & 0xFF, n>>8 & 0xFF, n & 0xFF)
+        default: (a, r, g, b) = (255, 0, 0, 0)
         }
         self.init(.sRGB, red: Double(r)/255, green: Double(g)/255,
                   blue: Double(b)/255, opacity: Double(a)/255)
     }
 }
-
 
 // ============================================================
 // MARK: - SEMANTIC COLOR API (dark-mode-only)
@@ -162,15 +161,15 @@ public extension Color {
 
 public extension Color {
 
-    static var amachBg: Color            { Amach.Surface.bgDark }
-    static var amachSurface: Color       { Amach.Surface.surfaceDark }
-    static var amachElevated: Color      { Amach.Surface.elevatedDark }
+    static var amachBg: Color { Amach.Surface.bgDark }
+    static var amachSurface: Color { Amach.Surface.surfaceDark }
+    static var amachElevated: Color { Amach.Surface.elevatedDark }
     static var amachSurfaceElevated: Color { Amach.Surface.elevatedDark }
-    static var amachPrimary: Color       { Color(hex: "10B981") }
-    static var amachAccent: Color        { Amach.accent }
-    static var amachTextPrimary: Color   { Amach.Text.primaryD }
+    static var amachPrimary: Color { Color(hex: "10B981") }
+    static var amachAccent: Color { Amach.accent }
+    static var amachTextPrimary: Color { Amach.Text.primaryD }
     static var amachTextSecondary: Color { Amach.Text.secondaryD }
-    static var amachTextTertiary: Color  { Amach.Text.tertiaryD }
+    static var amachTextTertiary: Color { Amach.Text.tertiaryD }
 
     static let amachPrimaryBright  = Color(hex: "34D399")
     static var amachPrimaryWordmark: Color { amachPrimary }
@@ -183,21 +182,20 @@ public extension Color {
     static let amachSuccess        = Color(hex: "34D399")
 }
 
-
 // ============================================================
 // MARK: - TYPOGRAPHY
 // ============================================================
 
 public enum AmachType {
     // Precise point sizes — match AmachHealth-iOS reference exactly
-    public static var h1: Font          { .system(size: 28, weight: .bold) }
+    public static var h1: Font { .system(size: 28, weight: .bold) }
     public static var companyName: Font { .system(size: 32, weight: .heavy) }
-    public static var h2: Font          { .system(size: 20, weight: .semibold) }
-    public static var h3: Font          { .system(size: 16, weight: .semibold) }
-    public static var body: Font        { .system(size: 16, weight: .regular) }
-    public static var caption: Font     { .system(size: 14, weight: .regular) }
-    public static var tiny: Font        { .system(size: 12, weight: .medium) }
-    public static var brandLabel: Font  { .system(size: 12, weight: .medium) }
+    public static var h2: Font { .system(size: 20, weight: .semibold) }
+    public static var h3: Font { .system(size: 16, weight: .semibold) }
+    public static var body: Font { .system(size: 16, weight: .regular) }
+    public static var caption: Font { .system(size: 14, weight: .regular) }
+    public static var tiny: Font { .system(size: 12, weight: .medium) }
+    public static var brandLabel: Font { .system(size: 12, weight: .medium) }
 
     public static func metricValue(size: CGFloat = 22) -> Font {
         .system(size: size, weight: .bold, design: .rounded)
@@ -211,50 +209,47 @@ public enum AmachType {
     public static var dataMono: Font { .system(size: 12, weight: .medium, design: .monospaced) }
 
     // Icon / display sizes — use these instead of hardcoded .system(size:) values
-    public static let iconSm:    CGFloat = 28
-    public static let iconBase:  CGFloat = 32
+    public static let iconSm: CGFloat = 28
+    public static let iconBase: CGFloat = 32
     public static let iconAlert: CGFloat = 36
-    public static let iconCard:  CGFloat = 40
-    public static let iconMd:    CGFloat = 44
-    public static let iconHero:  CGFloat = 48
-    public static let iconLg:    CGFloat = 56
+    public static let iconCard: CGFloat = 40
+    public static let iconMd: CGFloat = 44
+    public static let iconHero: CGFloat = 48
+    public static let iconLg: CGFloat = 56
 }
-
 
 // ============================================================
 // MARK: - SPACING
 // ============================================================
 
 public enum AmachSpacing {
-    public static let xs:   CGFloat = 4
-    public static let sm:   CGFloat = 8
-    public static let md:   CGFloat = 16
-    public static let lg:   CGFloat = 24
-    public static let xl:   CGFloat = 32
-    public static let xxl:  CGFloat = 48
+    public static let xs: CGFloat = 4
+    public static let sm: CGFloat = 8
+    public static let md: CGFloat = 16
+    public static let lg: CGFloat = 24
+    public static let xl: CGFloat = 32
+    public static let xxl: CGFloat = 48
     public static let xxxl: CGFloat = 64
 
-    public static let cardPadding:    CGFloat = 24
-    public static let cardGap:        CGFloat = 16
+    public static let cardPadding: CGFloat = 24
+    public static let cardGap: CGFloat = 16
     public static let sectionSpacing: CGFloat = 32
-    public static let screenEdge:     CGFloat = 16
+    public static let screenEdge: CGFloat = 16
 }
-
 
 // ============================================================
 // MARK: - CORNER RADIUS
 // ============================================================
 
 public enum AmachRadius {
-    public static let xs:   CGFloat = 7
-    public static let sm:   CGFloat = 8
-    public static let md:   CGFloat = 14
+    public static let xs: CGFloat = 7
+    public static let sm: CGFloat = 8
+    public static let md: CGFloat = 14
     public static let card: CGFloat = 16
-    public static let lg:   CGFloat = 16
-    public static let xl:   CGFloat = 24
+    public static let lg: CGFloat = 16
+    public static let xl: CGFloat = 24
     public static let pill: CGFloat = 99
 }
-
 
 // ============================================================
 // MARK: - ELEVATION
@@ -263,52 +258,51 @@ public enum AmachRadius {
 public enum AmachElevation {
     public struct Level1 {
         public static let shadowColor    = Color.black.opacity(0.10)
-        public static let shadowRadius:  CGFloat = 8
-        public static let shadowX:       CGFloat = 0
-        public static let shadowY:       CGFloat = 2
+        public static let shadowRadius: CGFloat = 8
+        public static let shadowX: CGFloat = 0
+        public static let shadowY: CGFloat = 2
         public static let borderOpacity: Double  = 0.12
     }
     public struct Level2 {
         public static let shadowColor    = Color.black.opacity(0.18)
-        public static let shadowRadius:  CGFloat = 16
-        public static let shadowX:       CGFloat = 0
-        public static let shadowY:       CGFloat = 6
+        public static let shadowRadius: CGFloat = 16
+        public static let shadowX: CGFloat = 0
+        public static let shadowY: CGFloat = 6
         public static let borderOpacity: Double  = 0.20
     }
     public struct Level3 {
         public static let shadowColor     = Color.black.opacity(0.30)
-        public static let shadowRadius:   CGFloat = 32
-        public static let shadowX:        CGFloat = 0
-        public static let shadowY:        CGFloat = 16
+        public static let shadowRadius: CGFloat = 32
+        public static let shadowX: CGFloat = 0
+        public static let shadowY: CGFloat = 16
         public static let overlayOpacity: Double  = 0.40
     }
 }
-
 
 // ============================================================
 // MARK: - ANIMATION
 // ============================================================
 
 public enum AmachAnimation {
-    public static let durationFast:    Double = 0.15
-    public static let durationNormal:  Double = 0.25
-    public static let durationSlow:    Double = 0.40
-    public static let durationChart:   Double = 0.80
-    public static let durationCount:   Double = 0.50
+    public static let durationFast: Double = 0.15
+    public static let durationNormal: Double = 0.25
+    public static let durationSlow: Double = 0.40
+    public static let durationChart: Double = 0.80
+    public static let durationCount: Double = 0.50
 
-    public static let fast:        Animation = .easeOut(duration: durationFast)
-    public static let normal:      Animation = .easeOut(duration: durationNormal)
-    public static let slow:        Animation = .easeInOut(duration: durationSlow)
-    public static let spring:      Animation = .spring(response: 0.3, dampingFraction: 0.7)
+    public static let fast: Animation = .easeOut(duration: durationFast)
+    public static let normal: Animation = .easeOut(duration: durationNormal)
+    public static let slow: Animation = .easeInOut(duration: durationSlow)
+    public static let spring: Animation = .spring(response: 0.3, dampingFraction: 0.7)
     public static let sheetSpring: Animation = .spring(response: 0.35, dampingFraction: 0.85)
-    public static let countUp:     Animation = .easeOut(duration: durationCount)
-    public static let chartDraw:   Animation = .easeInOut(duration: durationChart)
+    public static let countUp: Animation = .easeOut(duration: durationCount)
+    public static let chartDraw: Animation = .easeInOut(duration: durationChart)
 
-    public static let cardPressScale:   CGFloat = 0.97
+    public static let cardPressScale: CGFloat = 0.97
     public static let buttonPressScale: CGFloat = 0.96
 
     public static let lumaTypingDotDuration: Double = 0.6
-    public static let lumaTypingStagger:     Double = 0.15
+    public static let lumaTypingStagger: Double = 0.15
 
     public static func ifMotion(_ animation: Animation) -> Animation? {
 #if os(iOS)
@@ -319,40 +313,38 @@ public enum AmachAnimation {
     }
 }
 
-
 // ============================================================
 // MARK: - HAPTICS
 // ============================================================
 
 public enum AmachHaptics {
 #if os(iOS)
-    public static func cardTap()      { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
-    public static func buttonPress()  { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
-    public static func success()      { UINotificationFeedbackGenerator().notificationOccurred(.success) }
-    public static func error()        { UINotificationFeedbackGenerator().notificationOccurred(.error) }
-    public static func toggle()       { UISelectionFeedbackGenerator().selectionChanged() }
-    public static func pullRefresh()  { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
+    public static func cardTap() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+    public static func buttonPress() { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
+    public static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+    public static func error() { UINotificationFeedbackGenerator().notificationOccurred(.error) }
+    public static func toggle() { UISelectionFeedbackGenerator().selectionChanged() }
+    public static func pullRefresh() { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
     public static func lumaResponse() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
 #elseif os(watchOS)
-    public static func cardTap()      { WKInterfaceDevice.current().play(.click) }
-    public static func buttonPress()  { WKInterfaceDevice.current().play(.click) }
-    public static func success()      { WKInterfaceDevice.current().play(.success) }
-    public static func error()        { WKInterfaceDevice.current().play(.failure) }
-    public static func toggle()       { WKInterfaceDevice.current().play(.click) }
-    public static func pullRefresh()  { WKInterfaceDevice.current().play(.click) }
+    public static func cardTap() { WKInterfaceDevice.current().play(.click) }
+    public static func buttonPress() { WKInterfaceDevice.current().play(.click) }
+    public static func success() { WKInterfaceDevice.current().play(.success) }
+    public static func error() { WKInterfaceDevice.current().play(.failure) }
+    public static func toggle() { WKInterfaceDevice.current().play(.click) }
+    public static func pullRefresh() { WKInterfaceDevice.current().play(.click) }
     public static func lumaResponse() { WKInterfaceDevice.current().play(.click) }
 #else
     // macOS — no-op (design system used in tests only)
-    public static func cardTap()      {}
-    public static func buttonPress()  {}
-    public static func success()      {}
-    public static func error()        {}
-    public static func toggle()       {}
-    public static func pullRefresh()  {}
+    public static func cardTap() {}
+    public static func buttonPress() {}
+    public static func success() {}
+    public static func error() {}
+    public static func toggle() {}
+    public static func pullRefresh() {}
     public static func lumaResponse() {}
 #endif
 }
-
 
 // ============================================================
 // MARK: - ACCESSIBILITY
@@ -370,7 +362,6 @@ public enum AmachAccessibility {
 #endif
     }
 }
-
 
 // ============================================================
 // MARK: - VIEW MODIFIERS
@@ -435,7 +426,6 @@ public extension View {
     }
 }
 
-
 // ============================================================
 // MARK: - BUTTON STYLES (iOS only)
 // ============================================================
@@ -499,7 +489,6 @@ public extension View {
 }
 #endif
 
-
 // ============================================================
 // MARK: - HEALTH STATUS PILL
 // ============================================================
@@ -555,7 +544,6 @@ public struct HealthStatusPill: View {
     }
 }
 
-
 // ============================================================
 // MARK: - TIER BADGE
 // ============================================================
@@ -566,10 +554,10 @@ public struct AmachTierBadge: View {
 
     private var config: (bg: Color, text: Color, border: Color) {
         switch tier.uppercased() {
-        case "GOLD":   return (Color.Amach.Tier.goldBg,   Color.Amach.Tier.goldText,   Color.Amach.Tier.goldBorder)
+        case "GOLD":   return (Color.Amach.Tier.goldBg, Color.Amach.Tier.goldText, Color.Amach.Tier.goldBorder)
         case "SILVER": return (Color.Amach.Tier.silverBg, Color.Amach.Tier.silverText, Color.Amach.Tier.silverBorder)
         case "BRONZE": return (Color.Amach.Tier.bronzeBg, Color.Amach.Tier.bronzeText, Color.Amach.Tier.bronzeBorder)
-        default:       return (Color.Amach.Tier.noneBg,   Color.Amach.Tier.noneText,   Color.Amach.Tier.noneBorder)
+        default:       return (Color.Amach.Tier.noneBg, Color.Amach.Tier.noneText, Color.Amach.Tier.noneBorder)
         }
     }
 
@@ -589,7 +577,6 @@ public struct AmachTierBadge: View {
             )
     }
 }
-
 
 // ============================================================
 // MARK: - ICON TOKENS

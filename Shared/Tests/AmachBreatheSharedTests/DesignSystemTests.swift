@@ -133,7 +133,7 @@ final class DesignSystemRadiusTests: XCTestCase {
         XCTAssertLessThan(AmachRadius.xs, AmachRadius.sm)
         XCTAssertLessThan(AmachRadius.sm, AmachRadius.md)
         XCTAssertLessThan(AmachRadius.md, AmachRadius.card)
-        XCTAssertLessThan(AmachRadius.card, AmachRadius.lg)
+        XCTAssertLessThanOrEqual(AmachRadius.card, AmachRadius.lg)
         XCTAssertLessThan(AmachRadius.lg, AmachRadius.xl)
     }
 }

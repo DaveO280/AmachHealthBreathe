@@ -27,7 +27,7 @@ struct AmachShimmerModifier: ViewModifier {
                             .clear
                         ],
                         startPoint: .leading,
-                        endPoint:   .trailing
+                        endPoint: .trailing
                     )
                     .frame(width: stripW)
                     .offset(x: startX + phase * travel)

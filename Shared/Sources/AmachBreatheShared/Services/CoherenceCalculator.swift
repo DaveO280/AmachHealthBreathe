@@ -7,6 +7,10 @@ import Foundation
 /// A score ≥ 0.65 indicates high coherence (Heart Math threshold).
 public final class CoherenceCalculator: @unchecked Sendable {
 
+    /// Matches `CalibrationEngine.minSamplesPerRate`.
+    private static let minRRIntervals = 6
+    private static let minInterpolatedSamples = 6
+
     private let lock = NSLock()
 
     /// Sample rate of the RR interval series (Hz). Typical HRV analysis uses ~4 Hz.
@@ -24,11 +28,11 @@ public final class CoherenceCalculator: @unchecked Sendable {
     ///   - targetBPM: breathing rate in breaths per minute (e.g. 5.5)
     /// - Returns: coherence score 0…1, or nil if insufficient data
     public func coherenceScore(rrIntervals: [Double], targetBPM: Double) -> Double? {
-        guard rrIntervals.count >= 8 else { return nil }
+        guard rrIntervals.count >= Self.minRRIntervals else { return nil }
 
         // Interpolate RR intervals to evenly-spaced time series at sampleRate
         let evenlySampled = interpolate(rrIntervals: rrIntervals)
-        guard evenlySampled.count >= 8 else { return nil }
+        guard evenlySampled.count >= Self.minInterpolatedSamples else { return nil }
 
         let targetFreq = targetBPM / 60.0   // BPM → Hz
 
@@ -47,7 +51,7 @@ public final class CoherenceCalculator: @unchecked Sendable {
         rrIntervals: [Double],
         candidates: [Double] = [4.5, 5.0, 5.5, 6.0, 6.5, 7.0]
     ) -> ResonanceFrequencyResult? {
-        guard rrIntervals.count >= 8 else { return nil }
+        guard rrIntervals.count >= Self.minRRIntervals else { return nil }
 
         var scores: [Double: Double] = [:]
         for bpm in candidates {
@@ -66,9 +70,9 @@ public final class CoherenceCalculator: @unchecked Sendable {
     /// Use this for comparing across different breathing rates (calibration).
     /// Use `coherenceScore` for the live 0–1 display metric during sessions.
     public func rawAmplitude(rrIntervals: [Double], targetBPM: Double) -> Double? {
-        guard rrIntervals.count >= 8 else { return nil }
+        guard rrIntervals.count >= Self.minRRIntervals else { return nil }
         let evenlySampled = interpolate(rrIntervals: rrIntervals)
-        guard evenlySampled.count >= 8 else { return nil }
+        guard evenlySampled.count >= Self.minInterpolatedSamples else { return nil }
         let power = goertzel(signal: evenlySampled, frequency: targetBPM / 60.0,
                              sampleRate: sampleRate)
         return sqrt(max(0, power))

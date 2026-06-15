@@ -213,7 +213,7 @@ final class CalibrationDegradedTests: XCTestCase {
     // MARK: - 5. Minimum data boundary
 
     func testMinimumSamples_exactlyAtThreshold_returnsResult() {
-        // CalibrationEngine.minSamplesPerRate = 8 — test the floor
+        // CalibrationEngine.minSamplesPerRate — test the floor
         let samples = Dictionary(uniqueKeysWithValues: CalibrationEngine.candidateBPMs.map {
             ($0, oscillatingRR(bpm: $0, count: CalibrationEngine.minSamplesPerRate, amplitude: 40))
         })

@@ -9,7 +9,7 @@ final class iPhoneMasterPhaseTimer: ObservableObject {
 
     @Published private(set) var state: PacerState = .idle
     @Published private(set) var isRunning: Bool = false
-    @Published private(set) var isPaused:  Bool = false
+    @Published private(set) var isPaused: Bool = false
 
     var bpm: Double = 5.5 { didSet { recomputeBreathPeriod() } }
     var mainDurationSeconds: Int = 300

@@ -41,11 +41,11 @@ public final class AmachAPIClient: Sendable {
             data: AnyCodable(record),
             dataType: "breathing-session",
             options: StorjStoreOptions(metadata: [
-                "sessionId":      record.id,
-                "timestamp":      ISO8601DateFormatter().string(from: record.timestamp),
-                "bpm":            String(record.bpm),
+                "sessionId": record.id,
+                "timestamp": ISO8601DateFormatter().string(from: record.timestamp),
+                "bpm": String(record.bpm),
                 "coherenceScore": String(format: "%.3f", record.coherenceScore ?? 0),
-                "platform":       "ios"
+                "platform": "ios"
             ])
         )
         return try await post(path: "/api/storj", body: request, responseType: StorjResponse<StorjStoreResult>.self)
@@ -102,7 +102,7 @@ public final class AmachAPIClient: Sendable {
             data: AnyCodable(record),
             dataType: "subscription-state",
             options: StorjStoreOptions(metadata: [
-                "state":     record.state.rawValue,
+                "state": record.state.rawValue,
                 "updatedAt": ISO8601DateFormatter().string(from: record.updatedAt)
             ])
         )
@@ -142,7 +142,7 @@ public final class AmachAPIClient: Sendable {
     ) async throws {
         // /api/tracking accepts any JSON body — we send the event directly.
         // No authentication required; the backend proxies to the admin analytics API.
-        let _ = try await post(path: "/api/tracking", body: event,
+        _ = try await post(path: "/api/tracking", body: event,
                                responseType: TrackingResponse.self)
     }
 
@@ -164,10 +164,10 @@ public final class AmachAPIClient: Sendable {
             data: AnyCodable(event),
             dataType: "timeline-event",
             options: StorjStoreOptions(metadata: [
-                "eventId":   event.id,
+                "eventId": event.id,
                 "eventType": event.eventType,
                 "timestamp": ISO8601DateFormatter().string(from: event.timestamp),
-                "platform":  platform
+                "platform": platform
             ])
         )
         _ = try await post(path: "/api/storj", body: request,

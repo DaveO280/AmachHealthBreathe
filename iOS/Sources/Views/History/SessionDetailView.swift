@@ -63,9 +63,9 @@ struct SessionDetailView: View {
     private var hrvPoints: [(label: String, value: Double)] {
         guard let r = record else { return [] }
         var pts: [(String, Double)] = []
-        if let v = r.baselineHRV, v > 0  { pts.append(("Baseline", v)) }
-        if let v = r.avgHRV, v > 0       { pts.append(("Session", v)) }
-        if let v = r.recoveryHRV, v > 0  { pts.append(("Recovery", v)) }
+        if let v = r.baselineHRV, v > 0 { pts.append(("Baseline", v)) }
+        if let v = r.avgHRV, v > 0 { pts.append(("Session", v)) }
+        if let v = r.recoveryHRV, v > 0 { pts.append(("Recovery", v)) }
         return pts
     }
 
@@ -106,7 +106,7 @@ struct SessionDetailView: View {
                 .font(AmachType.h3)
                 .foregroundStyle(Color.amachTextPrimary)
             Chart {
-                ForEach(Array(hrvPoints.enumerated()), id: \.offset) { idx, pt in
+                ForEach(Array(hrvPoints.enumerated()), id: \.offset) { _, pt in
                     LineMark(
                         x: .value("Phase", pt.label),
                         y: .value("HRV (ms)", pt.value)

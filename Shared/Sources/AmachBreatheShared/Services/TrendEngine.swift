@@ -81,7 +81,7 @@ public enum TrendEngine {
         let total = sessions.count
         let todayStart = calendar.startOfDay(for: today)
 
-        let last7Start  = calendar.date(byAdding: .day, value: -6,  to: todayStart)!
+        let last7Start  = calendar.date(byAdding: .day, value: -6, to: todayStart)!
         let last30Start = calendar.date(byAdding: .day, value: -29, to: todayStart)!
 
         let last7  = sessions.filter { $0.timestamp >= last7Start }.count
@@ -108,8 +108,7 @@ public enum TrendEngine {
         for i in stride(from: 1, to: sortedDays.count, by: 1) {
             let diff = calendar.dateComponents(
                 [.day], from: sortedDays[i-1], to: sortedDays[i]).day ?? 0
-            if diff == 1 { run += 1; longest = max(longest, run) }
-            else { run = 1 }
+            if diff == 1 { run += 1; longest = max(longest, run) } else { run = 1 }
         }
 
         return ConsistencyStats(

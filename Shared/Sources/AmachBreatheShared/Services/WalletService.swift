@@ -306,11 +306,11 @@ public final class WalletService: ObservableObject {
         guard let key = encryptionKey else { throw WalletError.noEncryptionKey }
         let data = try JSONEncoder().encode(key)
         let query: [String: Any] = [
-            kSecClass as String:            kSecClassGenericPassword,
-            kSecAttrAccount as String:      "breathe_enc_\(key.walletAddress)",
-            kSecAttrService as String:      "com.amach.breathe",
-            kSecValueData as String:        data,
-            kSecAttrAccessible as String:   kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: "breathe_enc_\(key.walletAddress)",
+            kSecAttrService as String: "com.amach.breathe",
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         SecItemDelete(query as CFDictionary)
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -319,11 +319,11 @@ public final class WalletService: ObservableObject {
 
     public func loadEncryptionKeyFromKeychain(for address: String) throws -> WalletEncryptionKey {
         let query: [String: Any] = [
-            kSecClass as String:       kSecClassGenericPassword,
+            kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: "breathe_enc_\(address)",
             kSecAttrService as String: "com.amach.breathe",
-            kSecReturnData as String:  true,
-            kSecMatchLimit as String:  kSecMatchLimitOne
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -333,7 +333,7 @@ public final class WalletService: ObservableObject {
 
     public func deleteEncryptionKeyFromKeychain(for address: String) {
         let query: [String: Any] = [
-            kSecClass as String:       kSecClassGenericPassword,
+            kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: "breathe_enc_\(address)",
             kSecAttrService as String: "com.amach.breathe"
         ]

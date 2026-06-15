@@ -20,8 +20,8 @@ public enum BrandMarkLayout {
 //
 public struct AmachBrandMark: View {
 
-    public var layout:   BrandMarkLayout = .stacked
-    public var iconSize: CGFloat?        = nil
+    public var layout: BrandMarkLayout = .stacked
+    public var iconSize: CGFloat?
 
     public init(layout: BrandMarkLayout = .stacked, iconSize: CGFloat? = nil) {
         self.layout = layout
@@ -160,9 +160,9 @@ public struct BreatheGlyph: View {
 public struct AmachNavigationHeader<Trailing: View>: View {
 
     public let title: String
-    public var subtitle: String? = nil
+    public var subtitle: String?
     public var showBack: Bool = true
-    public var backAction: (() -> Void)? = nil
+    public var backAction: (() -> Void)?
     @ViewBuilder public var trailing: () -> Trailing
 
     @Environment(\.dismiss) private var dismiss
@@ -238,8 +238,8 @@ public struct AmachEmptyState: View {
     public let title: String
     public let message: String
     public var tintColor: Color = Color.amachPrimary
-    public var ctaLabel: String? = nil
-    public var ctaAction: (() -> Void)? = nil
+    public var ctaLabel: String?
+    public var ctaAction: (() -> Void)?
 
     public init(
         icon: String,

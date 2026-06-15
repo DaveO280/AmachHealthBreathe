@@ -36,12 +36,12 @@ public struct SessionPhaseController: Sendable {
 
     private let phaseSequence: [SessionPhase]
 
-    private var sessionStartDate: Date? = nil
-    private var phaseStartDate: Date? = nil
+    private var sessionStartDate: Date?
+    private var phaseStartDate: Date?
     /// Elapsed within current phase accumulated before the most recent pause.
     private var accumulatedPhaseElapsed: TimeInterval = 0
     /// Date when current pause began (nil = running).
-    private var pauseStartDate: Date? = nil
+    private var pauseStartDate: Date?
     /// Total wall-clock time spent paused (used to correct totalElapsed).
     private var totalPauseDuration: TimeInterval = 0
 
@@ -123,7 +123,7 @@ public struct SessionPhaseController: Sendable {
                 + (phaseStartDate.map { now.timeIntervalSince($0) } ?? 0)
         }
 
-        var transitioned: SessionPhase? = nil
+        var transitioned: SessionPhase?
 
         // Auto-advance when target duration reached (only while running).
         if !isPaused, let target = currentPhase.targetDurationSeconds,

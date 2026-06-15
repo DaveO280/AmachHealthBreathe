@@ -21,8 +21,8 @@ public struct WalletEncryptionKey: Codable, Sendable {
         var c = encoder.container(keyedBy: WebKeys.self)
         try c.encode(walletAddress, forKey: .walletAddress)
         try c.encode(encryptionKey, forKey: .key)
-        try c.encode(signature,     forKey: .signature)
-        try c.encode(timestamp,     forKey: .derivedAt)
+        try c.encode(signature, forKey: .signature)
+        try c.encode(timestamp, forKey: .derivedAt)
     }
 
     public init(from decoder: Decoder) throws {
@@ -253,16 +253,16 @@ public struct BreathingSessionRecord: Codable, Identifiable, Sendable {
     // Custom decoder for backward compatibility: legacy Watch records don't have `source`.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id              = try  c.decode(String.self,        forKey: .id)
-        timestamp       = try  c.decode(Date.self,          forKey: .timestamp)
-        durationSeconds = try  c.decode(Int.self,           forKey: .durationSeconds)
-        bpm             = try  c.decode(Double.self,        forKey: .bpm)
-        ratio           = try  c.decode(String.self,        forKey: .ratio)
+        id              = try  c.decode(String.self, forKey: .id)
+        timestamp       = try  c.decode(Date.self, forKey: .timestamp)
+        durationSeconds = try  c.decode(Int.self, forKey: .durationSeconds)
+        bpm             = try  c.decode(Double.self, forKey: .bpm)
+        ratio           = try  c.decode(String.self, forKey: .ratio)
         baselineHRV     = try  c.decodeIfPresent(Double.self, forKey: .baselineHRV)
         recoveryHRV     = try  c.decodeIfPresent(Double.self, forKey: .recoveryHRV)
         avgHRV          = try  c.decodeIfPresent(Double.self, forKey: .avgHRV)
         coherenceScore  = try  c.decodeIfPresent(Double.self, forKey: .coherenceScore)
-        reflectionRating = try c.decodeIfPresent(Int.self,  forKey: .reflectionRating)
+        reflectionRating = try c.decodeIfPresent(Int.self, forKey: .reflectionRating)
         source = (try c.decodeIfPresent(SessionSource.self, forKey: .source)) ?? .watch
         audioBreathMetrics = try c.decodeIfPresent(AudioBreathMetrics.self, forKey: .audioBreathMetrics)
     }
@@ -289,15 +289,15 @@ public struct BreathingSessionEvent: Codable, Sendable {
         self.eventType = "BREATHING_SESSION"
         self.timestamp = record.timestamp
         var data = [
-            "sessionId":       record.id,
+            "sessionId": record.id,
             "durationSeconds": String(record.durationSeconds),
-            "bpm":             String(record.bpm),
-            "ratio":           record.ratio,
-            "source":          record.source.rawValue,
-            "coherenceScore":  String(format: "%.3f", record.coherenceScore ?? 0),
-            "avgHRV":          String(format: "%.1f", record.avgHRV ?? 0),
-            "baselineHRV":     String(format: "%.1f", record.baselineHRV ?? 0),
-            "recoveryHRV":     String(format: "%.1f", record.recoveryHRV ?? 0)
+            "bpm": String(record.bpm),
+            "ratio": record.ratio,
+            "source": record.source.rawValue,
+            "coherenceScore": String(format: "%.3f", record.coherenceScore ?? 0),
+            "avgHRV": String(format: "%.1f", record.avgHRV ?? 0),
+            "baselineHRV": String(format: "%.1f", record.baselineHRV ?? 0),
+            "recoveryHRV": String(format: "%.1f", record.recoveryHRV ?? 0)
         ]
         if let audio = record.audioBreathMetrics {
             data["audioBreathTracking"] = String(audio.enabled)

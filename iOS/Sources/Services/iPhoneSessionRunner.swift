@@ -13,7 +13,7 @@ final class iPhoneSessionRunner: ObservableObject {
     @Published private(set) var phase: SessionPhase = .idle
     @Published private(set) var pacerState: PacerState = .idle
     @Published private(set) var isRunning: Bool = false
-    @Published private(set) var isPaused:  Bool = false
+    @Published private(set) var isPaused: Bool = false
     @Published private(set) var completedRecord: BreathingSessionRecord?
     @Published private(set) var audioTrackingStatus: iPhoneAudioBreathTracker.Status = .off
 
